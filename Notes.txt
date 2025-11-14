@@ -1,0 +1,8 @@
+1) Use Selenium to read my Ao3 casual collection catalog
+2) Use Apache Storm and Spark to turn the series into a set of text chunks to save
+3) Use Apache Storm and Spark to send the data to Apache Kafka and Hadoop
+4) Use Apache Kafka to also send data to Hadoop
+5) Use Hadoop to save things to files
+6) Do everything inside containers
+
+selenium/standalone-chrome docker image
