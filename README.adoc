@@ -1,0 +1,27 @@
+= Asasefu Pipeline
+:author: Laolu Adewoye
+:email: laoluadewoye@gmail.com>
+:description: Java-based project for parsing my fanfiction and analysing it through Apache Products.
+:keywords: container, docker, java, testing, junit, maven, ao3, web, selenium, parsing
+:toc:
+
+include::version_control.adoc[]
+
+== Software Bill of Materials
+
+. Docker Desktop
+. Java Runtime Environment 8
+. Open JDK 25.0.1
+. Maven 3.9.11
+. Selenium Standalone Chrome image (version 136.0-20251101)
+.. Docker command to run image is `docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-chrome:136.0-20251101`
+
+== Explanation
+
+This project is passion project for analysing my AO3 account while being a neat excuse to learn more about Selenium, Maven, and big data Apache stuff. I'm going to try to create everything for a container environment but also make it so that one could set up virtual machines using Ansible or another Infrastructure-as-code strategy.
+
+Right now the architecture is as follows:
+
+*Finish this later...*
+
+. One set of containers will be using Selenium to ingest the

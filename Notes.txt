@@ -6,3 +6,15 @@
 6) Do everything inside containers
 
 selenium/standalone-chrome docker image
+
+docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-chrome:136.0-20251101
+
+Create tests for these three links:
+The Community Board -> https://archiveofourown.org/works/45081343
+I love (I think) therefore I am -> https://archiveofourown.org/works/73057466
+Anna's Journal -> https://archiveofourown.org/works/58655203
+The Ballad of Calice (Old Story) -> https://archiveofourown.org/works/58185457
+
+Finish the chapter creation by reading the chapter titles, notes, chapter itself, comments, who left kudos, etc.
+
+Add the fully fledged story creation.
