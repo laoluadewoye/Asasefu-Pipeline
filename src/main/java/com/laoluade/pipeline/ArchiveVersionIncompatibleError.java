@@ -1,4 +1,4 @@
-package com.laoluade;
+package com.laoluade.pipeline;
 
 public class ArchiveVersionIncompatibleError extends RuntimeException {
     public ArchiveVersionIncompatibleError(String version) {

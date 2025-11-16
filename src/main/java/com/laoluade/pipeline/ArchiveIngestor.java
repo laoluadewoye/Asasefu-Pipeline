@@ -1,4 +1,4 @@
-package com.laoluade;
+package com.laoluade.pipeline;
 
 // JSON Packages
 import org.json.JSONObject;
@@ -9,7 +9,11 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.WebElement;
 
 // I/O Packages
-import java.io.*;
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 
 // List Packages
 import java.util.ArrayList;
