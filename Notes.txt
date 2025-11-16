@@ -18,3 +18,5 @@ The Ballad of Calice (Old Story) -> https://archiveofourown.org/works/58185457
 Finish the chapter creation by reading the chapter titles, notes, chapter itself, comments, who left kudos, etc.
 
 Add the fully fledged story creation.
+
+Add check to ensure that a valid version of otwarchive is being worked with.

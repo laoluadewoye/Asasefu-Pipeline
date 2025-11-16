@@ -1,29 +1,56 @@
 package com.laoluade;
 
+// JSON Packages
+import org.json.JSONObject;
+
+// JUnit Packages
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
+
+// Selenium Packages
 import org.openqa.selenium.SessionNotCreatedException;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.net.URL;
+// I/O and URL Packages
+import java.io.IOException;
 import java.net.URI;
-import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URISyntaxException;
+import java.net.MalformedURLException;
+
+// Datetime Packages
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.time.LocalDate;
 
+// Structure Packages
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+
 public class ArchiveIngestorTest {
+    private static JSONObject testLinks;
     private static RemoteWebDriver testDriver;
+    private static ArchiveIngestor testIngestor;
 
     @BeforeAll
-    public static void createDriver() throws URISyntaxException, MalformedURLException, SessionNotCreatedException {
+    public static void setupTests() throws IOException {
+        System.out.println("Obtaining test links...");
+
+        URL testLinksLocator = ArchiveIngestorTest.class.getResource("test_story_links.json");
+        assert testLinksLocator != null;
+        String testLinksPathDecoded = URLDecoder.decode(testLinksLocator.getPath(), StandardCharsets.UTF_8);
+        testLinks = ArchiveIngestor.getJSONFromFilepath(testLinksPathDecoded);
+
+        System.out.println("Creating Ingestor instance...");
+        testIngestor = new ArchiveIngestor();
+
         System.out.println("Creating test driver...");
 
         try {
@@ -47,7 +74,7 @@ public class ArchiveIngestorTest {
     }
 
     @Test
-    public void testSelenium() throws WebDriverException {
+    public void testSelenium() {
         try {
             testDriver.get("https://www.google.com/");
             System.out.println("Was able to access Google.");
@@ -58,13 +85,10 @@ public class ArchiveIngestorTest {
         }
     }
 
-    @Test
-    public void testArchiveParse() throws InterruptedException, NoSuchElementException {
+    public void runArchiveParseTest(String pageLink) throws InterruptedException {
         try {
             // Parse the story page
-            Chapter testChapter = ArchiveIngestor.createChapter(
-                    testDriver, "test_series", "https://archiveofourown.org/works/45081343"
-            );
+            Chapter testChapter = testIngestor.createChapter(testDriver, "test_series", pageLink);
 
             // Assert the title exists
             Assertions.assertNotNull(testChapter.pageTitle);
@@ -87,7 +111,7 @@ public class ArchiveIngestorTest {
             // Assert the warning items is good
             ArrayList<String> expectedWarnings = new ArrayList<>(Arrays.asList(
                     "Underage Sex", "Rape/Non-Con", "Graphic Depictions Of Violence", "Major Character Death",
-                    "Creator Chose Not To Use Archive Warnings"
+                    "Creator Chose Not To Use Archive Warnings", "No Archive Warnings Apply"
             ));
             for (String warningItem : testChapter.parentStory.warningItems) {
                 Assertions.assertTrue(expectedWarnings.contains(warningItem));
@@ -126,10 +150,15 @@ public class ArchiveIngestorTest {
 
     @Test
     public void testSingleChapterParse() throws InterruptedException {
-        // Parse the story page
-        Chapter testChapter = ArchiveIngestor.createChapter(
-                testDriver, "test_series", "https://archiveofourown.org/works/73057466"
-        );
+        // Loop through the test set of stories
+        Iterator<String> testLinksKeys = testLinks.keys();
+        while (testLinksKeys.hasNext()) {
+            String testStoryName = testLinksKeys.next();
+            System.out.println("Current story: " + testStoryName);
+
+            String testStoryLink = testLinks.getString(testStoryName);
+            runArchiveParseTest(testStoryLink);
+        }
     }
 
     @AfterAll

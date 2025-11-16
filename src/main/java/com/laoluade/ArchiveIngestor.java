@@ -1,36 +1,57 @@
 package com.laoluade;
 
+// JSON Packages
+import org.json.JSONObject;
+
+// Selenium Packages
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.WebElement;
 
+// I/O Packages
+import java.io.*;
+
+// List Packages
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ArchiveIngestor {
-    private final String[] casualCollectionStories = {
-        "https://archiveofourown.org/works/33168574",
-        "https://archiveofourown.org/works/33957277",
-        "https://archiveofourown.org/works/34974553",
-        "https://archiveofourown.org/works/35448004"
-    };
-
-    private final String[] casualExpansionStories = {
-        "https://archiveofourown.org/works/39327156",
-        "https://archiveofourown.org/works/43738372",
-        "https://archiveofourown.org/works/47769598",
-        "https://archiveofourown.org/works/52561213",
-        "https://archiveofourown.org/works/56392429",
-        "https://archiveofourown.org/works/62649829"
-    };
-
-    private final String[] asasefuStories = {"https://archiveofourown.org/works/69878601"};
-
+    // Class Constants
+    public static final String VERSION = "0.1";
     public static final String PLACEHOLDER = "Null";
 
-    private static void handleTOSPrompt(RemoteWebDriver driver) throws InterruptedException {
+    // Instance Constants
+    public JSONObject storyLinks;
+    public JSONObject versionTable;
+
+    public ArchiveIngestor() throws IOException {
+        System.out.println("Creating new Archive Ingestor...");
+
+        System.out.println("Loading story links...");
+        storyLinks = getJSONFromResource("story_links.json");
+
+        System.out.println("Loading version table...");
+        versionTable = getJSONFromResource("version_table.json");
+    }
+
+    public static JSONObject getJSONFromFilepath(String filePath) throws IOException {
+        FileReader reader = new FileReader(filePath);
+        String jsonString = reader.readAllAsString();
+        return new JSONObject(jsonString);
+    }
+
+    private JSONObject getJSONFromResource(String resource) throws IOException {
+        InputStream resourceStream = ArchiveIngestor.class.getResourceAsStream(resource);
+        assert resourceStream != null;
+        BufferedReader resourceReader = new BufferedReader(new InputStreamReader(resourceStream));
+        String resourceString = resourceReader.readAllAsString();
+        return new JSONObject(resourceString);
+    }
+
+    private void handleTOSPrompt(RemoteWebDriver driver) throws InterruptedException {
         // Sleep for three seconds
+        System.out.println("Waiting three seconds for possible TOS prompt...");
         Thread.sleep(3000);
 
         // Check for TOS specific element
@@ -45,115 +66,164 @@ public class ArchiveIngestor {
         }
     }
 
-    private static void handleAdultContentAgreement(RemoteWebDriver driver) throws InterruptedException {
-        // Sleep for three seconds
-        Thread.sleep(3000);
-
-        // Check for TOS specific element
+    private void handleAdultContentAgreement(RemoteWebDriver driver) {
+        System.out.println("Checking for adult content agreement...");
         List<WebElement> elements = driver.findElements(By.className("caution"));
         if (!elements.isEmpty()) {
-            System.out.println("Detected Adult Content Agreement. Handling contents...");
+            System.out.println("Detected adult content agreement. Handling contents...");
 
             // Hit the continue button
             driver.findElement(By.xpath("//*[@id=\"main\"]/ul/li[1]/a")).click();
         }
     }
 
-    private static ArrayList<String> parseMetaItems(WebElement metaElement) {
-        WebElement commas = metaElement.findElement(By.className("commas"));
+    private void checkArchiveVersion(RemoteWebDriver driver) {
+        System.out.println("Checking AO3 version...");
+        WebElement archiveVersionElement = driver.findElement(By.xpath("//*[@id=\"footer\"]/ul/li[3]/ul/li[1]/a"));
+        String archiveVersion = archiveVersionElement.getText();
 
-        ArrayList<String> metaItems = new ArrayList<>();
-        for (WebElement item : commas.findElements(By.tagName("li"))) {
-            metaItems.add(item.getText());
+        List<Object> compatibleArchiveVersions = this.versionTable.getJSONArray(VERSION).toList();
+        if (!compatibleArchiveVersions.contains(archiveVersion)) {
+            throw new ArchiveVersionIncompatibleError(archiveVersion);
         }
-        
-        return metaItems;
+        else {
+            System.out.println("AO3 version validated.");
+        }
     }
 
-    public static Chapter createChapter(RemoteWebDriver driver, String storySeries, String pageLink) throws
-            InterruptedException, NoSuchElementException {
+    private ArrayList<String> parseMetaItems(WebElement metaSection, String metaSectionClass) {
+        System.out.println("Parsing " + metaSectionClass + " meta information...");
+
+        // Create function wide variables
+        ArrayList<String> metaItems;
+        List<WebElement> metaElements = metaSection.findElements(By.className(metaSectionClass));
+
+        // Extract if not empty, otherwise send an empty list of items.
+        if (!metaElements.isEmpty()) {
+            WebElement metaElementLast = metaElements.getLast();
+            WebElement commas = metaElementLast.findElement(By.className("commas"));
+
+            metaItems = new ArrayList<>();
+            for (WebElement item : commas.findElements(By.tagName("li"))) {
+                metaItems.add(item.getText());
+            }
+
+            return metaItems;
+        }
+        else {
+            return new ArrayList<>();
+        }
+    }
+
+    private ArrayList<String> parseMetaStats(WebElement storyStats, String storyStatsClass) {
+        System.out.println("Parsing " + storyStatsClass + " meta statistic...");
+
+        String statTitle, statValue;
+        List<WebElement> statusElements = storyStats.findElements(By.className(storyStatsClass));
+        if (!statusElements.isEmpty()) {
+            statTitle = storyStats.findElements(By.className(storyStatsClass)).getFirst().getText();
+            statValue = storyStats.findElements(By.className(storyStatsClass)).getLast().getText();
+        }
+        else {
+            statTitle = PLACEHOLDER;
+            statValue = PLACEHOLDER;
+        }
+
+        return new ArrayList<>(Arrays.asList(statTitle, statValue));
+    }
+
+    public Chapter createChapter(RemoteWebDriver driver, String storySeries, String pageLink) throws
+            InterruptedException {
         // Create a driver session new page
+        System.out.println("Opening website " + pageLink + "...");
         driver.get(pageLink);
 
         // Check for and get past acceptance screens
         handleTOSPrompt(driver);
         handleAdultContentAgreement(driver);
 
+        // Check for the correct version of otwarchive
+        checkArchiveVersion(driver);
+
         // Get the title
+        System.out.println("Getting website page title...");
         String pageTitle = driver.getTitle();
 
         // Get the meta section
         WebElement metaSection = driver.findElement(By.className("meta"));
 
         // Get the rating
-        WebElement storyRating = metaSection.findElements(By.className("rating")).getLast();
-        ArrayList<String> storyRatingItems = parseMetaItems(storyRating);
+        ArrayList<String> storyRatingItems = parseMetaItems(metaSection, "rating");
 
         // Get the warnings
-        WebElement storyWarning = metaSection.findElements(By.className("warning")).getLast();
-        ArrayList<String> storyWarningItems = parseMetaItems(storyWarning);
+        ArrayList<String> storyWarningItems = parseMetaItems(metaSection, "warning");
 
         // Get the categories
-        WebElement storyCategory = metaSection.findElements(By.className("category")).getLast();
-        ArrayList<String> storyCategoryItems = parseMetaItems(storyCategory);
+        ArrayList<String> storyCategoryItems = parseMetaItems(metaSection, "category");
 
         // Get the fandoms
-        WebElement storyFandom = metaSection.findElements(By.className("fandom")).getLast();
-        ArrayList<String> storyFandomItems = parseMetaItems(storyFandom);
+        ArrayList<String> storyFandomItems = parseMetaItems(metaSection, "fandom");
+
+        // Get the relationships
+        ArrayList<String> storyRelationshipItems = parseMetaItems(metaSection, "relationship");
+
+        // Get the characters
+        ArrayList<String> storyCharacterItems = parseMetaItems(metaSection, "character");
 
         // Get the freeform
-        WebElement storyFreeform = metaSection.findElements(By.className("freeform")).getLast();
-        ArrayList<String> storyFreeformItems = parseMetaItems(storyFreeform);
+        ArrayList<String> storyFreeformItems = parseMetaItems(metaSection, "freeform");
 
         // Get the language
+        System.out.println("Getting story language...");
         String storyLanguage = metaSection.findElements(By.className("language")).getLast().getText();
 
         // Get the stats
         WebElement storyStats = metaSection.findElements(By.className("stats")).getLast();
 
-        String storyStatus, storyStatusWhen;
-        List<WebElement> statusElements = storyStats.findElements(By.className("status"));
-        if (!statusElements.isEmpty()) {
-            storyStatus = storyStats.findElements(By.className("status")).getFirst().getText();
-            storyStatusWhen = storyStats.findElements(By.className("status")).getLast().getText();
-        }
-        else {
-            storyStatus = PLACEHOLDER;
-            storyStatusWhen = PLACEHOLDER;
-        }
-
-        String storyPublished = storyStats.findElements(By.className("published")).getLast().getText();
-        String storyWords = storyStats.findElements(By.className("words")).getLast().getText();
-        String storyChapters = storyStats.findElements(By.className("chapters")).getLast().getText();
-        String storyComments = storyStats.findElements(By.className("comments")).getLast().getText();
-        String storyKudos = storyStats.findElements(By.className("kudos")).getLast().getText();
-        String storyBookmarks = storyStats.findElements(By.className("bookmarks")).getLast().getText();
-        String storyHits = storyStats.findElements(By.className("hits")).getLast().getText();
+        ArrayList<String> storyStatusBundle = parseMetaStats(storyStats, "status");
+        String storyStatus = storyStatusBundle.getFirst();
+        String storyStatusWhen = storyStatusBundle.getLast();
+        String storyPublished = parseMetaStats(storyStats, "published").getLast();
+        String storyWords = parseMetaStats(storyStats, "words").getLast();
+        String storyChapters = parseMetaStats(storyStats, "chapters").getLast();
+        String storyComments = parseMetaStats(storyStats, "comments").getLast();
+        String storyKudos = parseMetaStats(storyStats, "kudos").getLast();
+        String storyBookmarks = parseMetaStats(storyStats, "bookmarks").getLast();
+        String storyHits = parseMetaStats(storyStats, "hits").getLast();
 
         // Create a story object
+        System.out.println("Creating new Story instance...");
         Story newStory = new Story(
                 storySeries, storyRatingItems, storyWarningItems, storyCategoryItems, storyFandomItems,
-                storyFreeformItems, storyLanguage, storyPublished, storyStatus, storyStatusWhen, storyWords,
-                storyChapters, storyComments, storyKudos, storyBookmarks, storyHits
+                storyRelationshipItems, storyCharacterItems, storyFreeformItems, storyLanguage, storyPublished,
+                storyStatus, storyStatusWhen, storyWords, storyChapters, storyComments, storyKudos, storyBookmarks,
+                storyHits
         );
         
         // Create a chapter object
+        System.out.println("Creating new Chapter instance...");
         return new Chapter(newStory, pageTitle, "1");
     }
     
-    public static Chapter createChapter(RemoteWebDriver driver, Story parentStory, String pageLink) throws
+    public Chapter createChapter(RemoteWebDriver driver, Story parentStory, String pageLink) throws
             InterruptedException {
         // Create a driver session new page
+        System.out.println("Opening website " + pageLink + "...");
         driver.get(pageLink);
 
         // Check for and get past acceptance screens
         handleTOSPrompt(driver);
         handleAdultContentAgreement(driver);
 
+        // Check for the correct version of otwarchive
+        checkArchiveVersion(driver);
+
         // Get the title
+        System.out.println("Getting website page title...");
         String pageTitle = driver.getTitle();
 
         // Create a chapter object
+        System.out.println("Creating new Chapter instance...");
         return new Chapter(parentStory, pageTitle, "1");
     }
 }

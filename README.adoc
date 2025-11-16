@@ -24,4 +24,4 @@ Right now the architecture is as follows:
 
 *Finish this later...*
 
-. One set of containers will be using Selenium to ingest the
+. One set of containers will be using Selenium to ingest the stories

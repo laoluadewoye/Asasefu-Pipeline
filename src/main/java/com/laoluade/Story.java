@@ -4,7 +4,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.time.LocalDate;
-import java.util.Objects;
 
 public class Story {
     public ZonedDateTime timestamp;
@@ -13,6 +12,8 @@ public class Story {
     public ArrayList<String> warningItems;
     public ArrayList<String> categoryItems;
     public ArrayList<String> fandomItems;
+    public ArrayList<String> relationshipItems;
+    public ArrayList<String> characterItems;
     public ArrayList<String> freeformItems;
     public String language;
     public LocalDate published;
@@ -27,11 +28,10 @@ public class Story {
     public Integer hits;
 
     public Story(String series, ArrayList<String> ratingItems,
-                 ArrayList<String> warningItems, ArrayList<String> categoryItems,
-                 ArrayList<String> fandomItems, ArrayList<String> freeformItems, String language,
-                 String published, String status, String statusWhen, String words,
-                 String chapters, String comments, String kudos, String bookmarks,
-                 String hits) {
+                 ArrayList<String> warningItems, ArrayList<String> categoryItems, ArrayList<String> fandomItems,
+                 ArrayList<String> relationshipItems, ArrayList<String> characterItems, ArrayList<String> freeformItems,
+                 String language, String published, String status, String statusWhen, String words, String chapters,
+                 String comments, String kudos, String bookmarks, String hits) {
         // Get current timestamp
         this.timestamp = ZonedDateTime.now(ZoneId.of("UTC"));
 
@@ -41,12 +41,14 @@ public class Story {
         this.warningItems = warningItems;
         this.categoryItems = categoryItems;
         this.fandomItems = fandomItems;
+        this.relationshipItems = relationshipItems;
+        this.characterItems = characterItems;
         this.freeformItems = freeformItems;
         this.language = language;
 
         // Setup statistics
         this.published = LocalDate.parse(published);
-        this.words = Integer.parseInt(words.replace(",", ""));
+        this.words = parseInitString(words);
 
         this.status = status.replace(":", "");
         if (!status.equals(ArchiveIngestor.PLACEHOLDER)) {
@@ -57,12 +59,24 @@ public class Story {
         }
 
         String[] chaptersSplit = chapters.split("/");
-        this.currentChapters = Integer.parseInt(chaptersSplit[0].replace(",", ""));
-        this.totalChapters = Integer.parseInt(chaptersSplit[1].replace(",", ""));
+        this.currentChapters = parseInitString(chaptersSplit[0]);
+        this.totalChapters = parseInitString(chaptersSplit[1]);
 
-        this.comments = Integer.parseInt(comments.replace(",", ""));
-        this.kudos = Integer.parseInt(kudos.replace(",", ""));
-        this.bookmarks = Integer.parseInt(bookmarks.replace(",", ""));
-        this.hits = Integer.parseInt(hits.replace(",", ""));
+        this.comments = parseInitString(comments);
+        this.kudos = parseInitString(kudos);
+        this.bookmarks = parseInitString(bookmarks);
+        this.hits = parseInitString(hits);
+    }
+
+    private Integer parseInitString(String initString) {
+        if (initString.equals("?")) {
+            return -1;
+        }
+        else if (!initString.equals(ArchiveIngestor.PLACEHOLDER)) {
+            return Integer.parseInt(initString.replace(",", ""));
+        }
+        else {
+            return 0;
+        }
     }
 }
