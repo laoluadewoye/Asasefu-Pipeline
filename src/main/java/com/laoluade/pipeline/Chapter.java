@@ -2,22 +2,32 @@ package com.laoluade.pipeline;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 public class Chapter {
     public ZonedDateTime timestamp;
-    public Story parentStory;
+    public StoryInfo parentStoryInfo;
     public String pageTitle;
-    public Integer chapterNumber;
+    public String chapterTitle;
+    public ArrayList<String> summary;
+    public ArrayList<String> startNotes;
+    public ArrayList<String> endNotes;
+    public ArrayList<String> paragraphs;
 
-    public Chapter(Story parentStory, String pageTitle, String chapterNumber) {
+    public Chapter(StoryInfo parentStoryInfo, String pageTitle, String chapterTitle, ArrayList<String> summary,
+                   ArrayList<String> startNotes, ArrayList<String> endNotes, ArrayList<String> paragraphs) {
         // Get current timestamp
         this.timestamp = ZonedDateTime.now(ZoneId.of("UTC"));
 
         // Set parent story
-        this.parentStory = parentStory;
+        this.parentStoryInfo = parentStoryInfo;
 
         // Set chapter information
         this.pageTitle = pageTitle;
-        this.chapterNumber = Integer.parseInt(chapterNumber);
+        this.chapterTitle = chapterTitle;
+        this.summary = summary;
+        this.startNotes = startNotes;
+        this.endNotes = endNotes;
+        this.paragraphs = paragraphs;
     }
 }

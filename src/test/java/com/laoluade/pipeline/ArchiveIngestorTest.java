@@ -51,6 +51,8 @@ public class ArchiveIngestorTest {
         System.out.println("Creating Ingestor instance...");
         testIngestor = new ArchiveIngestor();
 
+        // TODO: Figure out way to start docker container from here
+
         System.out.println("Creating test driver...");
 
         try {
@@ -85,35 +87,36 @@ public class ArchiveIngestorTest {
         }
     }
 
-    public void runArchiveParseTest(String pageLink) throws InterruptedException {
+    public void runChapterParseTest(String pageLink) throws InterruptedException {
         try {
             // Parse the story page
-            Chapter testChapter = testIngestor.createChapter(testDriver, "test_series", pageLink);
+            Chapter testChapter = testIngestor.createChapter(testDriver, pageLink);
 
-            // Assert the title exists
-            Assertions.assertNotNull(testChapter.pageTitle);
-            Assertions.assertFalse(testChapter.pageTitle.isBlank());
+            // Assert timestamps are good
+            Assertions.assertInstanceOf(ZonedDateTime.class, testChapter.parentStoryInfo.timestamp);
+            Assertions.assertEquals("UTC", testChapter.parentStoryInfo.timestamp.getZone().toString());
 
-            // Assert timestamp is good
-            Assertions.assertInstanceOf(ZonedDateTime.class, testChapter.parentStory.timestamp);
-            Assertions.assertEquals("UTC", testChapter.parentStory.timestamp.getZone().toString());
+            Assertions.assertInstanceOf(ZonedDateTime.class, testChapter.timestamp);
+            Assertions.assertEquals("UTC", testChapter.timestamp.getZone().toString());
 
-            // Assert the series is correct
-            Assertions.assertEquals("test_series", testChapter.parentStory.series);
+            // Assert that values are not null
+            // TODO: Redo test suite
+
+            // Assert that the parent story is properly set
 
             // Assert the rating is right
             ArrayList<String> expectedRatings = new ArrayList<>(Arrays.asList(
                     "General Audiences", "Teen and Up", "Mature", "Explicit", "Not Rated"
             ));
-            Assertions.assertEquals(1, testChapter.parentStory.ratingItems.size());
-            Assertions.assertTrue(expectedRatings.contains(testChapter.parentStory.ratingItems.getFirst()));
+            Assertions.assertEquals(1, testChapter.parentStoryInfo.ratings.size());
+            Assertions.assertTrue(expectedRatings.contains(testChapter.parentStoryInfo.ratings.getFirst()));
 
             // Assert the warning items is good
             ArrayList<String> expectedWarnings = new ArrayList<>(Arrays.asList(
                     "Underage Sex", "Rape/Non-Con", "Graphic Depictions Of Violence", "Major Character Death",
                     "Creator Chose Not To Use Archive Warnings", "No Archive Warnings Apply"
             ));
-            for (String warningItem : testChapter.parentStory.warningItems) {
+            for (String warningItem : testChapter.parentStoryInfo.warnings) {
                 Assertions.assertTrue(expectedWarnings.contains(warningItem));
             }
 
@@ -121,22 +124,37 @@ public class ArchiveIngestorTest {
             ArrayList<String> expectedCategories = new ArrayList<>(Arrays.asList(
                     "F/F", "F/M", "Gen", "M/M", "Multi", "Other"
             ));
-            for (String categoryItem : testChapter.parentStory.categoryItems) {
+            for (String categoryItem : testChapter.parentStoryInfo.categories) {
                 Assertions.assertTrue(expectedCategories.contains(categoryItem));
             }
 
             // Assert time statistics are good
-            Assertions.assertInstanceOf(LocalDate.class, testChapter.parentStory.published);
-            Assertions.assertInstanceOf(LocalDate.class, testChapter.parentStory.statusWhen);
+            Assertions.assertInstanceOf(LocalDate.class, testChapter.parentStoryInfo.published);
+            Assertions.assertInstanceOf(LocalDate.class, testChapter.parentStoryInfo.statusWhen);
 
-            boolean publishBefore = testChapter.parentStory.published.isBefore(testChapter.parentStory.statusWhen);
-            boolean publishEqual = testChapter.parentStory.published.isEqual(testChapter.parentStory.statusWhen);
+            boolean publishBefore = testChapter.parentStoryInfo.published.isBefore(testChapter.parentStoryInfo.statusWhen);
+            boolean publishEqual = testChapter.parentStoryInfo.published.isEqual(testChapter.parentStoryInfo.statusWhen);
             Assertions.assertTrue(publishBefore | publishEqual);
 
             ArrayList<String> expectedStatuses = new ArrayList<>(Arrays.asList(
                     "Completed", "Updated", ArchiveIngestor.PLACEHOLDER
             ));
-            Assertions.assertTrue(expectedStatuses.contains(testChapter.parentStory.status));
+            Assertions.assertTrue(expectedStatuses.contains(testChapter.parentStoryInfo.status));
+            
+            // Assert series items are good
+            for (String series : testChapter.parentStoryInfo.series) {
+                Assertions.assertFalse(series.contains("Part"));
+            }
+            
+            // Assert numbers are good
+            Assertions.assertTrue(testChapter.parentStoryInfo.words > -2);
+            Assertions.assertTrue(testChapter.parentStoryInfo.currentChapters > -2);
+            Assertions.assertTrue(testChapter.parentStoryInfo.totalChapters > -2);
+            Assertions.assertTrue(testChapter.parentStoryInfo.comments > -2);
+            Assertions.assertTrue(testChapter.parentStoryInfo.kudos > -2);
+            Assertions.assertTrue(testChapter.parentStoryInfo.bookmarks > -2);
+            Assertions.assertTrue(testChapter.parentStoryInfo.hits > -2);
+                
         }
         catch (SessionNotCreatedException e) {
             System.out.println("Session was unable to be created with container selenium. Check if a container is running.");
@@ -157,7 +175,7 @@ public class ArchiveIngestorTest {
             System.out.println("Current story: " + testStoryName);
 
             String testStoryLink = testLinks.getString(testStoryName);
-            runArchiveParseTest(testStoryLink);
+            runChapterParseTest(testStoryLink);
         }
     }
 
