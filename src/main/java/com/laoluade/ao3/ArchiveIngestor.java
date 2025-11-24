@@ -1,4 +1,4 @@
-package com.laoluade.pipeline;
+package com.laoluade.ao3;
 
 // JSON Packages
 import org.json.JSONArray;
@@ -11,6 +11,7 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.pagefactory.ByChained;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 // I/O Packages
@@ -37,7 +38,6 @@ public class ArchiveIngestor {
     // Private Class Constants
     private static final Integer TOS_SLEEP_DURATION_SECS = 3;
     private static final Integer WAIT_DURATION_SECS = 5;
-    private static final Integer COMMENT_PAGE_WAIT_DURATION_MS = 500;
     private static final Integer MAX_THREAD_DEPTH = 10;
     private static final String ALL_CHILDREN_XPATH = ".//*";
     private static final String DIRECT_CHILDREN_XPATH = "./*";
@@ -450,7 +450,6 @@ public class ArchiveIngestor {
         JSONObject commentThread = new JSONObject();
         String lastParentCommentID = "";
 
-        // for (WebElement commentListItem: commentThreadElement.findElements(By.tagName("li"))) {
         for (WebElement commentListItem: commentThreadElement.findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
             if (!commentListItem.getTagName().equals("li")) {
                 continue;
@@ -475,7 +474,7 @@ public class ArchiveIngestor {
             if (parentComment) {
                 try {
                     // Create new comment object
-                    String commentUser = commentListItem.findElement(By.xpath(".//h4/a")).getText();
+                    String commentUser = commentListItem.findElement(By.xpath(".//h4/a | .//h4/span")).getText();
                     String commentPosted = commentListItem.findElement(By.className("posted")).getText();
                     String commentID = (commentUser + '_' + commentPosted).replace(' ', '_');
                     commentID = commentID.replace(':', '_');
@@ -571,7 +570,7 @@ public class ArchiveIngestor {
                 int pageCount = 0;
 
                 while (nextEnabled) {
-                    pageCount = pageCount + 1;
+                    pageCount++;
                     System.out.println("Parsing page number " + pageCount + " of comments...");
 
                     // Get a new next button
@@ -644,12 +643,7 @@ public class ArchiveIngestor {
         return newChapter;
     }
 
-    public Chapter createChapter(RemoteWebDriver driver, String pageLink) throws
-            InterruptedException {
-        // Create a driver session new page
-        System.out.println("Opening website " + pageLink + "...");
-        driver.get(pageLink);
-
+    public Chapter createChapter(RemoteWebDriver driver) throws InterruptedException {
         // Check for and get past acceptance screens
         handleTOSPrompt(driver);
         handleAdultContentAgreement(driver);
@@ -669,15 +663,7 @@ public class ArchiveIngestor {
         return parseChapter(driver, newStoryInfo, pageTitle);
     }
 
-    // TODO: Create a way to seperate the driver session and chapter building portions of this function
-    //  Maybe like splitting into "startChapter" and "createChapter"
-    //  Same for story functions as well
-    public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo, String pageLink) throws
-            InterruptedException {
-        // Create a driver session new page
-        System.out.println("Opening website " + pageLink + "...");
-        driver.get(pageLink);
-
+    public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws InterruptedException {
         // Check for and get past acceptance screens
         handleTOSPrompt(driver);
         handleAdultContentAgreement(driver);
@@ -695,23 +681,48 @@ public class ArchiveIngestor {
     }
 
     // TODO: Create way to parse through story, then maybe even a series
-    public void createStory(RemoteWebDriver driver, String pageLink, boolean singleChapter) throws InterruptedException {
-        // Create a driver session new page
-        System.out.println("Opening website " + pageLink + "...");
-        driver.get(pageLink);
+    public Story createStory(RemoteWebDriver driver) throws InterruptedException {
+        // Do the first chapter
+        System.out.println("Parsing chapter 1 of " + driver.getTitle());
 
-        // Check for and get past acceptance screens
-        handleTOSPrompt(driver);
-        handleAdultContentAgreement(driver);
+        ArrayList<Chapter> chapters = new ArrayList<>();
+        chapters.add(createChapter(driver));
+        StoryInfo storyInfo = chapters.getFirst().parentStoryInfo;
 
-        // Check for the correct version of otwarchive
-        checkArchiveVersion(driver);
+        // Do the rest of the chapters if necessary
+        WebDriverWait nextChapterWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
+        By chapterTitleFinder = new ByChained(
+                By.id("chapters"), By.className("chapter"), By.className("preface"), By.className("title")
+        );
+        boolean nextButtonFound;
+        int chapterCount = 2;
+        do {
+            // Reset flag
+            nextButtonFound = false;
 
-        // Get the first chapter out of the way
-        System.out.println("Getting story website page title...");
-        String pageTitle = driver.getTitle();
+            // Go to next chapter if the next chapter button is found
+            WebElement feedback = driver.findElement(By.id("feedback"));
+            WebElement feedbackActions = feedback.findElement(By.className("actions"));
+            for (WebElement action : feedbackActions.findElements(By.tagName("li"))) {
+                if (action.getText().contains("Next Chapter")) {
+                    String nextChapterPage = action.findElement(By.tagName("a")).getAttribute("href");
+                    assert nextChapterPage != null;
+                    driver.navigate().to(nextChapterPage);
+                    nextButtonFound = true; // Keeps the loop going
+                    break;
+                }
+            }
 
-        // Create a chapter object
-        System.out.println("Creating first chapter of the story...");
+            // Parse next chapter
+            if (nextButtonFound) {
+                nextChapterWait.until(d -> d.findElement(chapterTitleFinder).isDisplayed());
+                System.out.println("Parsing chapter " + chapterCount + " of " + storyInfo.title);
+                chapters.add(createChapter(driver, storyInfo));
+                chapterCount++;
+            }
+        } while (nextButtonFound);
+
+        // Return a full story
+        return new Story(storyInfo, chapters);
     }
 }

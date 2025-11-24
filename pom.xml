@@ -32,7 +32,7 @@
                             <archive>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>com.laoluade.pipeline.Main</mainClass>
+                                    <mainClass>com.laoluade.ao3.Main</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
@@ -67,6 +67,11 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20250517</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.5.0-jre</version>
         </dependency>
     </dependencies>
 </project>

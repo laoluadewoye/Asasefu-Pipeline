@@ -1,4 +1,4 @@
-package com.laoluade.pipeline;
+package com.laoluade.ao3;
 
 public class ChapterContentNotFoundError extends RuntimeException {
     public ChapterContentNotFoundError() {

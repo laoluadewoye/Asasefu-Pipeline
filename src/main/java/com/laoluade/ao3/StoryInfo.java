@@ -1,13 +1,21 @@
-package com.laoluade.pipeline;
+package com.laoluade.ao3;
 
+import com.google.common.hash.Hashing;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class StoryInfo {
-    // Meta items
-    public ZonedDateTime timestamp;
+    // Meta items - self created
+    public ZonedDateTime creationTimestamp;
+    public String creationHash;
+
+    // Meta items - passed in
     public ArrayList<String> ratings;
     public ArrayList<String> warnings;
     public ArrayList<String> categories;
@@ -51,7 +59,7 @@ public class StoryInfo {
                      ArrayList<String> collections, String published, String status, String statusWhen, String words, String chapters,
                      String comments, String kudos, String bookmarks, String hits) {
         // Get current timestamp
-        this.timestamp = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.creationTimestamp = ZonedDateTime.now(ZoneId.of("UTC"));
 
         // Set core information
         this.ratings = ratings;
@@ -119,6 +127,12 @@ public class StoryInfo {
                 this.associations.add(association);
             }
         }
+
+        // Generate the hash using preface information
+        String creationHashInput = this.title + String.join("", this.authors) +
+                String.join("", this.summary) + String.join("", this.associations) +
+                String.join("", this.startNotes) + String.join("", this.endNotes);
+        this.creationHash = Hashing.sha256().hashString(creationHashInput, StandardCharsets.UTF_8).toString();
     }
 
     public void setKudosList(ArrayList<String> kudosList) {
@@ -138,5 +152,42 @@ public class StoryInfo {
 
     public void setPublicBookmarkList(ArrayList<String> bookmarkList) {
         this.publicBookmarks = bookmarkList;
+    }
+
+    public JSONObject getJSONRep() {
+        JSONObject rep = new JSONObject();
+        rep.put("creationTimestamp", this.creationTimestamp.toString());
+        rep.put("creationHash", this.creationHash);
+        rep.put("ratings", new JSONArray(this.ratings));
+        rep.put("warnings", new JSONArray(this.warnings));
+        rep.put("categories", new JSONArray(this.categories));
+        rep.put("fandoms", new JSONArray(this.fandoms));
+        rep.put("relationships", new JSONArray(this.relationships));
+        rep.put("characters", new JSONArray(this.characters));
+        rep.put("additionalTags", new JSONArray(this.additionalTags));
+        rep.put("language", this.language);
+        rep.put("series", new JSONArray(this.series));
+        rep.put("collections", new JSONArray(this.collections));
+        rep.put("published", this.published.toString());
+        rep.put("status", this.status);
+        rep.put("statusWhen", this.statusWhen.toString());
+        rep.put("words", this.words);
+        rep.put("currentChapters", this.currentChapters);
+        rep.put("totalChapters", this.totalChapters);
+        rep.put("comments", this.comments);
+        rep.put("kudos", this.kudos);
+        rep.put("bookmarks", this.bookmarks);
+        rep.put("hits", this.hits);
+        rep.put("title", this.title);
+        rep.put("authors", new JSONArray(this.authors));
+        rep.put("summary", new JSONArray(this.summary));
+        rep.put("associations", new JSONArray(this.associations));
+        rep.put("startNotes", new JSONArray(this.startNotes));
+        rep.put("endNotes", new JSONArray(this.endNotes));
+        rep.put("registeredKudos", new JSONArray(this.registeredKudos));
+        rep.put("unnamedRegisteredKudos", this.unnamedRegisteredKudos);
+        rep.put("guestKudos", this.guestKudos);
+        rep.put("publicBookmarks", new JSONArray(this.publicBookmarks));
+        return rep;
     }
 }
