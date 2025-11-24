@@ -1,12 +1,17 @@
 package com.laoluade.pipeline;
 
 // JSON Packages
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 // Selenium Packages
 import org.openqa.selenium.By;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 // I/O Packages
 import java.io.IOException;
@@ -15,15 +20,27 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 
-// List Packages
+// Structure Packages
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.time.Duration;
 
 public class ArchiveIngestor {
-    // Class Constants
+    // Public Class Constants
     public static final String VERSION = "0.1";
     public static final String PLACEHOLDER = "Null";
+    public static final ArrayList<String> PARAGRAPH_IGNORE_TAGS = new ArrayList<>(Arrays.asList(
+            "strong", "em", "u", "span"
+    ));
+
+    // Private Class Constants
+    private static final Integer TOS_SLEEP_DURATION_SECS = 3;
+    private static final Integer WAIT_DURATION_SECS = 5;
+    private static final Integer COMMENT_PAGE_WAIT_DURATION_MS = 500;
+    private static final Integer MAX_THREAD_DEPTH = 10;
+    private static final String ALL_CHILDREN_XPATH = ".//*";
+    private static final String DIRECT_CHILDREN_XPATH = "./*";
 
     // Instance Constants
     public JSONObject storyLinks;
@@ -56,7 +73,7 @@ public class ArchiveIngestor {
     private void handleTOSPrompt(RemoteWebDriver driver) throws InterruptedException {
         // Sleep for three seconds
         System.out.println("Waiting three seconds for possible TOS prompt...");
-        Thread.sleep(3000);
+        Thread.sleep(Duration.ofSeconds(TOS_SLEEP_DURATION_SECS));
 
         // Check for TOS specific element
         if (!driver.findElements(By.xpath("//*[@id=\"tos_agree\"]")).isEmpty()) {
@@ -91,6 +108,24 @@ public class ArchiveIngestor {
         else {
             System.out.println("AO3 version validated.");
         }
+    }
+
+    private ArrayList<String> filterText(List<WebElement> chapterText) {
+        // Create empty array list
+        ArrayList<String> filteredText  = new ArrayList<>();
+
+        for (WebElement text : chapterText) {
+            // Set of tag name checks to prevent
+            if (PARAGRAPH_IGNORE_TAGS.contains(text.getTagName())) {
+                continue;
+            }
+
+            // Get text if the checks pass
+            filteredText.add(text.getText());
+        }
+
+        // Return filtered list
+        return filteredText;
     }
 
     private ArrayList<String> parseMetaItems(WebElement metaSection, String metaSectionClass) {
@@ -169,7 +204,7 @@ public class ArchiveIngestor {
 
         for (WebElement sS : storySeries) {
             if (!sS.findElements(By.tagName("span")).isEmpty()) {
-                for (WebElement item : sS.findElements(By.xpath(".//*"))) {
+                for (WebElement item : sS.findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
                     storySeriesItems.add(item.getText());
                 }
                 break;
@@ -181,7 +216,7 @@ public class ArchiveIngestor {
         List<WebElement> storyCollection = metaSection.findElements(By.className("collections"));
         ArrayList<String> storyCollectionItems = new ArrayList<>();
         if (!storyCollection.isEmpty()) {
-            for (WebElement item : storyCollection.getLast().findElements(By.xpath(".//*"))) {
+            for (WebElement item : storyCollection.getLast().findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
                 storyCollectionItems.add(item.getText());
             }
         }
@@ -224,8 +259,7 @@ public class ArchiveIngestor {
         System.out.println("Getting story authors...");
         ArrayList<String> storyAuthors = new ArrayList<>();
         WebElement storyAuthor = preface.findElement(By.xpath(".//h3"));
-        List<WebElement> storyAuthorList = storyAuthor.findElements(By.xpath(".//*"));
-        for (WebElement author : storyAuthorList) {
+        for (WebElement author : storyAuthor.findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
             storyAuthors.add(author.getText());
         }
 
@@ -235,9 +269,7 @@ public class ArchiveIngestor {
         ArrayList<String> storySummaryText = new ArrayList<>();
         if (!storySummaryList.isEmpty()) {
             WebElement storySummaryUserStuff = storySummaryList.getFirst().findElement(By.className("userstuff"));
-            for (WebElement summaryText : storySummaryUserStuff.findElements(By.xpath(".//*"))) {
-                storySummaryText.add(summaryText.getText());
-            }
+            storySummaryText = filterText(storySummaryUserStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
         }
 
         // Get the notes of a story if available
@@ -251,7 +283,7 @@ public class ArchiveIngestor {
             System.out.println("Story notes found. Checking for system-made notes...");
             if (!storyStartNotesList.getFirst().findElements(By.className("associations")).isEmpty()) {
                 WebElement storyAssociation = storyStartNotesList.getFirst().findElement(By.className("associations"));
-                for (WebElement association : storyAssociation.findElements(By.xpath(".//*"))) {
+                for (WebElement association : storyAssociation.findElements(By.xpath(ALL_CHILDREN_XPATH))) {
                     storyAssociationItems.add(association.getText());
                 }
             }
@@ -259,9 +291,7 @@ public class ArchiveIngestor {
             System.out.println("Checking for user-made start notes...");
             if (!storyStartNotesList.getFirst().findElements(By.className("userstuff")).isEmpty()) {
                 WebElement storyStartNote = storyStartNotesList.getFirst().findElement(By.className("userstuff"));
-                for (WebElement note : storyStartNote.findElements(By.xpath(".//*"))) {
-                    storyStartNoteItems.add(note.getText());
-                }
+                storyStartNoteItems = filterText(storyStartNote.findElements(By.xpath(ALL_CHILDREN_XPATH)));
             }
         }
 
@@ -271,16 +301,78 @@ public class ArchiveIngestor {
             if (!storyEndNotesList.getFirst().findElements(By.className("end")).isEmpty()) {
                 WebElement storyEndNote = storyEndNotesList.getFirst().findElement(By.className("end"));
                 WebElement storyEndNoteUserStuff = storyEndNote.findElement(By.className("userstuff"));
-                for (WebElement note : storyEndNoteUserStuff.findElements(By.xpath(".//*"))) {
-                    storyEndNoteItems.add(note.getText());
-                }
+                storyEndNoteItems = filterText(storyEndNoteUserStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
             }
         }
 
         // Update story info
         parentStoryInfo.setPrefaceInfo(
-                storyTitle, storyAuthors, storySummaryText, storyAssociationItems, storyStartNoteItems, storyEndNoteItems
+                storyTitle, storyAuthors, storySummaryText, storyAssociationItems, storyStartNoteItems,
+                storyEndNoteItems
         );
+    }
+
+    private void parseStoryKudos(RemoteWebDriver driver, StoryInfo parentStoryInfo) {
+        WebElement kudos = driver.findElement(By.id("kudos"));
+        List<WebElement> kudosClass = kudos.findElements(By.className("kudos"));
+
+        if (!kudosClass.isEmpty()) {
+            System.out.println("Getting list of users who gave a kudos...");
+
+            // Expand kudos list
+            try {
+                while (!kudos.findElements(By.id("kudos_more_link")).isEmpty()) {
+                    kudos.findElement(By.id("kudos_more_link")).click();
+                }
+            }
+            catch (StaleElementReferenceException | NoSuchElementException e) {
+                System.out.println("Kudos more link detection gone wrong, continuing on...");
+            }
+
+            // Record the text for parsing in memory
+            ArrayList<String> kudosList = new ArrayList<>();
+            for (WebElement user : kudosClass.getFirst().findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
+                if (user.getTagName().equals("a")) {
+                    kudosList.add(user.getText());
+                }
+            }
+
+            parentStoryInfo.setKudosList(kudosList);
+        }
+    }
+
+    private void parseStoryBookmarks(RemoteWebDriver driver, StoryInfo parentStoryInfo) {
+        // Create a wait object for later navigation
+        WebDriverWait newSiteWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
+
+        WebElement metaSection = driver.findElement(By.className("meta"));
+        WebElement storyStats = metaSection.findElements(By.className("stats")).getLast();
+
+        ArrayList<String> bookmarkList = new ArrayList<>();
+
+        List<WebElement> storyBookmarks = storyStats.findElements(By.className("bookmarks"));
+        if (!storyBookmarks.isEmpty()) {
+            // Click the bookmark link
+            WebElement bookmarkLink = storyBookmarks.getLast();
+            bookmarkLink.findElement(By.tagName("a")).click();
+
+            // Wait for new elements to appear
+            newSiteWait.until(d -> d.findElement(By.xpath("//*[@id=\"main\"]/ol")));
+
+            // Get to the organized list and copy the users
+            WebElement bookmarks = driver.findElement(By.xpath("//*[@id=\"main\"]/ol"));
+            for (WebElement bookmarkBlurb : bookmarks.findElements(By.className("short"))) {
+                bookmarkList.add(bookmarkBlurb.findElement(By.tagName("a")).getText());
+            }
+
+            // Go back to the last page
+            driver.navigate().back();
+
+            // Wait for certain elements to appear
+            newSiteWait.until(d -> bookmarkLink.isDisplayed());
+        }
+
+        parentStoryInfo.setPublicBookmarkList(bookmarkList);
     }
 
     private Chapter parseChapterText(WebElement workSkinSection, StoryInfo parentStoryInfo, String pageTitle) {
@@ -292,7 +384,7 @@ public class ArchiveIngestor {
         ArrayList<String> chapterSummaryText = new ArrayList<>();
         ArrayList<String> chapterStartNoteText = new ArrayList<>();
         ArrayList<String> chapterEndNoteText = new ArrayList<>();
-        ArrayList<String> chapterParagraphs = new ArrayList<>();
+        ArrayList<String> chapterParagraphs;
 
         // Parse the chapter specific content
         if (!chapter.findElements(By.className("chapter")).isEmpty()) {
@@ -303,16 +395,12 @@ public class ArchiveIngestor {
             System.out.println("Getting chapter title...");
             chapterTitle = chapterStuff.findElement(By.className("title")).getText();
 
-            // TODO: Add ways to ignore <strong> <em> and <u> tags
-            //  Do this for notes and summaries as well
             // Get chapter summary
             System.out.println("Checking for chapter summary...");
             List<WebElement> chapterSummary = chapterStuff.findElements(By.className("summary"));
             if (!chapterSummary.isEmpty()) {
                 WebElement chapterSummaryUserStuff = chapterSummary.getFirst().findElement(By.className("userstuff"));
-                for (WebElement summaryText : chapterSummaryUserStuff.findElements(By.xpath(".//*"))) {
-                    chapterSummaryText.add(summaryText.getText());
-                }
+                chapterSummaryText = filterText(chapterSummaryUserStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
             }
 
             // Get chapter start notes
@@ -320,35 +408,27 @@ public class ArchiveIngestor {
             List<WebElement> chapterStartNotes = chapterStuff.findElements(By.className("notes"));
             if (!chapterStartNotes.isEmpty()) {
                 WebElement chapterStartNote = chapterStartNotes.getFirst().findElement(By.className("userstuff"));
-                for (WebElement note : chapterStartNote.findElements(By.xpath(".//*"))) {
-                    chapterStartNoteText.add(note.getText());
-                }
+                chapterStartNoteText = filterText(chapterStartNote.findElements(By.xpath(ALL_CHILDREN_XPATH)));
             }
 
             // Get paragraphs from chapter user stuff
             System.out.println("Getting chapter paragraphs...");
             WebElement userStuff = chapterStuff.findElement(By.className("userstuff"));
-            for (WebElement paragraph : userStuff.findElements(By.xpath(".//*"))) {
-                chapterParagraphs.add(paragraph.getText());
-            }
+            chapterParagraphs = filterText(userStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
 
             // Get chapter end notes
             System.out.println("Checking for chapter end notes...");
             List<WebElement> chapterEndNotes = chapterStuff.findElements(By.className("end"));
             if (!chapterEndNotes.isEmpty()) {
                 WebElement chapterEndNote = chapterEndNotes.getFirst().findElement(By.className("userstuff"));
-                for (WebElement note : chapterEndNote.findElements(By.xpath(".//*"))) {
-                    chapterEndNoteText.add(note.getText());
-                }
+                chapterEndNoteText = filterText(chapterEndNote.findElements(By.xpath(ALL_CHILDREN_XPATH)));
             }
         }
         else if (!chapter.findElements(By.className("userstuff")).isEmpty()) {
             // Get paragraphs from direct user stuff
             System.out.println("User stuff class exist. Getting user stuff paragraphs...");
             WebElement userStuff = chapter.findElement(By.className("userstuff"));
-            for (WebElement paragraph : userStuff.findElements(By.xpath(".//*"))) {
-                chapterParagraphs.add(paragraph.getText());
-            }
+            chapterParagraphs = filterText(userStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
         }
         else {
             throw new ChapterContentNotFoundError();
@@ -361,19 +441,205 @@ public class ArchiveIngestor {
         );
     }
 
-    private Chapter parseChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo, String pageTitle) {
+    private WebElement createCommentsPlaceholderReference(RemoteWebDriver driver) {
+        return driver.findElement(By.id("comments_placeholder"));
+    }
+
+    private JSONObject parseCommentThread(WebDriverWait commentBlockWait, WebElement commentThreadElement,
+                                          Integer threadDepth) {
+        JSONObject commentThread = new JSONObject();
+        String lastParentCommentID = "";
+
+        // for (WebElement commentListItem: commentThreadElement.findElements(By.tagName("li"))) {
+        for (WebElement commentListItem: commentThreadElement.findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
+            if (!commentListItem.getTagName().equals("li")) {
+                continue;
+            }
+
+            // Check what kind of list item it is
+            boolean parentComment;
+            String itemID = commentListItem.getAttribute("id");
+            if (itemID == null) { // Null check
+                parentComment = false;
+            }
+            else if (itemID.contains("add") || (!itemID.contains("comment") && lastParentCommentID.isBlank())) { // Skip conditions
+                continue;
+            }
+            else if (!itemID.contains("comment")) { // False conditions
+                parentComment = false;
+            }
+            else {
+                parentComment = true;
+            }
+
+            if (parentComment) {
+                try {
+                    // Create new comment object
+                    String commentUser = commentListItem.findElement(By.xpath(".//h4/a")).getText();
+                    String commentPosted = commentListItem.findElement(By.className("posted")).getText();
+                    String commentID = (commentUser + '_' + commentPosted).replace(' ', '_');
+                    commentID = commentID.replace(':', '_');
+
+                    commentThread.put(commentID, new JSONObject());
+
+                    JSONObject commentObject = commentThread.getJSONObject(commentID);
+                    commentObject.put("user", commentUser);
+                    commentObject.put("posted", commentPosted);
+
+                    WebElement commentBlock = commentListItem.findElement(By.className("userstuff"));
+                    ArrayList<String> commentText = filterText(commentBlock.findElements(By.xpath(ALL_CHILDREN_XPATH)));
+                    commentObject.put("text", new JSONArray(commentText));
+
+                    // Set last parent comment ID
+                    lastParentCommentID = commentID;
+                }
+                catch (NoSuchElementException e) {
+                    System.out.println("Skipping thread member list item...");
+                }
+            }
+            else {
+                // Only go deeper if the max thread depth is not exceeded
+                JSONObject parentCommentObject = commentThread.getJSONObject(lastParentCommentID);
+                if (threadDepth <= MAX_THREAD_DEPTH) {
+                    // Create new JSON array for child threads
+                    try {
+                        WebElement childCommentThreadElement = commentListItem.findElement(By.className("thread"));
+                        parentCommentObject.put("threads", parseCommentThread(
+                                commentBlockWait, childCommentThreadElement, threadDepth + 1)
+                        );
+                    }
+                    catch (NoSuchElementException e) {
+                        System.out.println("Skipping thread member list item...");
+                    }
+                }
+                else {
+                    parentCommentObject.put("threads", "Beyond max thread depth of " + MAX_THREAD_DEPTH);
+                    return commentThread;
+                }
+            }
+        }
+
+        return commentThread;
+    }
+
+    private JSONObject parseCommentPage(RemoteWebDriver driver) {
+        // Create the starting point
+        WebElement commentsPlaceholder = createCommentsPlaceholderReference(driver);
+        WebElement commentThreadElement = commentsPlaceholder.findElement(By.className("thread"));
+        WebDriverWait commentBlockWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
+
+        // Start thread searching and return the result
+        return parseCommentThread(commentBlockWait, commentThreadElement, 1);
+    }
+
+    private WebElement createNextButtonReference(RemoteWebDriver driver) {
+        WebElement tempPagination = driver.findElement(By.className("pagination"));
+        return tempPagination.findElement(By.className("next"));
+    }
+
+    private void parseChapterComments(RemoteWebDriver driver, Chapter newChapter) {
+        // Create wait and URL checkpoint for comment navigation
+        WebDriverWait commentNavWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
+        String currentURL = driver.getCurrentUrl();
+        assert currentURL != null;
+
+        // Open comment section
+        System.out.println("Checking for chapter comments...");
+        List<WebElement> openCommentsButton = driver.findElements(By.id("show_comments_link"));
+        boolean commentsOpened = false;
+        if (!openCommentsButton.isEmpty()) {
+            openCommentsButton.getFirst().click();
+            commentNavWait.until(d -> openCommentsButton.getFirst().getText().contains("Hide"));
+            commentsOpened = true;
+        }
+
+        // Create main comment object
+        JSONObject comments = new JSONObject();
+        comments.put("pages", new JSONObject());
+        JSONObject commentPages = comments.getJSONObject("pages");
+
+        // Read comment section
+        if (commentsOpened) {
+            System.out.println("Parsing chapter comments...");
+
+            // Check for pagination
+            List<WebElement> pagination = driver.findElements(By.className("pagination"));
+
+            if (!pagination.isEmpty()) {
+                System.out.println("Multiple pages of comments found...");
+                boolean nextEnabled = true;
+                int pageCount = 0;
+
+                while (nextEnabled) {
+                    pageCount = pageCount + 1;
+                    System.out.println("Parsing page number " + pageCount + " of comments...");
+
+                    // Get a new next button
+                    WebElement next;
+                    try {
+                        // Wait until the comment buttons are reloaded
+                        commentNavWait.until(d -> !d.findElements(By.className("next")).isEmpty());
+                        next = createNextButtonReference(driver);
+                    }
+                    catch (NoSuchElementException | TimeoutException e) {
+                        System.out.println("Comment page navigation failed. Skipping page...");
+
+                        String currentPage = driver.getCurrentUrl();
+                        String[] curPagePartOne = currentPage.split("=", 2);
+                        String[] curPagePartTwo = curPagePartOne[1].split("&", 2);
+                        int newPageNumber = Integer.parseInt(curPagePartTwo[0]) + 1;
+
+                        String skipPage = curPagePartOne[0] + "=" + newPageNumber + "&" + curPagePartTwo[1];
+                        driver.navigate().to(skipPage);
+                        continue;
+                    }
+
+                    // Parse comment page
+                    commentPages.put(Integer.toString(pageCount), parseCommentPage(driver));
+
+                    // Check if next is still enabled
+                    if (next.findElements(By.className("disabled")).isEmpty()) { // Go to next comment page
+                        WebElement nextPageRef = next.findElement(By.tagName("a"));
+                        String nextPage = nextPageRef.getAttribute("href");
+                        assert nextPage != null;
+                        driver.navigate().to(nextPage);
+                    }
+                    else { // Go back to original chapter page
+                        driver.navigate().to(currentURL);
+                        nextEnabled = false;
+                    }
+                }
+            }
+            else {
+                System.out.println("Parsing single page of comments...");
+                commentPages.put("1", parseCommentPage(driver));
+            }
+        }
+
+        // Save comments to chapter
+        newChapter.setComments(comments);
+    }
+
+    private Chapter parseChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo, String pageTitle) throws InterruptedException {
         // Get the work skin section
         WebElement workSkinSection = driver.findElement(By.id("workskin"));
 
         // Parse the preface
         if (!parentStoryInfo.isSet) {
             parseStoryPrefaceInfo(workSkinSection, parentStoryInfo);
+            parseStoryKudos(driver, parentStoryInfo);
+            parseStoryBookmarks(driver, parentStoryInfo);
+
+            // Set setting flag
+            parentStoryInfo.isSet = true;
         }
 
         // Parse the chapter contents
         Chapter newChapter = parseChapterText(workSkinSection, parentStoryInfo, pageTitle);
+        newChapter.setPageLink(driver.getCurrentUrl());
 
-        // TODO: Parse the chapter comments here
+        // Parse chapter comments
+        parseChapterComments(driver, newChapter);
 
         return newChapter;
     }
@@ -402,7 +668,10 @@ public class ArchiveIngestor {
         System.out.println("Creating new Chapter instance...");
         return parseChapter(driver, newStoryInfo, pageTitle);
     }
-    
+
+    // TODO: Create a way to seperate the driver session and chapter building portions of this function
+    //  Maybe like splitting into "startChapter" and "createChapter"
+    //  Same for story functions as well
     public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo, String pageLink) throws
             InterruptedException {
         // Create a driver session new page
@@ -425,7 +694,24 @@ public class ArchiveIngestor {
         return parseChapter(driver, parentStoryInfo, pageTitle);
     }
 
-    public void createStory() {
-        // TODO: Get bookmarks and the "left kudos" section here after creating the whole story
+    // TODO: Create way to parse through story, then maybe even a series
+    public void createStory(RemoteWebDriver driver, String pageLink, boolean singleChapter) throws InterruptedException {
+        // Create a driver session new page
+        System.out.println("Opening website " + pageLink + "...");
+        driver.get(pageLink);
+
+        // Check for and get past acceptance screens
+        handleTOSPrompt(driver);
+        handleAdultContentAgreement(driver);
+
+        // Check for the correct version of otwarchive
+        checkArchiveVersion(driver);
+
+        // Get the first chapter out of the way
+        System.out.println("Getting story website page title...");
+        String pageTitle = driver.getTitle();
+
+        // Create a chapter object
+        System.out.println("Creating first chapter of the story...");
     }
 }

@@ -38,6 +38,12 @@ public class StoryInfo {
     public ArrayList<String> startNotes;
     public ArrayList<String> endNotes;
 
+    // Other information
+    public ArrayList<String> registeredKudos;
+    public Integer unnamedRegisteredKudos;
+    public Integer guestKudos;
+    public ArrayList<String> publicBookmarks;
+
     public StoryInfo(ArrayList<String> ratings,
                      ArrayList<String> warnings, ArrayList<String> categories, ArrayList<String> fandoms,
                      ArrayList<String> relationships, ArrayList<String> characters,
@@ -113,8 +119,24 @@ public class StoryInfo {
                 this.associations.add(association);
             }
         }
+    }
 
-        // Set setting flag
-        this.isSet = true;
+    public void setKudosList(ArrayList<String> kudosList) {
+        // Check last value in case its saying there are more unspecified registered users
+        try {
+            this.unnamedRegisteredKudos = Integer.parseInt(kudosList.getLast().split(" ")[0]);
+            kudosList.removeLast();
+        }
+        catch (NumberFormatException e) {
+            this.unnamedRegisteredKudos = 0;
+        }
+
+        // Set values
+        this.registeredKudos = kudosList;
+        this.guestKudos = this.kudos - this.registeredKudos.size() - this.unnamedRegisteredKudos;
+    }
+
+    public void setPublicBookmarkList(ArrayList<String> bookmarkList) {
+        this.publicBookmarks = bookmarkList;
     }
 }

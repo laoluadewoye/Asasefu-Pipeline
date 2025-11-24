@@ -17,7 +17,9 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 // I/O and URL Packages
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -40,21 +42,39 @@ public class ArchiveIngestorTest {
     private static ArchiveIngestor testIngestor;
 
     @BeforeAll
-    public static void setupTests() throws IOException {
+    public static void setupTests() throws IOException, InterruptedException {
         System.out.println("Obtaining test links...");
-
         URL testLinksLocator = ArchiveIngestorTest.class.getResource("test_story_links.json");
         assert testLinksLocator != null;
         String testLinksPathDecoded = URLDecoder.decode(testLinksLocator.getPath(), StandardCharsets.UTF_8);
         testLinks = ArchiveIngestor.getJSONFromFilepath(testLinksPathDecoded);
 
-        System.out.println("Creating Ingestor instance...");
+        System.out.println("Creating archive ingestor instance...");
         testIngestor = new ArchiveIngestor();
 
-        // TODO: Figure out way to start docker container from here
+        System.out.println("Creating Selenium container...");
+        try {
+            String startSeleniumContainerCmd = "docker run -d -p 4444:4444 -p 7900:7900 --shm-size=\"2g\" " +
+                    "--name archive-ingestor-test-container selenium/standalone-chrome:136.0-20251101";
+            Runtime runtime = Runtime.getRuntime();
+            Process startProcess = runtime.exec(startSeleniumContainerCmd);
+            BufferedReader outputReader = new BufferedReader(new InputStreamReader(startProcess.getInputStream()));
 
-        System.out.println("Creating test driver...");
+            String msg;
+            while((msg = outputReader.readLine()) != null) {
+                System.out.println(msg);
+            }
+            outputReader.close();
+        }
+        catch (IOException ioe) {
+            ioe.printStackTrace();
+            Assertions.fail();
+        }
 
+        System.out.println("Waiting three seconds for container to fully start...");
+        Thread.sleep(3000);
+
+        System.out.println("Creating remote Selenium test driver...");
         try {
             ChromeOptions options = new ChromeOptions();
             URI containerIdentifier = new URI("http://localhost:4444");
@@ -181,7 +201,25 @@ public class ArchiveIngestorTest {
 
     @AfterAll
     public static void quitDriver() {
-        System.out.println("Quitting test driver...");
+        System.out.println("Closing remote Selenium test driver...");
         testDriver.quit();
+
+        System.out.println("Deleting Selenium container...");
+        try {
+            String removeSeleniumContainerCmd = "docker rm archive-ingestor-test-container";
+            Runtime runtime = Runtime.getRuntime();
+            Process startProcess = runtime.exec(removeSeleniumContainerCmd);
+            BufferedReader outputReader = new BufferedReader(new InputStreamReader(startProcess.getInputStream()));
+
+            String msg;
+            while((msg = outputReader.readLine()) != null) {
+                System.out.println(msg);
+            }
+            outputReader.close();
+        }
+        catch (IOException ioe) {
+            ioe.printStackTrace();
+            Assertions.fail();
+        }
     }
 }

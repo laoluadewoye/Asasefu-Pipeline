@@ -9,8 +9,6 @@ selenium/standalone-chrome docker image
 
 docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-chrome:136.0-20251101
 
-Add the fully fledged story creation.
-
 Add a fuzzing random Ao3 link test to test suite.
 
 Add CI/CD through Github Actions.
