@@ -644,6 +644,8 @@ public class ArchiveIngestor {
     }
 
     public Chapter createChapter(RemoteWebDriver driver) throws InterruptedException {
+        System.out.println("Opening website " + driver.getCurrentUrl() + "...");
+
         // Check for and get past acceptance screens
         handleTOSPrompt(driver);
         handleAdultContentAgreement(driver);
@@ -654,6 +656,7 @@ public class ArchiveIngestor {
         // Get the title
         System.out.println("Getting website page title...");
         String pageTitle = driver.getTitle();
+        System.out.println("Parsing a chapter of " + pageTitle);
 
         // Get story information
         StoryInfo newStoryInfo = parseStoryMetaTable(driver);
@@ -664,6 +667,8 @@ public class ArchiveIngestor {
     }
 
     public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws InterruptedException {
+        System.out.println("Opening website " + driver.getCurrentUrl() + "...");
+
         // Check for and get past acceptance screens
         handleTOSPrompt(driver);
         handleAdultContentAgreement(driver);
@@ -680,7 +685,6 @@ public class ArchiveIngestor {
         return parseChapter(driver, parentStoryInfo, pageTitle);
     }
 
-    // TODO: Create way to parse through story, then maybe even a series
     public Story createStory(RemoteWebDriver driver) throws InterruptedException {
         // Do the first chapter
         System.out.println("Parsing chapter 1 of " + driver.getTitle());

@@ -1,6 +1,7 @@
 package com.laoluade.ao3;
 
 // JSON Packages
+import org.json.JSONException;
 import org.json.JSONObject;
 
 // JUnit Packages
@@ -11,15 +12,12 @@ import org.junit.jupiter.api.Assertions;
 
 // Selenium Packages
 import org.openqa.selenium.SessionNotCreatedException;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 // I/O and URL Packages
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -35,11 +33,15 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.lang.reflect.Field;
 
 public class ArchiveIngestorTest {
+    // Test objects
     private static JSONObject testLinks;
     private static RemoteWebDriver testDriver;
     private static ArchiveIngestor testIngestor;
+
+    // Test values to check
     private static final ArrayList<String> expectedRatings = new ArrayList<>(Arrays.asList(
             "General Audiences", "Teen And Up Audiences", "Mature", "Explicit", "Not Rated"
     ));
@@ -54,6 +56,22 @@ public class ArchiveIngestorTest {
             "Completed", "Updated", ArchiveIngestor.PLACEHOLDER
     ));
 
+    // Test runtime stuff
+    private static final Runtime testRuntime = Runtime.getRuntime();
+    private static final String[] runSeleniumContainerCmd = {
+            "docker", "run", "-d", "-p", "4444:4444", "-p", "7900:7900", "--shm-size=\"2g\"",
+            "--name", "archive-ingestor-test-container", "selenium/standalone-chrome:136.0-20251101"
+    };
+    private static final String[] stopSeleniumContainerCmd = {
+            "docker", "stop", "archive-ingestor-test-container"
+    };
+    private static final String[] startSeleniumContainerCmd = {
+            "docker", "start", "archive-ingestor-test-container"
+    };
+    private static final String[] removeSeleniumContainerCmd = {
+            "docker", "rm", "archive-ingestor-test-container"
+    };
+
     @BeforeAll
     public static void setupTests() throws IOException, InterruptedException {
         System.out.println("Obtaining test links...");
@@ -65,28 +83,23 @@ public class ArchiveIngestorTest {
         System.out.println("Creating archive ingestor instance...");
         testIngestor = new ArchiveIngestor();
 
-        // TODO: Figure out a better way for this
-//        System.out.println("Creating Selenium container...");
-//        try {
-//            String startSeleniumContainerCmd = "docker run -d -p 4444:4444 -p 7900:7900 --shm-size=\"2g\" " +
-//                    "--name archive-ingestor-test-container selenium/standalone-chrome:136.0-20251101";
-//            Runtime runtime = Runtime.getRuntime();
-//            Process startProcess = runtime.exec(startSeleniumContainerCmd);
-//            BufferedReader outputReader = new BufferedReader(new InputStreamReader(startProcess.getInputStream()));
-//
-//            String msg;
-//            while((msg = outputReader.readLine()) != null) {
-//                System.out.println(msg);
-//            }
-//            outputReader.close();
-//        }
-//        catch (IOException ioe) {
-//            System.out.println(ioe.getMessage());
-//            Assertions.fail();
-//        }
+        System.out.println("Creating Selenium container...");
+        try {
+            Process runExec = testRuntime.exec(runSeleniumContainerCmd);
+            int runExitCode = runExec.waitFor();
+            if (runExitCode != 0) {
+                Process stopExec = testRuntime.exec(stopSeleniumContainerCmd);
+                stopExec.waitFor();
+                Process startExec = testRuntime.exec(startSeleniumContainerCmd);
+                startExec.waitFor();
+            }
+        }
+        catch (IOException e) {
+            Assertions.fail(e.toString());
+        }
 
-        System.out.println("Waiting three seconds for container to fully start...");
-        Thread.sleep(3000);
+        System.out.println("Waiting five seconds for container to fully start...");
+        Thread.sleep(5000);
 
         System.out.println("Creating remote Selenium test driver...");
         try {
@@ -96,16 +109,15 @@ public class ArchiveIngestorTest {
             testDriver = new RemoteWebDriver(containerLocator, options);
         }
         catch (URISyntaxException e) {
-            System.out.println("URI creation failed.");
-            Assertions.fail();
+            Assertions.fail("URI creation failed.");
         }
         catch (MalformedURLException e) {
-            System.out.println("URL creation failed.");
-            Assertions.fail();
+            Assertions.fail("URL creation failed.");
         }
         catch (SessionNotCreatedException e) {
-            System.out.println("Session was unable to be created with container selenium. Check if a container is running.");
-            Assertions.fail();
+            Assertions.fail(
+                    "Session was unable to be created with container selenium. Check if Docker is installed."
+            );
         }
     }
 
@@ -116,143 +128,310 @@ public class ArchiveIngestorTest {
             System.out.println("Was able to access Google.");
         }
         catch (WebDriverException e) {
-            System.out.println("Bad URL Link received. Check test link.");
-            Assertions.fail();
+            Assertions.fail("Bad URL Link received. Check test link.");
         }
     }
 
-    public void runChapterParseTest(String pageLink) throws InterruptedException {
+    public void runChapterTests(Chapter testChapter, String storyCreationTimestamp) {
+        // Assert chapter timestamps are good
+        Assertions.assertInstanceOf(
+                ZonedDateTime.class, testChapter.creationTimestamp,
+                "Chapter " + testChapter.chapterTitle + " timestamp is not a ZonedDateTime object."
+        );
+        Assertions.assertEquals(
+                "UTC", testChapter.creationTimestamp.getZone().toString(),
+                "Chapter " + testChapter.chapterTitle + " timestamp is not set to UTC."
+        );
+        Assertions.assertNotEquals(
+                testChapter.parentStoryInfo.creationTimestamp.toString(), testChapter.creationTimestamp.toString(),
+                "Chapter " + testChapter.chapterTitle + " timestamp is the same as the parent story info timestamp."
+        );
+        Assertions.assertNotEquals(
+                storyCreationTimestamp, testChapter.creationTimestamp.toString(),
+                "Chapter " + testChapter.chapterTitle + " timestamp is the same as the parent story timestamp."
+        );
+
+        // Assert that the pageLink supplied is valid
         try {
-            // Parse the story page
-            System.out.println("Opening website " + pageLink + "...");
-            testDriver.get(pageLink);
+            URI testURI = new URI(testChapter.pageLink);
+            URL testURL = testURI.toURL();
+        }
+        catch (MalformedURLException | URISyntaxException e) {
+            Assertions.fail("Chapter " + testChapter.chapterTitle + " page link is bad.");
+        }
+
+        // Assert that the paragraph list is not empty
+        Assertions.assertNotEquals(
+                0, testChapter.paragraphs.size(),
+                "Chapter " + testChapter.chapterTitle + " does not contain the actual chapter."
+        );
+
+        // Assert JSONs can return properly
+        JSONObject testJSONFatherful = testChapter.getJSONRepWithParent();
+        JSONObject testJSONFatherless = testChapter.getJSONRepWithoutParent();
+
+        Assertions.assertInstanceOf(
+                JSONObject.class, testJSONFatherful,
+                "Chapter " + testChapter.chapterTitle +
+                        " JSON representation with parent is not a JSONObject object."
+        );
+        Assertions.assertInstanceOf(
+                JSONObject.class, testJSONFatherless,
+                "Chapter " + testChapter.chapterTitle +
+                        " JSON representation without parent is not a JSONObject object."
+        );
+
+        // Assert JSON contains all values
+        try {
+            for (Field field : Chapter.class.getDeclaredFields()) {
+                if (field.getName().equals("parentStoryInfo")) {
+                    JSONObject psi = testJSONFatherful.getJSONObject(field.getName());
+                    for (Field innerField : StoryInfo.class.getDeclaredFields()) {
+                        if (!innerField.getName().equals("isSet")) {
+                            psi.get(innerField.getName());
+                        }
+                    }
+                }
+                else {
+                    testJSONFatherful.get(field.getName());
+                    testJSONFatherless.get(field.getName());
+                }
+            }
+        }
+        catch (JSONException e) {
+            Assertions.fail(e.toString());
+        }
+    }
+
+    @Test
+    public void testChapterParse() throws InterruptedException {
+        JSONObject chapterTestLinks = testLinks.getJSONObject("Chapter");
+        Iterator<String> testLinksKeys = chapterTestLinks.keys();
+        while (testLinksKeys.hasNext()) {
+            // Parse the chapter
+            String testStoryName = testLinksKeys.next();
+            String testStoryLink = chapterTestLinks.getString(testStoryName);
+            testDriver.get(testStoryLink);
             Chapter testChapter = testIngestor.createChapter(testDriver);
 
-            // Assert timestamps are good
-            Assertions.assertInstanceOf(ZonedDateTime.class, testChapter.parentStoryInfo.creationTimestamp);
-            Assertions.assertEquals("UTC", testChapter.parentStoryInfo.creationTimestamp.getZone().toString());
-
-            Assertions.assertInstanceOf(ZonedDateTime.class, testChapter.creationTimestamp);
-            Assertions.assertEquals("UTC", testChapter.creationTimestamp.getZone().toString());
-
-            // Assert that the pageLink supplied is valid
-
-            // Assert that the paragraph list is not empty
-
-            // Assert that the author list is not empty
-
-            // Assert that the kudos math checks out
-            // kudos = rk + urk + gk
-
-            // Assert that the status doesn't have a colon
-
-            // Assert the rating is right
-            Assertions.assertEquals(1, testChapter.parentStoryInfo.ratings.size());
-            Assertions.assertTrue(expectedRatings.contains(testChapter.parentStoryInfo.ratings.getFirst()));
-
-            // Assert the warning items is good
-            for (String warningItem : testChapter.parentStoryInfo.warnings) {
-                Assertions.assertTrue(expectedWarnings.contains(warningItem));
-            }
-
-            // Assert the category items are good
-            for (String categoryItem : testChapter.parentStoryInfo.categories) {
-                Assertions.assertTrue(expectedCategories.contains(categoryItem));
-            }
-
-            // Assert time statistics are good
-            Assertions.assertInstanceOf(LocalDate.class, testChapter.parentStoryInfo.published);
-            Assertions.assertInstanceOf(LocalDate.class, testChapter.parentStoryInfo.statusWhen);
-
-            boolean publishBefore = testChapter.parentStoryInfo.published.isBefore(testChapter.parentStoryInfo.statusWhen);
-            boolean publishEqual = testChapter.parentStoryInfo.published.isEqual(testChapter.parentStoryInfo.statusWhen);
-            Assertions.assertTrue(publishBefore | publishEqual);
-
-            // Assert the status is good
-            Assertions.assertTrue(expectedStatuses.contains(testChapter.parentStoryInfo.status));
-            
-            // Assert series items are good
-            for (String series : testChapter.parentStoryInfo.series) {
-                Assertions.assertFalse(series.contains("Part"));
-            }
-            
-            // Assert numbers are good
-            Assertions.assertTrue(testChapter.parentStoryInfo.words > -2);
-            Assertions.assertTrue(testChapter.parentStoryInfo.currentChapters > -2);
-            Assertions.assertTrue(testChapter.parentStoryInfo.totalChapters > -2);
-            Assertions.assertTrue(testChapter.parentStoryInfo.comments > -2);
-            Assertions.assertTrue(testChapter.parentStoryInfo.kudos > -2);
-            Assertions.assertTrue(testChapter.parentStoryInfo.bookmarks > -2);
-            Assertions.assertTrue(testChapter.parentStoryInfo.hits > -2);
-
-            // Assert JSONs can return properly
+            // Test the chapter
+            runChapterTests(testChapter, testChapter.parentStoryInfo.creationTimestamp.toString());
         }
-        catch (SessionNotCreatedException e) {
-            System.out.println("Session was unable to be created with container selenium. Check if a container is running.");
-            Assertions.fail();
+    }
+
+    public void runStoryTests(Story testStory) {
+        // Assert story timestamps are good
+        Assertions.assertInstanceOf(
+                ZonedDateTime.class, testStory.creationTimestamp,
+                "Story timestamp is not a ZonedDateTime object."
+        );
+        Assertions.assertEquals(
+                "UTC", testStory.creationTimestamp.getZone().toString(),
+                "Story timestamp is not set to UTC."
+        );
+        Assertions.assertInstanceOf(
+                ZonedDateTime.class, testStory.storyInfo.creationTimestamp,
+                "Story info timestamp is not a ZonedDateTime object."
+        );
+        Assertions.assertEquals(
+                "UTC", testStory.storyInfo.creationTimestamp.getZone().toString(),
+                "Story info timestamp is not set to UTC."
+        );
+        Assertions.assertNotEquals(
+                testStory.creationTimestamp.toString(), testStory.storyInfo.toString(),
+                "Story " + testStory.storyInfo.title + " timestamp is the same as the story info timestamp."
+        );
+
+        // Assert that the author list is not empty
+        Assertions.assertNotEquals(
+                0, testStory.storyInfo.authors.size(),
+                "Story " + testStory.storyInfo.title + " does not contain the author(s)."
+        );
+
+        // Assert that the kudos math checks out
+        Integer totalKudos = testStory.storyInfo.registeredKudos.size() +
+                testStory.storyInfo.unnamedRegisteredKudos +
+                testStory.storyInfo.guestKudos;
+        Assertions.assertEquals(
+                testStory.storyInfo.kudos, totalKudos,
+                "Story " + testStory.storyInfo.title + " kudos calculations are off."
+        );
+
+        // Assert that the status doesn't have a colon
+        Assertions.assertFalse(
+                testStory.storyInfo.status.contains(":"),
+                "Story " + testStory.storyInfo.title + " status contains a colon."
+        );
+
+        // Assert the rating is right
+        Assertions.assertEquals(
+                1, testStory.storyInfo.ratings.size(),
+                "Story " + testStory.storyInfo.title + " contains more than one rating."
+        );
+        Assertions.assertTrue(expectedRatings.contains(
+                        testStory.storyInfo.ratings.getFirst()),
+                "Story " + testStory.storyInfo.title + " rating is invalid."
+        );
+
+        // Assert the warning items is good
+        for (String warningItem : testStory.storyInfo.warnings) {
+            Assertions.assertTrue(
+                    expectedWarnings.contains(warningItem),
+                    "Story " + testStory.storyInfo.title + " warning " + warningItem + " is invalid."
+            );
         }
-        catch (NoSuchElementException e) {
-            System.out.println(e.getLocalizedMessage());
-            Assertions.fail();
+
+        // Assert the category items are good
+        for (String categoryItem : testStory.storyInfo.categories) {
+            Assertions.assertTrue(
+                    expectedCategories.contains(categoryItem),
+                    "Story " + testStory.storyInfo.title + " category " + categoryItem + " is invalid."
+            );
+        }
+
+        // Assert time statistics are good
+        Assertions.assertInstanceOf(
+                LocalDate.class, testStory.storyInfo.published,
+                "Story " + testStory.storyInfo.title +
+                        " parent story info publish date is not a LocalDate Object."
+        );
+        Assertions.assertInstanceOf(
+                LocalDate.class, testStory.storyInfo.statusWhen,
+                "Story " + testStory.storyInfo.title +
+                        " parent story info status date is not a LocalDate Object."
+        );
+
+        boolean publishBefore = testStory.storyInfo.published.isBefore(testStory.storyInfo.statusWhen);
+        boolean publishEqual = testStory.storyInfo.published.isEqual(testStory.storyInfo.statusWhen);
+        Assertions.assertTrue(
+                publishBefore | publishEqual,
+                "Story " + testStory.storyInfo.title +
+                        " parent story info publish date is after the updated/completed date."
+        );
+
+        // Assert the status is good
+        Assertions.assertTrue(
+                expectedStatuses.contains(testStory.storyInfo.status),
+                "Story " + testStory.storyInfo.title + " parent story info status is invalid."
+        );
+
+        // Assert series items are good
+        for (String series : testStory.storyInfo.series) {
+            Assertions.assertFalse(
+                    series.contains("Part"),
+                    "Story " + testStory.storyInfo.title + " parent story series " + series + " is invalid."
+            );
+        }
+
+        // Assert numbers are good
+        Assertions.assertTrue(
+                testStory.storyInfo.words > -2,
+                "Story " + testStory.storyInfo.title + " parent story info word count is invalid."
+        );
+        Assertions.assertTrue(
+                testStory.storyInfo.currentChapters > -2,
+                "Story " + testStory.storyInfo.title + " parent story info current chapter count is invalid."
+        );
+        Assertions.assertTrue(
+                testStory.storyInfo.totalChapters > -2,
+                "Story " + testStory.storyInfo.title + " parent story info total chapter count is invalid."
+        );
+        Assertions.assertTrue(
+                testStory.storyInfo.comments > -2,
+                "Story " + testStory.storyInfo.title + " parent story info comment count is invalid."
+        );
+        Assertions.assertTrue(
+                testStory.storyInfo.kudos > -2,
+                "Story " + testStory.storyInfo.title + " parent story info kudos count is invalid."
+        );
+        Assertions.assertTrue(
+                testStory.storyInfo.bookmarks > -2,
+                "Story " + testStory.storyInfo.title + " parent story info bookmark count is invalid."
+        );
+        Assertions.assertTrue(
+                testStory.storyInfo.hits > -2,
+                "Story " + testStory.storyInfo.title + " parent story info hit count is invalid."
+        );
+
+        // Assert current chapters are less than story chapters (Unless there was a ?)
+        if (testStory.storyInfo.totalChapters > -1) { // gt comparison to confirm only counting numbers are used
+            Assertions.assertTrue(
+                    testStory.storyInfo.currentChapters <= testStory.storyInfo.totalChapters,
+                    "Story " + testStory.storyInfo.title +
+                            " parent story info current chapter count more than total chapter count."
+            );
+        }
+
+        // Start asserting that object hashes are different from each other
+        Assertions.assertNotEquals(
+                testStory.creationHash, testStory.storyInfo.creationHash,
+                "Story " + testStory.storyInfo.title + " hash matches its story info hash."
+        );
+
+        ArrayList<String> testHashList = new ArrayList<>();
+        testHashList.add(testStory.creationHash);
+        testHashList.add(testStory.storyInfo.creationHash);
+
+        // Run chapter specific tests in a loop
+        for (Chapter testChapter : testStory.chapters) {
+            // Call runChapterTests
+            runChapterTests(testChapter, testStory.creationTimestamp.toString());
+
+            // Assert that there is no duplicate hashes
+            Assertions.assertFalse(
+                    testHashList.contains(testChapter.creationHash),
+                    "Chapter " + testChapter.chapterTitle + " hash matches other hashes."
+            );
+            testHashList.add(testChapter.creationHash);
+
+            if (testStory.chapters.size() > 1) {
+                // Assert that story title and chapter titles are distinct if multi
+                Assertions.assertNotEquals(
+                        testStory.storyInfo.title, testChapter.chapterTitle,
+                        "Chapter " + testChapter.chapterTitle + " title matches story title."
+                );
+            }
+            else {
+                // Assert that story title and chapter titles are the same if single
+                Assertions.assertTrue(
+                        testChapter.chapterTitle.contains(testStory.storyInfo.title),
+                        "Chapter " + testChapter.chapterTitle +
+                                " (single chapter) title does not contain story title."
+                );
+            }
         }
     }
 
     @Test
-    public void testSingleChapterParse() throws InterruptedException {
-        // Loop through the test set of stories
-        Iterator<String> testLinksKeys = testLinks.keys();
+    public void testStoryParse() throws InterruptedException {
+        JSONObject storyTestLinks = testLinks.getJSONObject("Story");
+        Iterator<String> testLinksKeys = storyTestLinks.keys();
         while (testLinksKeys.hasNext()) {
+            // Parse the story
             String testStoryName = testLinksKeys.next();
-            System.out.println("Current story: " + testStoryName);
+            String testStoryLink = storyTestLinks.getString(testStoryName);
+            testDriver.get(testStoryLink);
+            Story testStory = testIngestor.createStory(testDriver);
 
-            String testStoryLink = testLinks.getString(testStoryName);
-            runChapterParseTest(testStoryLink);
+            // Test the story
+            runStoryTests(testStory);
         }
-    }
-
-    @Test
-    public void testSingleStoryParse() throws InterruptedException {
-        Iterator<String> testLinksKeys = testLinks.keys();
-        String testStoryName = testLinksKeys.next();
-        String testStoryLink = testLinks.getString(testStoryName);
-
-        System.out.println("Opening website " + testStoryLink + "...");
-        testDriver.get(testStoryLink);
-        Story testStory = testIngestor.createStory(testDriver);
-        System.out.println();
-
-        // Call runChapterParseTest in a loop
-
-        // Assert that there is no duplicate hashes
-
-        // Assert that story title and chapter titles are distinct if multi
-
-        // Assert that story title and chapter titles are the same if single
-
-        // Assert that every story aside from Anna's Journal has comments
     }
 
     @AfterAll
-    public static void quitDriver() {
+    public static void quitDriver() throws InterruptedException {
         System.out.println("Closing remote Selenium test driver...");
         testDriver.quit();
 
-//        System.out.println("Deleting Selenium container...");
-//        try {
-//            String removeSeleniumContainerCmd = "docker rm archive-ingestor-test-container";
-//            Runtime runtime = Runtime.getRuntime();
-//            Process startProcess = runtime.exec(removeSeleniumContainerCmd);
-//            BufferedReader outputReader = new BufferedReader(new InputStreamReader(startProcess.getInputStream()));
-//
-//            String msg;
-//            while((msg = outputReader.readLine()) != null) {
-//                System.out.println(msg);
-//            }
-//            outputReader.close();
-//        }
-//        catch (IOException ioe) {
-//            ioe.printStackTrace();
-//            Assertions.fail();
-//        }
+        System.out.println("Deleting Selenium container...");
+        try {
+            Process stopExec = testRuntime.exec(stopSeleniumContainerCmd);
+            stopExec.waitFor();
+            Process removeExec = testRuntime.exec(removeSeleniumContainerCmd);
+            removeExec.waitFor();
+        }
+        catch (IOException e) {
+            Assertions.fail(e.toString());
+        }
     }
 }
