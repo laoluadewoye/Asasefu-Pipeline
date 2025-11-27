@@ -12,3 +12,5 @@ docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-chro
 Add a fuzzing random Ao3 link test to test suite.
 
 Add CI/CD through Github Actions.
+
+Add tests for chapter, story, and storyinfo classes
