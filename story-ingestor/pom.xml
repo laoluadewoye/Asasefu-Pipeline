@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.laoluade</groupId>
-    <artifactId>asasefu-pipeline</artifactId>
+    <artifactId>story-ingestor</artifactId>
     <version>0.1</version>
 
-    <name>Asasefu Pipeline</name>
+    <name>Story Ingestor</name>
     <url>https://github.com/laoluadewoye/Asasefu-Pipeline</url>
     <licenses>
         <license>
