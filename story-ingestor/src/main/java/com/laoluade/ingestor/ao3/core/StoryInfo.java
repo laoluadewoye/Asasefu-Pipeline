@@ -52,6 +52,11 @@ public class StoryInfo {
     public Integer guestKudos;
     public ArrayList<String> publicBookmarks;
 
+
+    // Empty constructor for manual construction
+    public StoryInfo() {}
+
+    // Default constructor for parsing needs
     public StoryInfo(ArrayList<String> ratings,
                      ArrayList<String> warnings, ArrayList<String> categories, ArrayList<String> fandoms,
                      ArrayList<String> relationships, ArrayList<String> characters,
@@ -189,5 +194,54 @@ public class StoryInfo {
         rep.put("guestKudos", this.guestKudos);
         rep.put("publicBookmarks", new JSONArray(this.publicBookmarks));
         return rep;
+    }
+
+    public static ArrayList<String> convertJSONArrayToArrayList(JSONArray oldJSONArray) {
+        ArrayList<String> newArrayList = new ArrayList<>();
+        for (int i = 0; i < oldJSONArray.length(); i++) {
+            newArrayList.add(oldJSONArray.getString(i));
+        }
+        return newArrayList;
+    }
+
+    // TODO: Create a test for this
+    public static StoryInfo fromJSONString(String jsonString) {
+        JSONObject newStoryInfoJSON = new JSONObject(jsonString);
+        StoryInfo newStoryInfo = new StoryInfo();
+
+        newStoryInfo.creationTimestamp = ZonedDateTime.parse(newStoryInfoJSON.getString("creationTimestamp"));
+        newStoryInfo.creationHash = newStoryInfoJSON.getString("creationHash");
+        newStoryInfo.ratings = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("ratings"));
+        newStoryInfo.warnings = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("warnings"));
+        newStoryInfo.categories = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("categories"));
+        newStoryInfo.fandoms = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("fandoms"));
+        newStoryInfo.relationships = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("relationships"));
+        newStoryInfo.characters = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("characters"));
+        newStoryInfo.additionalTags = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("additionalTags"));
+        newStoryInfo.language = newStoryInfoJSON.getString("language");
+        newStoryInfo.series = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("series"));
+        newStoryInfo.collections = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("collections"));
+        newStoryInfo.published = LocalDate.parse(newStoryInfoJSON.getString("published"));
+        newStoryInfo.status = newStoryInfoJSON.getString("status");
+        newStoryInfo.statusWhen = LocalDate.parse(newStoryInfoJSON.getString("statusWhen"));
+        newStoryInfo.words = newStoryInfoJSON.getInt("words");
+        newStoryInfo.currentChapters = newStoryInfoJSON.getInt("currentChapters");
+        newStoryInfo.totalChapters = newStoryInfoJSON.getInt("totalChapters");
+        newStoryInfo.comments = newStoryInfoJSON.getInt("comments");
+        newStoryInfo.kudos = newStoryInfoJSON.getInt("kudos");
+        newStoryInfo.bookmarks = newStoryInfoJSON.getInt("bookmarks");
+        newStoryInfo.hits = newStoryInfoJSON.getInt("hits");
+        newStoryInfo.title = newStoryInfoJSON.getString("title");
+        newStoryInfo.authors = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("authors"));
+        newStoryInfo.summary = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("summary"));
+        newStoryInfo.associations = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("associations"));
+        newStoryInfo.startNotes = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("startNotes"));
+        newStoryInfo.endNotes = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("endNotes"));
+        newStoryInfo.registeredKudos = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("registeredKudos"));
+        newStoryInfo.unnamedRegisteredKudos = newStoryInfoJSON.getInt("unnamedRegisteredKudos");
+        newStoryInfo.guestKudos = newStoryInfoJSON.getInt("guestKudos");
+        newStoryInfo.publicBookmarks = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("publicBookmarks"));
+
+        return newStoryInfo;
     }
 }
