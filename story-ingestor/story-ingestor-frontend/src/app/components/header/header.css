@@ -1,0 +1,25 @@
+nav {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+a {
+    padding: 0.5rem;
+    margin-inline: 0.5rem;
+    outline-style: solid;
+    outline-color: #0A0A0A;
+    border-radius: 10px;
+    color: #F0E7D8;
+}
+
+a:hover {
+    background-color: #F0E7D8;
+    color: #990000;
+}
+
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+  }
+}

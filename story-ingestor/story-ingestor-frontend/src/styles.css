@@ -1,1 +1,24 @@
-/* You can add global styles to this file, and also import other style files */
+body {
+    background-color: #F0E7D8;
+    color: #0A0A0A;
+    font-family:'Lucida Sans Regular';
+}
+
+header, footer {
+    margin: auto;
+    text-align: center;
+    padding: 1rem;
+    background-color: #990000;
+    color: #F0E7D8;
+}
+
+footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+a {
+    text-decoration: none;
+}
