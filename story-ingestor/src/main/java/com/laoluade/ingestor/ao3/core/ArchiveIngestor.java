@@ -3,6 +3,7 @@ package com.laoluade.ingestor.ao3.core;
 // Error Classes
 import com.laoluade.ingestor.ao3.errors.ArchiveVersionIncompatibleError;
 import com.laoluade.ingestor.ao3.errors.ChapterContentNotFoundError;
+import com.laoluade.ingestor.ao3.errors.IngestorCaughtElementExceptionError;
 
 // JSON Packages
 import org.json.JSONArray;
@@ -49,15 +50,19 @@ public class ArchiveIngestor {
     // Instance Constants
     public JSONObject storyLinks;
     public JSONObject versionTable;
+    public String lastMessage;  // TODO: Create a test for this
 
     public ArchiveIngestor() throws IOException {
         System.out.println("Creating new Archive Ingestor...");
 
         System.out.println("Loading story links...");
-        storyLinks = getJSONFromResource("story_links.json");
+        this.storyLinks = getJSONFromResource("story_links.json");
 
         System.out.println("Loading version table...");
-        versionTable = getJSONFromResource("version_table.json");
+        this.versionTable = getJSONFromResource("version_table.json");
+
+        System.out.println("Starting message tracking...");
+        this.lastMessage = "Message tracking started.";
     }
 
     public static JSONObject getJSONFromFilepath(String filePath) throws IOException {
@@ -74,14 +79,22 @@ public class ArchiveIngestor {
         return new JSONObject(resourceString);
     }
 
+    private void updateLastMessage(String newMessage) {
+        // Reset lastMessage
+        lastMessage = newMessage;
+
+        // Print the newMessage;
+        System.out.println(newMessage);
+    }
+
     private void handleTOSPrompt(RemoteWebDriver driver) throws InterruptedException {
         // Sleep for three seconds
-        System.out.println("Waiting three seconds for possible TOS prompt...");
+        updateLastMessage("Waiting three seconds for possible TOS prompt...");
         Thread.sleep(Duration.ofSeconds(TOS_SLEEP_DURATION_SECS));
 
         // Check for TOS specific element
         if (!driver.findElements(By.xpath("//*[@id=\"tos_agree\"]")).isEmpty()) {
-            System.out.println("Detected TOS page. Handling contents...");
+            updateLastMessage("Detected TOS page. Handling contents...");
 
             // Accept TOS
             driver.findElement(By.xpath("//*[@id=\"tos_agree\"]")).click();
@@ -91,9 +104,9 @@ public class ArchiveIngestor {
     }
 
     private void handleAdultContentAgreement(RemoteWebDriver driver) {
-        System.out.println("Checking for adult content agreement...");
+        updateLastMessage("Checking for adult content agreement...");
         if (!driver.findElements(By.className("caution")).isEmpty()) {
-            System.out.println("Detected adult content agreement. Handling contents...");
+            updateLastMessage("Detected adult content agreement. Handling contents...");
 
             // Hit the continue button
             driver.findElement(By.xpath("//*[@id=\"main\"]/ul/li[1]/a")).click();
@@ -101,7 +114,7 @@ public class ArchiveIngestor {
     }
 
     private void checkArchiveVersion(RemoteWebDriver driver) {
-        System.out.println("Checking AO3 version...");
+        updateLastMessage("Checking AO3 version...");
         WebElement archiveVersionElement = driver.findElement(By.xpath("//*[@id=\"footer\"]/ul/li[3]/ul/li[1]/a"));
         String archiveVersion = archiveVersionElement.getText();
 
@@ -110,7 +123,7 @@ public class ArchiveIngestor {
             throw new ArchiveVersionIncompatibleError(archiveVersion);
         }
         else {
-            System.out.println("AO3 version validated.");
+            updateLastMessage("AO3 version validated.");
         }
     }
 
@@ -133,7 +146,7 @@ public class ArchiveIngestor {
     }
 
     private ArrayList<String> parseMetaItems(WebElement metaSection, String metaSectionClass) {
-        System.out.println("Parsing " + metaSectionClass + " meta information...");
+        updateLastMessage("Parsing " + metaSectionClass + " meta information...");
 
         // Create function wide variables
         ArrayList<String> metaItems;
@@ -157,7 +170,7 @@ public class ArchiveIngestor {
     }
 
     private ArrayList<String> parseMetaStats(WebElement storyStats, String storyStatsClass) {
-        System.out.println("Parsing " + storyStatsClass + " meta statistic...");
+        updateLastMessage("Parsing " + storyStatsClass + " meta statistic...");
 
         String statTitle, statValue;
         if (!storyStats.findElements(By.className(storyStatsClass)).isEmpty()) {
@@ -198,11 +211,11 @@ public class ArchiveIngestor {
         ArrayList<String> storyFreeformItems = parseMetaItems(metaSection, "freeform");
 
         // Get the language
-        System.out.println("Getting story language...");
+        updateLastMessage("Getting story language...");
         String storyLanguage = metaSection.findElements(By.className("language")).getLast().getText();
 
         // Get the series
-        System.out.println("Getting the series the story is a part of...");
+        updateLastMessage("Getting the series the story is a part of...");
         List<WebElement> storySeries = metaSection.findElements(By.className("series"));
         ArrayList<String> storySeriesItems = new ArrayList<>();
 
@@ -216,7 +229,7 @@ public class ArchiveIngestor {
         }
 
         // Get the Collection
-        System.out.println("Getting the collections the story is a part of...");
+        updateLastMessage("Getting the collections the story is a part of...");
         List<WebElement> storyCollection = metaSection.findElements(By.className("collections"));
         ArrayList<String> storyCollectionItems = new ArrayList<>();
         if (!storyCollection.isEmpty()) {
@@ -240,7 +253,7 @@ public class ArchiveIngestor {
         String storyHits = parseMetaStats(storyStats, "hits").getLast();
 
         // Return a story object
-        System.out.println("Creating new Story instance...");
+        updateLastMessage("Creating new Story instance...");
         return new StoryInfo(
                 storyRatingItems, storyWarningItems, storyCategoryItems, storyFandomItems, storyRelationshipItems,
                 storyCharacterItems, storyFreeformItems, storyLanguage, storySeriesItems, storyCollectionItems,
@@ -254,13 +267,13 @@ public class ArchiveIngestor {
         WebElement preface = workSkinSection.findElement(By.className("preface"));
 
         // Get the title of the story
-        System.out.println("Getting story title...");
+        updateLastMessage("Getting story title...");
         String storyTitle = preface.findElement(By.className("title")).getText();
 
         // TODO: Figure out selenium-level bug where all of the authors don't show up a percentage of the time when
         //  Getting the website
         // Get the authors of the story
-        System.out.println("Getting story authors...");
+        updateLastMessage("Getting story authors...");
         ArrayList<String> storyAuthors = new ArrayList<>();
         WebElement storyAuthor = preface.findElement(By.xpath(".//h3"));
         for (WebElement author : storyAuthor.findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
@@ -268,7 +281,7 @@ public class ArchiveIngestor {
         }
 
         // Get the summary of the story if available
-        System.out.println("Checking for story summary...");
+        updateLastMessage("Checking for story summary...");
         List<WebElement> storySummaryList = preface.findElements(By.className("summary"));
         ArrayList<String> storySummaryText = new ArrayList<>();
         if (!storySummaryList.isEmpty()) {
@@ -277,14 +290,14 @@ public class ArchiveIngestor {
         }
 
         // Get the notes of a story if available
-        System.out.println("Checking for story notes...");
+        updateLastMessage("Checking for story notes...");
         ArrayList<String> storyAssociationItems = new ArrayList<>();
         ArrayList<String> storyStartNoteItems = new ArrayList<>();
         ArrayList<String> storyEndNoteItems = new ArrayList<>();
 
         List<WebElement> storyStartNotesList = preface.findElements(By.className("notes"));
         if (!storyStartNotesList.isEmpty()) {
-            System.out.println("Story notes found. Checking for system-made notes...");
+            updateLastMessage("Story notes found. Checking for system-made notes...");
             if (!storyStartNotesList.getFirst().findElements(By.className("associations")).isEmpty()) {
                 WebElement storyAssociation = storyStartNotesList.getFirst().findElement(By.className("associations"));
                 for (WebElement association : storyAssociation.findElements(By.xpath(ALL_CHILDREN_XPATH))) {
@@ -292,7 +305,7 @@ public class ArchiveIngestor {
                 }
             }
 
-            System.out.println("Checking for user-made start notes...");
+            updateLastMessage("Checking for user-made start notes...");
             if (!storyStartNotesList.getFirst().findElements(By.className("userstuff")).isEmpty()) {
                 WebElement storyStartNote = storyStartNotesList.getFirst().findElement(By.className("userstuff"));
                 storyStartNoteItems = filterText(storyStartNote.findElements(By.xpath(ALL_CHILDREN_XPATH)));
@@ -301,7 +314,7 @@ public class ArchiveIngestor {
 
         List<WebElement> storyEndNotesList = workSkinSection.findElements(By.className("afterword"));
         if (!storyEndNotesList.isEmpty()) {
-            System.out.println("Checking for user-made end notes...");
+            updateLastMessage("Checking for user-made end notes...");
             if (!storyEndNotesList.getFirst().findElements(By.className("end")).isEmpty()) {
                 WebElement storyEndNote = storyEndNotesList.getFirst().findElement(By.className("end"));
                 WebElement storyEndNoteUserStuff = storyEndNote.findElement(By.className("userstuff"));
@@ -321,7 +334,7 @@ public class ArchiveIngestor {
         List<WebElement> kudosClass = kudos.findElements(By.className("kudos"));
 
         if (!kudosClass.isEmpty()) {
-            System.out.println("Getting list of users who gave a kudos...");
+            updateLastMessage("Getting list of users who gave a kudos...");
 
             // Expand kudos list
             try {
@@ -330,7 +343,7 @@ public class ArchiveIngestor {
                 }
             }
             catch (StaleElementReferenceException | NoSuchElementException e) {
-                System.out.println("Kudos more link detection gone wrong, continuing on...");
+                updateLastMessage("Kudos more link detection gone wrong, continuing on...");
             }
 
             // Record the text for parsing in memory
@@ -392,15 +405,15 @@ public class ArchiveIngestor {
 
         // Parse the chapter specific content
         if (!chapter.findElements(By.className("chapter")).isEmpty()) {
-            System.out.println("Chapter class exist.");
+            updateLastMessage("Chapter class exist.");
             WebElement chapterStuff = chapter.findElement(By.className("chapter"));
 
             // Get chapter title
-            System.out.println("Getting chapter title...");
+            updateLastMessage("Getting chapter title...");
             chapterTitle = chapterStuff.findElement(By.className("title")).getText();
 
             // Get chapter summary
-            System.out.println("Checking for chapter summary...");
+            updateLastMessage("Checking for chapter summary...");
             List<WebElement> chapterSummary = chapterStuff.findElements(By.className("summary"));
             if (!chapterSummary.isEmpty()) {
                 WebElement chapterSummaryUserStuff = chapterSummary.getFirst().findElement(By.className("userstuff"));
@@ -408,7 +421,7 @@ public class ArchiveIngestor {
             }
 
             // Get chapter start notes
-            System.out.println("Checking for chapter start notes...");
+            updateLastMessage("Checking for chapter start notes...");
             List<WebElement> chapterStartNotes = chapterStuff.findElements(By.className("notes"));
             if (!chapterStartNotes.isEmpty()) {
                 WebElement chapterStartNote = chapterStartNotes.getFirst().findElement(By.className("userstuff"));
@@ -416,12 +429,12 @@ public class ArchiveIngestor {
             }
 
             // Get paragraphs from chapter user stuff
-            System.out.println("Getting chapter paragraphs...");
+            updateLastMessage("Getting chapter paragraphs...");
             WebElement userStuff = chapterStuff.findElement(By.className("userstuff"));
             chapterParagraphs = filterText(userStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
 
             // Get chapter end notes
-            System.out.println("Checking for chapter end notes...");
+            updateLastMessage("Checking for chapter end notes...");
             List<WebElement> chapterEndNotes = chapterStuff.findElements(By.className("end"));
             if (!chapterEndNotes.isEmpty()) {
                 WebElement chapterEndNote = chapterEndNotes.getFirst().findElement(By.className("userstuff"));
@@ -430,7 +443,7 @@ public class ArchiveIngestor {
         }
         else if (!chapter.findElements(By.className("userstuff")).isEmpty()) {
             // Get paragraphs from direct user stuff
-            System.out.println("User stuff class exist. Getting user stuff paragraphs...");
+            updateLastMessage("User stuff class exist. Getting user stuff paragraphs...");
             WebElement userStuff = chapter.findElement(By.className("userstuff"));
             chapterParagraphs = filterText(userStuff.findElements(By.xpath(ALL_CHILDREN_XPATH)));
         }
@@ -497,7 +510,7 @@ public class ArchiveIngestor {
                     lastParentCommentID = commentID;
                 }
                 catch (NoSuchElementException e) {
-                    System.out.println("Skipping thread member list item...");
+                    updateLastMessage("Skipping thread member list item...");
                 }
             }
             else {
@@ -512,7 +525,7 @@ public class ArchiveIngestor {
                         );
                     }
                     catch (NoSuchElementException e) {
-                        System.out.println("Skipping thread member list item...");
+                        updateLastMessage("Skipping thread member list item...");
                     }
                 }
                 else {
@@ -547,7 +560,7 @@ public class ArchiveIngestor {
         assert currentURL != null;
 
         // Open comment section
-        System.out.println("Checking for chapter comments...");
+        updateLastMessage("Checking for chapter comments...");
         List<WebElement> openCommentsButton = driver.findElements(By.id("show_comments_link"));
         boolean commentsOpened = false;
         if (!openCommentsButton.isEmpty()) {
@@ -563,19 +576,19 @@ public class ArchiveIngestor {
 
         // Read comment section
         if (commentsOpened) {
-            System.out.println("Parsing chapter comments...");
+            updateLastMessage("Parsing chapter comments...");
 
             // Check for pagination
             List<WebElement> pagination = driver.findElements(By.className("pagination"));
 
             if (!pagination.isEmpty()) {
-                System.out.println("Multiple pages of comments found...");
+                updateLastMessage("Multiple pages of comments found...");
                 boolean nextEnabled = true;
                 int pageCount = 0;
 
                 while (nextEnabled) {
                     pageCount++;
-                    System.out.println("Parsing page number " + pageCount + " of comments...");
+                    updateLastMessage("Parsing page number " + pageCount + " of comments...");
 
                     // Get a new next button
                     WebElement next;
@@ -585,7 +598,7 @@ public class ArchiveIngestor {
                         next = createNextButtonReference(driver);
                     }
                     catch (NoSuchElementException | TimeoutException e) {
-                        System.out.println("Comment page navigation failed. Skipping page...");
+                        updateLastMessage("Comment page navigation failed. Skipping page...");
 
                         String currentPage = driver.getCurrentUrl();
                         String[] curPagePartOne = currentPage.split("=", 2);
@@ -614,7 +627,7 @@ public class ArchiveIngestor {
                 }
             }
             else {
-                System.out.println("Parsing single page of comments...");
+                updateLastMessage("Parsing single page of comments...");
                 commentPages.put("1", parseCommentPage(driver));
             }
         }
@@ -647,90 +660,106 @@ public class ArchiveIngestor {
         return newChapter;
     }
 
+    // TODO: Add generic IngestorCaughtError class for catching other unexpected errors.
     public Chapter createChapter(RemoteWebDriver driver) throws InterruptedException {
-        System.out.println("Opening website " + driver.getCurrentUrl() + "...");
+        try {
+            updateLastMessage("Opening website " + driver.getCurrentUrl() + "...");
 
-        // Check for and get past acceptance screens
-        handleTOSPrompt(driver);
-        handleAdultContentAgreement(driver);
+            // Check for and get past acceptance screens
+            handleTOSPrompt(driver);
+            handleAdultContentAgreement(driver);
 
-        // Check for the correct version of otwarchive
-        checkArchiveVersion(driver);
+            // Check for the correct version of otwarchive
+            checkArchiveVersion(driver);
 
-        // Get the title
-        System.out.println("Getting website page title...");
-        String pageTitle = driver.getTitle();
-        System.out.println("Parsing a chapter of " + pageTitle);
+            // Get the title
+            updateLastMessage("Getting website page title...");
+            String pageTitle = driver.getTitle();
+            updateLastMessage("Parsing a chapter of " + pageTitle);
 
-        // Get story information
-        StoryInfo newStoryInfo = parseStoryMetaTable(driver);
-        
-        // Create a chapter object
-        System.out.println("Creating new Chapter instance...");
-        return parseChapter(driver, newStoryInfo, pageTitle);
+            // Get story information
+            StoryInfo newStoryInfo = parseStoryMetaTable(driver);
+
+            // Create a chapter object
+            updateLastMessage("Creating new Chapter instance...");
+            return parseChapter(driver, newStoryInfo, pageTitle);
+        }
+        catch (NoSuchElementException e) {
+            throw new IngestorCaughtElementExceptionError(driver.getCurrentUrl(), e);
+        }
     }
 
     public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws InterruptedException {
-        System.out.println("Opening website " + driver.getCurrentUrl() + "...");
+        try {
+            updateLastMessage("Opening website " + driver.getCurrentUrl() + "...");
 
-        // Check for and get past acceptance screens
-        handleTOSPrompt(driver);
-        handleAdultContentAgreement(driver);
+            // Check for and get past acceptance screens
+            handleTOSPrompt(driver);
+            handleAdultContentAgreement(driver);
 
-        // Check for the correct version of otwarchive
-        checkArchiveVersion(driver);
+            // Check for the correct version of otwarchive
+            checkArchiveVersion(driver);
 
-        // Get the title
-        System.out.println("Getting website page title...");
-        String pageTitle = driver.getTitle();
+            // Get the title
+            updateLastMessage("Getting website page title...");
+            String pageTitle = driver.getTitle();
 
-        // Create a chapter object
-        System.out.println("Creating new Chapter instance...");
-        return parseChapter(driver, parentStoryInfo, pageTitle);
+            // Create a chapter object
+            updateLastMessage("Creating new Chapter instance...");
+            return parseChapter(driver, parentStoryInfo, pageTitle);
+        }
+        catch (NoSuchElementException e) {
+            throw new IngestorCaughtElementExceptionError(driver.getCurrentUrl(), e);
+        }
     }
 
     public Story createStory(RemoteWebDriver driver) throws InterruptedException {
-        // Do the first chapter
-        System.out.println("Parsing chapter 1 of " + driver.getTitle());
+        try {
+            // Do the first chapter
+            updateLastMessage("Parsing chapter 1 of " + driver.getTitle());
 
-        ArrayList<Chapter> chapters = new ArrayList<>();
-        chapters.add(createChapter(driver));
-        StoryInfo storyInfo = chapters.getFirst().parentStoryInfo;
+            ArrayList<Chapter> chapters = new ArrayList<>();
+            chapters.add(createChapter(driver));
+            StoryInfo storyInfo = chapters.getFirst().parentStoryInfo;
 
-        // Do the rest of the chapters if necessary
-        WebDriverWait nextChapterWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
-        By chapterTitleFinder = new ByChained(
-                By.id("chapters"), By.className("chapter"), By.className("preface"), By.className("title")
-        );
-        boolean nextButtonFound;
-        int chapterCount = 2;
-        do {
-            // Reset flag
-            nextButtonFound = false;
+            // Do the rest of the chapters if necessary
+            WebDriverWait nextChapterWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
+            By chapterTitleFinder = new ByChained(
+                    By.id("chapters"), By.className("chapter"), By.className("preface"), By.className("title")
+            );
+            boolean nextButtonFound;
+            int chapterCount = 2;
+            do {
+                // Reset flag
+                nextButtonFound = false;
 
-            // Go to next chapter if the next chapter button is found
-            WebElement feedback = driver.findElement(By.id("feedback"));
-            WebElement feedbackActions = feedback.findElement(By.className("actions"));
-            for (WebElement action : feedbackActions.findElements(By.tagName("li"))) {
-                if (action.getText().contains("Next Chapter")) {
-                    String nextChapterPage = action.findElement(By.tagName("a")).getAttribute("href");
-                    assert nextChapterPage != null;
-                    driver.navigate().to(nextChapterPage);
-                    nextButtonFound = true; // Keeps the loop going
-                    break;
+                // Go to next chapter if the next chapter button is found
+                WebElement feedback = driver.findElement(By.id("feedback"));
+                WebElement feedbackActions = feedback.findElement(By.className("actions"));
+                for (WebElement action : feedbackActions.findElements(By.tagName("li"))) {
+                    if (action.getText().contains("Next Chapter")) {
+                        String nextChapterPage = action.findElement(By.tagName("a")).getAttribute("href");
+                        assert nextChapterPage != null;
+                        driver.navigate().to(nextChapterPage);
+                        nextButtonFound = true; // Keeps the loop going
+                        break;
+                    }
                 }
-            }
 
-            // Parse next chapter
-            if (nextButtonFound) {
-                nextChapterWait.until(d -> d.findElement(chapterTitleFinder).isDisplayed());
-                System.out.println("Parsing chapter " + chapterCount + " of " + storyInfo.title);
-                chapters.add(createChapter(driver, storyInfo));
-                chapterCount++;
-            }
-        } while (nextButtonFound);
+                // Parse next chapter
+                if (nextButtonFound) {
+                    nextChapterWait.until(d -> d.findElement(chapterTitleFinder).isDisplayed());
+                    updateLastMessage("Parsing chapter " + chapterCount + " of " + storyInfo.title);
+                    chapters.add(createChapter(driver, storyInfo));
+                    chapterCount++;
+                }
+            } while (nextButtonFound);
 
-        // Return a full story
-        return new Story(storyInfo, chapters);
+            // Return a full story
+            return new Story(storyInfo, chapters);
+        }
+        catch (NoSuchElementException e) {
+            throw new IngestorCaughtElementExceptionError(driver.getCurrentUrl(), e);
+        }
     }
 }

@@ -5,12 +5,71 @@
 5) Use Hadoop to save things to files
 6) Do everything inside containers
 
+------------------
+
 selenium/standalone-chrome docker image
 
 docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-chrome:136.0-20251101
+
+------------------
 
 Add a fuzzing random Ao3 link test to test suite.
 
 Add CI/CD through Github Actions.
 
 Add tests for chapter, story, and storyinfo classes
+
+------------------
+
+REST-based live update system in Spring Boot:
+
+1) Client requests a parsing from the server through /api/v1/parse/chapter
+2) Server creates a session id and stores it in a session management hashmap
+3) Server starts a new thread for the parsing process attached to that session id.
+4) New parsing thread has access to session management HashMap to update the progress.
+5) Server returns a session id immediately to the client.
+6) Client saves the session id in its own session management signal.
+7) Client disables the starting of a new session until current session is done or canceled.
+8) Client pings the server at intervals using /api/v1/parse/session/{sessionid}.
+9) Client can cancel the session by using /api/v1/parse/session/{sessionid}/cancel.
+9) Server checks the progress of the thread using updates to a shared session management hashmap.
+10) Server sends the updated values of the session progress if not complete, including chapter progress and last message.
+11) Server sends the final JSON string if complete. 
+12) Server keeps the session in session management for a prespecified duration of time incase the client needs to get it again.
+13) Client receives final message and saves the contents somewhere.
+14) Client creates a dropdown for sessions completed and give the ability to nickname the session.
+15) Client can click a session from dropdown and display it's contents.
+16) The newest session is displayed immediately.
+17) there is a save button for saving various stuff.
+
+------------------
+
+Response Model
+
+1) pagelinkURL
+2) storyInfo
+3) sessionInfo
+3a) sessionID
+3b) sessionNickname
+3a) chaptersCompleted
+3b) chaptersTotal
+3c) lastMessage
+3d) isFinished
+3e) isCanceled
+
+------------------
+
+Angular frontend should be able to display:
+
+* Section that allows user to enter required settings for parsing
+	** What nickname do you want to call this parsing? (Optional Textbox)
+	** Is the parsing going to be a single chapter or a full story? (Required Toggle)
+	** What is the page link for this parsing? (Required Textbox, Needs Validation of URL and Ao3 address)
+* Section for choosing processed chapters and stories
+	** Tabular layout that switches between parsings, just storyinfos, and just chapters
+	** On anything you can expand on complex structures such as objects and arrays
+	** On any complex or atomic, you can select to download a json file of that object for safe keeping.
+		*** Maybe also a yaml and xml file.
+
+
+

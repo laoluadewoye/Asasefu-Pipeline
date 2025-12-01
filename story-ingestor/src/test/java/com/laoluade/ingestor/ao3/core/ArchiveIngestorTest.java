@@ -1,6 +1,7 @@
 package com.laoluade.ingestor.ao3.core;
 
 // JSON Packages
+import com.laoluade.ingestor.ao3.errors.IngestorCaughtElementExceptionError;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -129,6 +130,20 @@ public class ArchiveIngestorTest {
         }
         catch (WebDriverException e) {
             Assertions.fail("Bad URL Link received. Check test link.");
+        }
+    }
+
+    @Test
+    public void testBadWork() throws InterruptedException {
+        try {
+            testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
+            Chapter testChapter = testIngestor.createChapter(testDriver);
+        }
+        catch (IngestorCaughtElementExceptionError e) {
+            System.out.println(e.toString());
+        }
+        catch (Exception e) {
+            Assertions.fail("Intentional bad link broke the ingestor in an unintentional way.");
         }
     }
 

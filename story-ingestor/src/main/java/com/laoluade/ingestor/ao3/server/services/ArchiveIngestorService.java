@@ -56,6 +56,8 @@ public class ArchiveIngestorService {
         return new ArchiveIngestorInfo(ArchiveIngestor.VERSION, lastSupportedOTWArchiveVersion);
     }
 
+    // TODO: Handle any errors caught by the Ingestor
+    // TODO: Possibly create a base ingestor caught error class if needed
     public ArchiveIngestorResponse parseChapter(ArchiveIngestorRequest request) {
         // Extract request items
         URL chapterURL = request.getPageLinkURL();
@@ -114,6 +116,7 @@ public class ArchiveIngestorService {
         return new ArchiveIngestorResponse(newChapterJSON.toString(), "Chapter parsing was successful.");
     }
 
+    // TODO: Handle any errors caught by the Ingestor
     public ArchiveIngestorResponse parseStory(ArchiveIngestorRequest request) {
         // Extract request items
         URL storyURL = request.getPageLinkURL();

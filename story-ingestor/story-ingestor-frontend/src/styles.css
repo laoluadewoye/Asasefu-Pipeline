@@ -1,22 +1,25 @@
+:root {
+    --default-font-family: 'Lucida Sans Regular';
+    --default-border-radius: 20px;
+    --default-distance: 1rem;
+    --half-default-distance: 0.5rem;
+
+    --theme-white-color: #F0E7D8;
+    --theme-black-color: #0A0A0A;
+    --theme-red-color: #990000;
+}
+
 body {
-    background-color: #F0E7D8;
-    color: #0A0A0A;
-    font-family:'Lucida Sans Regular';
+    background-color: var(--theme-white-color);
+    color: var(--theme-black-color);
+    font-family: var(--default-font-family);
 }
 
 header, footer {
-    margin: auto;
     text-align: center;
-    padding: 1rem;
-    background-color: #990000;
-    color: #F0E7D8;
-}
-
-footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
+    padding: var(--default-distance);
+    background-color: var(--theme-red-color);
+    color: var(--theme-white-color);
 }
 
 a {

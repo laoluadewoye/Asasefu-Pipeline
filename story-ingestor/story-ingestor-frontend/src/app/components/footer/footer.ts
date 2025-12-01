@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { Version } from '../../services/version';
-import { VersionInfo } from '../../models/version.type';
+import { VersionService } from '../../services/version';
+import { VersionInfo } from '../../models/version_info';
 import { catchError } from 'rxjs';
 
 @Component({
@@ -10,8 +10,11 @@ import { catchError } from 'rxjs';
   styleUrl: './footer.css',
 })
 export class Footer implements OnInit {
-    versionService = inject(Version);
-    versionInfo = signal<VersionInfo>({archiveIngestorVersion: "0.0", latestOTWArchiveSupported: "otwarchive v0"});
+    versionService = inject(VersionService);
+    versionInfo = signal<VersionInfo>({
+        archiveIngestorVersion: "[Not Available]", 
+        latestOTWArchiveSupported: "[Not Available]"
+    });
 
     ngOnInit(): void {
         this.versionService.getArchiveIngestorInfo().pipe(

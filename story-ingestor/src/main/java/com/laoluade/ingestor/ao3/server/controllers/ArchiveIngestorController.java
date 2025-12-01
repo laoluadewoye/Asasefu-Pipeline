@@ -3,6 +3,7 @@ package com.laoluade.ingestor.ao3.server.controllers;
 import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorInfo;
 import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorRequest;
 import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorResponse;
+import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorTestAPIInfo;
 import com.laoluade.ingestor.ao3.server.services.ArchiveIngestorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,9 +15,11 @@ public class ArchiveIngestorController {
     @Autowired
     ArchiveIngestorService archiveIngestorService;
 
+    // TODO: Update the test
     @GetMapping("/api/v1")
-    public String Hello() {
-        return "Hello Archive Ingestor Service Version 1 API!";
+    public ArchiveIngestorTestAPIInfo getArchiveIngestorTestAPI() {
+        String info = "Hello Archive Ingestor Version 1 API!";
+        return new ArchiveIngestorTestAPIInfo(info);
     }
 
     @GetMapping("/api/v1/info")

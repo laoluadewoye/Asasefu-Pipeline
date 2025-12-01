@@ -1,21 +1,26 @@
+header {
+    margin-bottom: var(--default-distance);
+}
+
 nav {
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: var(--default-distance);
 }
 
 a {
-    padding: 0.5rem;
-    margin-inline: 0.5rem;
+    padding: var(--half-default-distance);
+    margin-inline: var(--half-default-distance);
     outline-style: solid;
-    outline-color: #0A0A0A;
-    border-radius: 10px;
-    color: #F0E7D8;
+    outline-color: var(--theme-black-color);
+    border-radius: var(--default-border-radius);
+    color: var(--theme-white-color);
+    transition: 0.3s;
 }
 
 a:hover {
-    background-color: #F0E7D8;
-    color: #990000;
+    background-color: var(--theme-white-color);
+    color: var(--theme-red-color);
 }
 
 @media (max-width: 600px) {
