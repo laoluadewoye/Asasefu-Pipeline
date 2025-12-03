@@ -2,170 +2,177 @@ package com.laoluade.ingestor.ao3.server.services;
 
 // Local classes
 import com.laoluade.ingestor.ao3.core.ArchiveIngestor;
-import com.laoluade.ingestor.ao3.core.Chapter;
-import com.laoluade.ingestor.ao3.core.Story;
-import com.laoluade.ingestor.ao3.core.StoryInfo;
-import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorInfo;
-import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorRequest;
-import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorResponse;
+import com.laoluade.ingestor.ao3.server.models.*;
+import com.laoluade.ingestor.ao3.server.tasks.ArchiveIngestorAsyncTasks;
 
 // Third party classes
+import com.google.common.hash.Hashing;
 import org.json.JSONArray;
-import org.json.JSONObject;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 // Java classes
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 
-// TODO: Add logging using org.slf4j.Logger and org.slf4j.LoggerFactory
 @Service
 public class ArchiveIngestorService {
-    // Attributes
-    private final ArchiveIngestor archiveIngestor;
-    private final String driverSocket;
+    // Async task bean
+    @Autowired
+    private ArchiveIngestorAsyncTasks archiveIngestorAsyncTasks;
 
-    // Constants
-    private final String EMPTY_JSON_STRING = "{}";
+    // Attributes
+    private final String driverSocket;
+    private final Integer sessionPersistSecs;
+    private final HashMap<String, ArchiveIngestorSession> sessionManager;
 
     // Logging
     private final Logger archiveIngestorServiceLogger;
 
-    public ArchiveIngestorService(@Value("${archiveingestor.driver.socket}") String driverSocket) throws IOException {
-        this.archiveIngestor = new ArchiveIngestor();
+    public ArchiveIngestorService(@Value("${archiveIngestor.driver.socket}") String driverSocket,
+                                  @Value("${archiveIngestor.session.persistSecs:120}") Integer sessionPersistSecs) {
         this.driverSocket = driverSocket;
+        this.sessionPersistSecs = sessionPersistSecs;
+        this.sessionManager = new HashMap<String, ArchiveIngestorSession>();
         this.archiveIngestorServiceLogger = LoggerFactory.getLogger(ArchiveIngestorService.class);
         this.archiveIngestorServiceLogger.info("Driver socket is set to {}.", this.driverSocket);
+        this.archiveIngestorServiceLogger.info("Session Persistence is set to {} seconds.", this.sessionPersistSecs);
+    }
+
+    public ArchiveIngestorTestAPIInfo getArchiveIngestorTestAPI() {
+        this.archiveIngestorServiceLogger.info("Sending test API string.");
+        String info = "Hello Archive Ingestor Version 1 API!";
+        return new ArchiveIngestorTestAPIInfo(info);
     }
 
     public ArchiveIngestorInfo getArchiveIngestorInfo() {
-        JSONArray supportedOTWArchiveVersions = this.archiveIngestor.versionTable.getJSONArray(ArchiveIngestor.VERSION);
-        String lastSupportedOTWArchiveVersion = supportedOTWArchiveVersions.toList().getLast().toString();
-        this.archiveIngestorServiceLogger.info(
-                "Sending version number {} and OTW Archive version {}",
-                ArchiveIngestor.VERSION, lastSupportedOTWArchiveVersion
-        );
-        return new ArchiveIngestorInfo(ArchiveIngestor.VERSION, lastSupportedOTWArchiveVersion);
+        try {
+            JSONArray supportedOTWArchiveVersions = new ArchiveIngestor().versionTable.getJSONArray(ArchiveIngestor.VERSION);
+            String lastSupportedOTWArchiveVersion = supportedOTWArchiveVersions.toList().getLast().toString();
+            this.archiveIngestorServiceLogger.info(
+                    "Sending version number {} and OTW Archive version {}.",
+                    ArchiveIngestor.VERSION, lastSupportedOTWArchiveVersion
+            );
+
+            return new ArchiveIngestorInfo(ArchiveIngestor.VERSION, lastSupportedOTWArchiveVersion);
+        }
+        catch (IOException e) {
+            return new ArchiveIngestorInfo("[Failed IO]", "[Failed IO]");
+        }
+        catch (Exception e) {
+            return new ArchiveIngestorInfo("[Failed Unknown]", "[Failed Unknown]");
+        }
     }
 
-    // TODO: Handle any errors caught by the Ingestor
-    // TODO: Possibly create a base ingestor caught error class if needed
-    public ArchiveIngestorResponse parseChapter(ArchiveIngestorRequest request) {
+    public ArchiveIngestorResponse startParseChapter(ArchiveIngestorRequest request) {
         // Extract request items
         URL chapterURL = request.getPageLinkURL();
-        StoryInfo storyInfo = request.getStoryInfo();
-        this.archiveIngestorServiceLogger.info("Successfully obtained parseChapter request contents.");
+        String sessionNickname = request.getSessionNickname();
+        this.archiveIngestorServiceLogger.info("Successfully obtained chapter parsing request contents.");
 
-        // Create a Selenium driver
-        ChromeOptions options = new ChromeOptions();
-        URL containerLocator;
+        // Create a session ID
+        String timestamp = ZonedDateTime.now(ZoneId.of("UTC")).toString();
+        String hashString = chapterURL.toString() + timestamp;
+        String newSessionID = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
-        try {
-            URI containerIdentifier = new URI(this.driverSocket);
-            containerLocator = containerIdentifier.toURL();
-        }
-        catch (URISyntaxException | MalformedURLException e) {
-            this.archiveIngestorServiceLogger.error(
-                    "Failed to create URL with driver address {} for parseChapter.", this.driverSocket
-            );
-            return new ArchiveIngestorResponse(this.EMPTY_JSON_STRING, "Failed to create URL with driver address.");
-        }
+        // Create response object and start filling it in
+        ArchiveIngestorSessionInfo newSessionInfo = new ArchiveIngestorSessionInfo(newSessionID, sessionNickname);
+        ArchiveIngestorResponse newResponse = new ArchiveIngestorResponse(
+                "", "New chapter parsing session created.", newSessionInfo
+        );
 
-        RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
-        this.archiveIngestorServiceLogger.info("Successfully created driver for parseChapter.");
+        // Start the chapter parsing process
+        CompletableFuture<ArchiveIngestorTaskFuture> newFuture = this.archiveIngestorAsyncTasks.parseChapter(
+                this.driverSocket, this.archiveIngestorServiceLogger, chapterURL, newResponse
+        );
 
-        // Navigate to the chapter URL
-        driver.get(chapterURL.toString());
+        // Add session to session manager
+        this.sessionManager.put(newSessionID, new ArchiveIngestorSession(newResponse, newFuture));
 
-        // Create a chapter object
-        Chapter newChapter;
-
-        try {
-            if (storyInfo == null) {
-                newChapter = this.archiveIngestor.createChapter(driver);
-            } else {
-                newChapter = this.archiveIngestor.createChapter(driver, storyInfo);
-            }
-            this.archiveIngestorServiceLogger.info("Successfully parsed link and extracted chapter.");
-        }
-        catch (InterruptedException e) {
-            this.archiveIngestorServiceLogger.error(
-                    "Execution was unexpectedly interrupted during Thread.sleep() in parseChapter."
-            );
-            return new ArchiveIngestorResponse(
-                    this.EMPTY_JSON_STRING, "Execution was unexpectedly interrupted during Thread.sleep()."
-            );
-        }
-
-        // End the driver session
-        driver.quit();
-        this.archiveIngestorServiceLogger.info("Successfully quit driver for parseChapter.");
-
-        // Return the chapter's contents
-        JSONObject newChapterJSON = newChapter.getJSONRepWithParent();
-        this.archiveIngestorServiceLogger.info("Successfully retrieved JSON representation of new chapter.");
-
-        return new ArchiveIngestorResponse(newChapterJSON.toString(), "Chapter parsing was successful.");
+        // Return the response
+        return newResponse;
     }
 
-    // TODO: Handle any errors caught by the Ingestor
-    public ArchiveIngestorResponse parseStory(ArchiveIngestorRequest request) {
+    public ArchiveIngestorResponse startParseStory(ArchiveIngestorRequest request) {
         // Extract request items
         URL storyURL = request.getPageLinkURL();
-        this.archiveIngestorServiceLogger.info("Successfully obtained parseStory request contents.");
+        String sessionNickname = request.getSessionNickname();
+        this.archiveIngestorServiceLogger.info("Successfully obtained story parsing request contents.");
 
-        // Create a Selenium driver
-        ChromeOptions options = new ChromeOptions();
-        URL containerLocator;
+        // Create a session ID
+        String timestamp = ZonedDateTime.now(ZoneId.of("UTC")).toString();
+        String hashString = storyURL.toString() + timestamp;
+        String newSessionID = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
-        try {
-            URI containerIdentifier = new URI(this.driverSocket);
-            containerLocator = containerIdentifier.toURL();
+        // Create response object and start filling it in
+        ArchiveIngestorSessionInfo newSessionInfo = new ArchiveIngestorSessionInfo(newSessionID, sessionNickname);
+        ArchiveIngestorResponse newResponse = new ArchiveIngestorResponse(
+                "", "New story parsing session created.", newSessionInfo
+        );
+
+        // Start the story parsing process
+        CompletableFuture<ArchiveIngestorTaskFuture> newFuture = this.archiveIngestorAsyncTasks.parseStory(
+                this.driverSocket, this.archiveIngestorServiceLogger, storyURL, newResponse
+        );
+
+        // Add session to session manager
+        this.sessionManager.put(newSessionID, new ArchiveIngestorSession(newResponse, newFuture));
+
+        // Return the response
+        return newResponse;
+    }
+
+    public void purgeSessionManager() {
+        ArrayList<String> sessionsToDelete = new ArrayList<>();
+        ZonedDateTime currentTimestamp = ZonedDateTime.now(ZoneId.of("UTC"));
+
+        // Get session IDs to delete
+        for (HashMap.Entry<String, ArchiveIngestorSession> sessionEntry : this.sessionManager.entrySet()) {
+            ZonedDateTime lastSessionTimestamp = sessionEntry.getValue().getSessionResponse().getSessionInfo().getCreationTimestamp();
+            ZonedDateTime lastValidSessionTime = lastSessionTimestamp.plusSeconds(this.sessionPersistSecs);
+
+            if (currentTimestamp.isAfter(lastValidSessionTime)) {
+                sessionsToDelete.add(sessionEntry.getKey());
+            }
         }
-        catch (URISyntaxException | MalformedURLException e) {
-            this.archiveIngestorServiceLogger.error(
-                    "Failed to create URL with driver address {} for parseStory.", this.driverSocket
-            );
-            return new ArchiveIngestorResponse(this.EMPTY_JSON_STRING, "Failed to create URL with requested link.");
+
+        // Delete sessions by their session ID
+        for (String sessionID : sessionsToDelete) {
+            this.sessionManager.remove(sessionID);
         }
+    }
 
-        RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
-        this.archiveIngestorServiceLogger.info("Successfully created driver for parseStory.");
+    public ArchiveIngestorResponse getSessionInformation(String sessionID) {
+        // Purge the session manager
+        purgeSessionManager();
 
-        // Navigate to the chapter URL
-        driver.get(storyURL.toString());
-
-        // Create a story object
-        Story newStory;
-        try {
-            newStory = this.archiveIngestor.createStory(driver);
-            this.archiveIngestorServiceLogger.info("Successfully parsed link and extracted story.");
+        // Get the session information or send a failed message
+        ArchiveIngestorSession session = this.sessionManager.get(sessionID);
+        if (session != null) {
+            return session.getSessionResponse();
         }
-        catch (InterruptedException e) {
-            this.archiveIngestorServiceLogger.error(
-                    "Execution was unexpectedly interrupted during Thread.sleep() in parseStory."
-            );
-            return new ArchiveIngestorResponse(
-                    this.EMPTY_JSON_STRING, "Execution was unexpectedly interrupted during Thread.sleep()."
-            );
+        else {
+            return new ArchiveIngestorResponse("", "Session either doesn't exist or has been deleted.");
         }
+    }
 
-        // End the driver session
-        driver.quit();
-        this.archiveIngestorServiceLogger.info("Successfully quit driver for parseStory.");
+    public ArchiveIngestorResponse cancelSession(String sessionID) {
+        // Purge the session manager
+        purgeSessionManager();
 
-        // Return the chapter's contents
-        JSONObject newStoryJSON = newStory.getJSONRep();
-        this.archiveIngestorServiceLogger.info("Successfully retrieved JSON representation of new story.");
+        // Cancel the session's async task
+        this.sessionManager.get(sessionID).getSessionFuture().cancel(true);
 
-        return new ArchiveIngestorResponse(newStoryJSON.toString(), "Story parsing was successful.");
+        // Return a notification
+        return new ArchiveIngestorResponse("", "Sent cancel signal to the task.");
     }
 }

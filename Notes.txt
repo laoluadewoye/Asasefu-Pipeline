@@ -46,8 +46,8 @@ REST-based live update system in Spring Boot:
 
 Response Model
 
-1) pagelinkURL
-2) storyInfo
+1) responseJSONString
+2) resultMessage
 3) sessionInfo
 3a) sessionID
 3b) sessionNickname

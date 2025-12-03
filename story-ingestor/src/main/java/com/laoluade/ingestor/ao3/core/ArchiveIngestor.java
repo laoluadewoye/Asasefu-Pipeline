@@ -1,9 +1,8 @@
 package com.laoluade.ingestor.ao3.core;
 
-// Error Classes
-import com.laoluade.ingestor.ao3.errors.ArchiveVersionIncompatibleError;
-import com.laoluade.ingestor.ao3.errors.ChapterContentNotFoundError;
-import com.laoluade.ingestor.ao3.errors.IngestorCaughtElementExceptionError;
+// Core Classes
+import com.laoluade.ingestor.ao3.errors.*;
+import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorSessionInfo;
 
 // JSON Packages
 import org.json.JSONArray;
@@ -50,7 +49,7 @@ public class ArchiveIngestor {
     // Instance Constants
     public JSONObject storyLinks;
     public JSONObject versionTable;
-    public String lastMessage;  // TODO: Create a test for this
+    public ArchiveIngestorSessionInfo parentSessionInfo;
 
     public ArchiveIngestor() throws IOException {
         System.out.println("Creating new Archive Ingestor...");
@@ -60,9 +59,19 @@ public class ArchiveIngestor {
 
         System.out.println("Loading version table...");
         this.versionTable = getJSONFromResource("version_table.json");
+    }
 
-        System.out.println("Starting message tracking...");
-        this.lastMessage = "Message tracking started.";
+    public ArchiveIngestor(ArchiveIngestorSessionInfo parentSessionInfo) throws IOException {
+        System.out.println("Creating new Archive Ingestor...");
+
+        System.out.println("Loading story links...");
+        this.storyLinks = getJSONFromResource("story_links.json");
+
+        System.out.println("Loading version table...");
+        this.versionTable = getJSONFromResource("version_table.json");
+
+        System.out.println("Linked to current parent session...");
+        this.parentSessionInfo = parentSessionInfo;
     }
 
     public static JSONObject getJSONFromFilepath(String filePath) throws IOException {
@@ -80,11 +89,20 @@ public class ArchiveIngestor {
     }
 
     private void updateLastMessage(String newMessage) {
-        // Reset lastMessage
-        lastMessage = newMessage;
+        // Reset last message
+        if (this.parentSessionInfo != null) {
+            this.parentSessionInfo.setLastMessage(newMessage);
+            this.parentSessionInfo.refreshCreationTimestamp();
+        }
 
-        // Print the newMessage;
+        // Print the new message
         System.out.println(newMessage);
+    }
+
+    private void checkForCancel() throws IngestorCanceledError {
+        if (Thread.interrupted()) {
+            throw new IngestorCanceledError();
+        }
     }
 
     private void handleTOSPrompt(RemoteWebDriver driver) throws InterruptedException {
@@ -103,7 +121,7 @@ public class ArchiveIngestor {
         }
     }
 
-    private void handleAdultContentAgreement(RemoteWebDriver driver) {
+    private void handleAdultContentAgreement(RemoteWebDriver driver) throws IngestorCanceledError {
         updateLastMessage("Checking for adult content agreement...");
         if (!driver.findElements(By.className("caution")).isEmpty()) {
             updateLastMessage("Detected adult content agreement. Handling contents...");
@@ -111,9 +129,12 @@ public class ArchiveIngestor {
             // Hit the continue button
             driver.findElement(By.xpath("//*[@id=\"main\"]/ul/li[1]/a")).click();
         }
+
+        // Check for cancellation of thread
+        checkForCancel();
     }
 
-    private void checkArchiveVersion(RemoteWebDriver driver) {
+    public void checkArchiveVersion(RemoteWebDriver driver) throws ArchiveVersionIncompatibleError {
         updateLastMessage("Checking AO3 version...");
         WebElement archiveVersionElement = driver.findElement(By.xpath("//*[@id=\"footer\"]/ul/li[3]/ul/li[1]/a"));
         String archiveVersion = archiveVersionElement.getText();
@@ -185,7 +206,7 @@ public class ArchiveIngestor {
         return new ArrayList<>(Arrays.asList(statTitle, statValue));
     }
 
-    private StoryInfo parseStoryMetaTable(RemoteWebDriver driver) throws InterruptedException {
+    private StoryInfo parseStoryMetaTable(RemoteWebDriver driver) throws IngestorCanceledError {
         // Get the meta section
         WebElement metaSection = driver.findElement(By.className("meta"));
 
@@ -252,6 +273,14 @@ public class ArchiveIngestor {
         String storyBookmarks = parseMetaStats(storyStats, "bookmarks").getLast();
         String storyHits = parseMetaStats(storyStats, "hits").getLast();
 
+        // Save the chapter count at instance level
+        if (this.parentSessionInfo != null) {
+            this.parentSessionInfo.setChaptersTotal(StoryInfo.parseInitString(storyChapters));
+        }
+
+        // Check for cancellation of thread
+        checkForCancel();
+
         // Return a story object
         updateLastMessage("Creating new Story instance...");
         return new StoryInfo(
@@ -262,7 +291,8 @@ public class ArchiveIngestor {
         );
     }
 
-    private void parseStoryPrefaceInfo(WebElement workSkinSection, StoryInfo parentStoryInfo) {
+    private void parseStoryPrefaceInfo(WebElement workSkinSection, StoryInfo parentStoryInfo)
+            throws IngestorCanceledError {
         // Get the preface part of the work skin
         WebElement preface = workSkinSection.findElement(By.className("preface"));
 
@@ -327,9 +357,12 @@ public class ArchiveIngestor {
                 storyTitle, storyAuthors, storySummaryText, storyAssociationItems, storyStartNoteItems,
                 storyEndNoteItems
         );
+
+        // Check for cancellation of thread
+        checkForCancel();
     }
 
-    private void parseStoryKudos(RemoteWebDriver driver, StoryInfo parentStoryInfo) {
+    private void parseStoryKudos(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws IngestorCanceledError {
         WebElement kudos = driver.findElement(By.id("kudos"));
         List<WebElement> kudosClass = kudos.findElements(By.className("kudos"));
 
@@ -356,9 +389,12 @@ public class ArchiveIngestor {
 
             parentStoryInfo.setKudosList(kudosList);
         }
+
+        // Check for cancellation of thread
+        checkForCancel();
     }
 
-    private void parseStoryBookmarks(RemoteWebDriver driver, StoryInfo parentStoryInfo) {
+    private void parseStoryBookmarks(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws IngestorCanceledError {
         // Create a wait object for later navigation
         WebDriverWait newSiteWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
 
@@ -390,9 +426,13 @@ public class ArchiveIngestor {
         }
 
         parentStoryInfo.setPublicBookmarkList(bookmarkList);
+
+        // Check for cancellation of thread
+        checkForCancel();
     }
 
-    private Chapter parseChapterText(WebElement workSkinSection, StoryInfo parentStoryInfo, String pageTitle) {
+    private Chapter parseChapterText(WebElement workSkinSection, StoryInfo parentStoryInfo, String pageTitle)
+            throws ChapterContentNotFoundError, IngestorCanceledError {
         // Get the actual chapter part of the work skin
         WebElement chapter = workSkinSection.findElement(By.id("chapters"));
 
@@ -450,6 +490,9 @@ public class ArchiveIngestor {
         else {
             throw new ChapterContentNotFoundError();
         }
+
+        // Check for cancellation of thread
+        checkForCancel();
 
         // Finally return a chapter object
         return new Chapter(
@@ -553,7 +596,7 @@ public class ArchiveIngestor {
         return tempPagination.findElement(By.className("next"));
     }
 
-    private void parseChapterComments(RemoteWebDriver driver, Chapter newChapter) {
+    private void parseChapterComments(RemoteWebDriver driver, Chapter newChapter) throws IngestorCanceledError {
         // Create wait and URL checkpoint for comment navigation
         WebDriverWait commentNavWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
         String currentURL = driver.getCurrentUrl();
@@ -613,6 +656,9 @@ public class ArchiveIngestor {
                     // Parse comment page
                     commentPages.put(Integer.toString(pageCount), parseCommentPage(driver));
 
+                    // Check for cancellation of thread
+                    checkForCancel();
+
                     // Check if next is still enabled
                     if (next.findElements(By.className("disabled")).isEmpty()) { // Go to next comment page
                         WebElement nextPageRef = next.findElement(By.tagName("a"));
@@ -629,6 +675,9 @@ public class ArchiveIngestor {
             else {
                 updateLastMessage("Parsing single page of comments...");
                 commentPages.put("1", parseCommentPage(driver));
+
+                // Check for cancellation of thread
+                checkForCancel();
             }
         }
 
@@ -636,7 +685,8 @@ public class ArchiveIngestor {
         newChapter.setComments(comments);
     }
 
-    private Chapter parseChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo, String pageTitle) throws InterruptedException {
+    private Chapter parseChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo, String pageTitle)
+            throws IngestorCanceledError, ChapterContentNotFoundError {
         // Get the work skin section
         WebElement workSkinSection = driver.findElement(By.id("workskin"));
 
@@ -660,8 +710,8 @@ public class ArchiveIngestor {
         return newChapter;
     }
 
-    // TODO: Add generic IngestorCaughtError class for catching other unexpected errors.
-    public Chapter createChapter(RemoteWebDriver driver) throws InterruptedException {
+    public Chapter createChapter(RemoteWebDriver driver) throws InterruptedException, ChapterContentNotFoundError,
+            IngestorCanceledError, IngestorElementNotFoundError {
         try {
             updateLastMessage("Opening website " + driver.getCurrentUrl() + "...");
 
@@ -670,7 +720,11 @@ public class ArchiveIngestor {
             handleAdultContentAgreement(driver);
 
             // Check for the correct version of otwarchive
-            checkArchiveVersion(driver);
+            try {
+                checkArchiveVersion(driver);
+            } catch (ArchiveVersionIncompatibleError e) {
+                System.out.println("A archive version error was thrown. There may be some unknown behavior.");
+            }
 
             // Get the title
             updateLastMessage("Getting website page title...");
@@ -685,11 +739,12 @@ public class ArchiveIngestor {
             return parseChapter(driver, newStoryInfo, pageTitle);
         }
         catch (NoSuchElementException e) {
-            throw new IngestorCaughtElementExceptionError(driver.getCurrentUrl(), e);
+            throw new IngestorElementNotFoundError(driver.getCurrentUrl(), e);
         }
     }
 
-    public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws InterruptedException {
+    public Chapter createChapter(RemoteWebDriver driver, StoryInfo parentStoryInfo) throws InterruptedException,
+            ChapterContentNotFoundError, IngestorCanceledError, IngestorElementNotFoundError {
         try {
             updateLastMessage("Opening website " + driver.getCurrentUrl() + "...");
 
@@ -698,7 +753,11 @@ public class ArchiveIngestor {
             handleAdultContentAgreement(driver);
 
             // Check for the correct version of otwarchive
-            checkArchiveVersion(driver);
+            try {
+                checkArchiveVersion(driver);
+            } catch (ArchiveVersionIncompatibleError e) {
+                System.out.println("A archive version error was thrown. There may be some unknown behavior.");
+            }
 
             // Get the title
             updateLastMessage("Getting website page title...");
@@ -709,11 +768,12 @@ public class ArchiveIngestor {
             return parseChapter(driver, parentStoryInfo, pageTitle);
         }
         catch (NoSuchElementException e) {
-            throw new IngestorCaughtElementExceptionError(driver.getCurrentUrl(), e);
+            throw new IngestorElementNotFoundError(driver.getCurrentUrl(), e);
         }
     }
 
-    public Story createStory(RemoteWebDriver driver) throws InterruptedException {
+    public Story createStory(RemoteWebDriver driver) throws InterruptedException, ChapterContentNotFoundError,
+            IngestorCanceledError, IngestorElementNotFoundError {
         try {
             // Do the first chapter
             updateLastMessage("Parsing chapter 1 of " + driver.getTitle());
@@ -721,6 +781,14 @@ public class ArchiveIngestor {
             ArrayList<Chapter> chapters = new ArrayList<>();
             chapters.add(createChapter(driver));
             StoryInfo storyInfo = chapters.getFirst().parentStoryInfo;
+
+            // Set the chapter completed count
+            if (this.parentSessionInfo != null) {
+                this.parentSessionInfo.setChaptersCompleted(1);
+            }
+
+            // Check for cancellation of thread
+            checkForCancel();
 
             // Do the rest of the chapters if necessary
             WebDriverWait nextChapterWait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DURATION_SECS));
@@ -751,6 +819,16 @@ public class ArchiveIngestor {
                     nextChapterWait.until(d -> d.findElement(chapterTitleFinder).isDisplayed());
                     updateLastMessage("Parsing chapter " + chapterCount + " of " + storyInfo.title);
                     chapters.add(createChapter(driver, storyInfo));
+
+                    // Set the chapter completed count
+                    if (this.parentSessionInfo != null) {
+                        this.parentSessionInfo.setChaptersCompleted(chapterCount);
+                    }
+
+                    // Check for cancellation of thread
+                    checkForCancel();
+
+                    // Increment chapter count
                     chapterCount++;
                 }
             } while (nextButtonFound);
@@ -759,7 +837,7 @@ public class ArchiveIngestor {
             return new Story(storyInfo, chapters);
         }
         catch (NoSuchElementException e) {
-            throw new IngestorCaughtElementExceptionError(driver.getCurrentUrl(), e);
+            throw new IngestorElementNotFoundError(driver.getCurrentUrl(), e);
         }
     }
 }

@@ -1,7 +1,10 @@
 package com.laoluade.ingestor.ao3.server;
 
-// JUnit classes
+// Server model classes
 import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorInfo;
+import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorTestAPIInfo;
+
+// JUnit classes
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// TODO: Backend is pretty much built now, so add some tests!
 @SpringBootTest(useMainMethod = SpringBootTest.UseMainMethod.ALWAYS)
 @AutoConfigureMockMvc
 public class ArchiveIngestorServerTest {
@@ -38,21 +42,30 @@ public class ArchiveIngestorServerTest {
     @Test
     void testAPI(@Autowired MockMvc mvc) throws Exception {
         // Test API version path
-        mvc.perform(get("/api/v1"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Hello Archive Ingestor Service Version 1 API!"));
-
-        // Test backend info gathering
-        MvcResult testInfoResult = mvc.perform(get("/api/v1/info"))
+        MvcResult testInfoResult = mvc.perform(get("/api/v1"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         // Recreate the expected info model instance
         String infoJSONString = testInfoResult.getResponse().getContentAsString();
+        ArchiveIngestorTestAPIInfo testAPIInfoInstance = new ObjectMapper().readValue(
+                infoJSONString, ArchiveIngestorTestAPIInfo.class
+        );
+
+        Assertions.assertEquals("Hello Archive Ingestor Version 1 API!", testAPIInfoInstance.getInfo());
+
+        // Test backend info gathering
+        testInfoResult = mvc.perform(get("/api/v1/info"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        // Recreate the expected info model instance
+        infoJSONString = testInfoResult.getResponse().getContentAsString();
         ArchiveIngestorInfo testInfoInstance = new ObjectMapper().readValue(infoJSONString, ArchiveIngestorInfo.class);
 
         Assertions.assertEquals("0.1", testInfoInstance.getArchiveIngestorVersion());
-        Assertions.assertEquals("otwarchive v0.9.445.0", testInfoInstance.getLatestOTWArchiveSupported());
+        Assertions.assertEquals("otwarchive v0.9.446.1", testInfoInstance.getLatestOTWArchiveSupported());
     }
 }

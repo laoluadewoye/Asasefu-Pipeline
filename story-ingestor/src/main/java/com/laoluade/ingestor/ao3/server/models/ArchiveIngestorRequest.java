@@ -1,7 +1,5 @@
 package com.laoluade.ingestor.ao3.server.models;
 
-import com.laoluade.ingestor.ao3.core.StoryInfo;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,18 +7,18 @@ import java.net.URL;
 
 public class ArchiveIngestorRequest {
     private URL pagelinkURL;
-    private StoryInfo storyInfo;
+    private String sessionNickname;
 
     public ArchiveIngestorRequest(String pageLink) throws URISyntaxException, MalformedURLException {
         URI pageLinkURI = new URI(pageLink);
         this.pagelinkURL = pageLinkURI.toURL();
     }
 
-    public ArchiveIngestorRequest(String pageLink, String storyInfoJSONString) throws URISyntaxException,
+    public ArchiveIngestorRequest(String pageLink, String sessionNickname) throws URISyntaxException,
             MalformedURLException {
         URI pageLinkURI = new URI(pageLink);
         this.pagelinkURL = pageLinkURI.toURL();
-        this.storyInfo = StoryInfo.fromJSONString(storyInfoJSONString);
+        this.sessionNickname = sessionNickname;
     }
 
     public void setPageLinkURL(String pageLink) throws URISyntaxException, MalformedURLException {
@@ -30,9 +28,9 @@ public class ArchiveIngestorRequest {
 
     public URL getPageLinkURL() { return this.pagelinkURL; }
 
-    public void setStoryInfo(String storyInfoJSONString) {
-        this.storyInfo = StoryInfo.fromJSONString(storyInfoJSONString);
+    public void setSessionNickname(String sessionNickname) {
+        this.sessionNickname = sessionNickname;
     }
 
-    public StoryInfo getStoryInfo() { return this.storyInfo; }
+    public String getSessionNickname() { return this.sessionNickname; }
 }

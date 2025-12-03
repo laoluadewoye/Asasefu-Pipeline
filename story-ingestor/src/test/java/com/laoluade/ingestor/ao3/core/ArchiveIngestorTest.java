@@ -1,7 +1,9 @@
 package com.laoluade.ingestor.ao3.core;
 
+// Core Error Package
+import com.laoluade.ingestor.ao3.errors.*;
+
 // JSON Packages
-import com.laoluade.ingestor.ao3.errors.IngestorCaughtElementExceptionError;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -134,16 +136,30 @@ public class ArchiveIngestorTest {
     }
 
     @Test
-    public void testBadWork() throws InterruptedException {
+    public void testBadWork() {
         try {
             testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
-            Chapter testChapter = testIngestor.createChapter(testDriver);
+            testIngestor.createChapter(testDriver);
         }
-        catch (IngestorCaughtElementExceptionError e) {
+        catch (ArchiveVersionIncompatibleError | ChapterContentNotFoundError | IngestorCanceledError |
+               IngestorElementNotFoundError e) {
             System.out.println(e.toString());
+        }
+        catch (InterruptedException e) {
+            Assertions.fail("For some reason the thread threw this exception.");
         }
         catch (Exception e) {
             Assertions.fail("Intentional bad link broke the ingestor in an unintentional way.");
+        }
+    }
+
+    @Test
+    public void testArchiveVersion() {
+        testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
+        try {
+            testIngestor.checkArchiveVersion(testDriver);
+        } catch (ArchiveVersionIncompatibleError e) {
+            Assertions.fail("Archive version is out of date. This is fine if it happens post-release but not here.");
         }
     }
 
@@ -219,7 +235,8 @@ public class ArchiveIngestorTest {
     }
 
     @Test
-    public void testChapterParse() throws InterruptedException {
+    public void testChapterParse() throws InterruptedException, ChapterContentNotFoundError, IngestorCanceledError,
+            IngestorElementNotFoundError {
         JSONObject chapterTestLinks = testLinks.getJSONObject("Chapter");
         Iterator<String> testLinksKeys = chapterTestLinks.keys();
         while (testLinksKeys.hasNext()) {
@@ -418,7 +435,8 @@ public class ArchiveIngestorTest {
     }
 
     @Test
-    public void testStoryParse() throws InterruptedException {
+    public void testStoryParse() throws InterruptedException, ChapterContentNotFoundError, IngestorCanceledError,
+            IngestorElementNotFoundError {
         JSONObject storyTestLinks = testLinks.getJSONObject("Story");
         Iterator<String> testLinksKeys = storyTestLinks.keys();
         while (testLinksKeys.hasNext()) {

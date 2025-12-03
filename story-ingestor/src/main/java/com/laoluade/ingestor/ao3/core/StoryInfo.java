@@ -100,7 +100,8 @@ public class StoryInfo {
         this.hits = parseInitString(hits);
     }
 
-    private Integer parseInitString(String initString) {
+    // TODO: Make sure front end can handle the negative 1
+    public static Integer parseInitString(String initString) {
         if (initString.equals("?")) {
             return -1;
         }
