@@ -11,6 +11,7 @@ import com.laoluade.ingestor.ao3.errors.IngestorCanceledError;
 import com.laoluade.ingestor.ao3.errors.IngestorElementNotFoundError;
 
 // Server Model Package
+import com.laoluade.ingestor.ao3.server.ArchiveIngestorMessageManager;
 import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorResponse;
 import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorTaskFuture;
 
@@ -18,6 +19,7 @@ import com.laoluade.ingestor.ao3.server.models.ArchiveIngestorTaskFuture;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +32,14 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 
 @Component
-public class ArchiveIngestorAsyncTasks {
+public class ArchiveIngestorAsyncTaskManager {
+    @Autowired
+    private final ArchiveIngestorMessageManager messageManager;
+
+    public ArchiveIngestorAsyncTaskManager(ArchiveIngestorMessageManager messageManager) {
+        this.messageManager = messageManager;
+    }
+
     public CompletableFuture<ArchiveIngestorTaskFuture> returnFailedFuture(String resultMessage, Logger logger,
                                                                            ArchiveIngestorResponse curResponse) {
         // Log error
@@ -74,12 +83,13 @@ public class ArchiveIngestorAsyncTasks {
             containerLocator = containerIdentifier.toURL();
         }
         catch (URISyntaxException | MalformedURLException e) {
-            String resultMessage = "Failed to create URL with driver address " + driverSocket + " for chapter parsing.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(
+                    this.messageManager.createChapterURLExceptionMessage(driverSocket), logger, curResponse
+            );
         }
 
         RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
-        logger.info("Successfully created driver for chapter parsing.");
+        logger.info(this.messageManager.getLoggingInfoChapterCreatedDriver());
 
         // Navigate to the chapter URL
         driver.get(chapterURL.toString());
@@ -90,37 +100,33 @@ public class ArchiveIngestorAsyncTasks {
         try {
             ArchiveIngestor archiveIngestor = new ArchiveIngestor(curResponse.getSessionInfo());
             newChapter = archiveIngestor.createChapter(driver);
-            logger.info("Successfully parsed link and extracted chapter.");
+            logger.info(this.messageManager.getLoggingInfoChapterParseSucceeded());
         }
         catch (IOException e) {
-            String resultMessage = "The archive ingestor could not read in json settings.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorParseFailedIO(), logger, curResponse);
         }
         catch (InterruptedException e) {
-            String resultMessage = "The execution was unexpectedly interrupted during Thread.sleep() during chapter parsing.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorChapterFailedInterrupt(), logger, curResponse);
         }
         catch (ChapterContentNotFoundError e) {
-            String resultMessage = "The chapter's paragraphs could not be found.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorChapterFailedContent(), logger, curResponse);
         }
         catch (IngestorElementNotFoundError e) {
-            String resultMessage = "The archive ingestor could not find a required element during parsing.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorParseFailedElement(), logger, curResponse);
         }
         catch (IngestorCanceledError e) {
-            String resultMessage = "The archive ingestor's task was canceled from parent service.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorParseFailedCanceled(), logger, curResponse);
         }
 
         // End the driver session
         driver.quit();
-        logger.info("Successfully quit driver for chapter parsing.");
+        logger.info(this.messageManager.getLoggingInfoChapterQuitDriver());
 
         // Set the response instance with the chapter's contents and return everything
         String newChapterJSONString = newChapter.getJSONRepWithParent().toString();
-        String resultMessage = "Successfully retrieved JSON representation of new chapter.";
-        return returnCompletedFuture(newChapterJSONString, resultMessage, logger, curResponse);
+        return returnCompletedFuture(
+                newChapterJSONString, this.messageManager.getLoggingInfoChapterRetrievedJSON(), logger, curResponse
+        );
     }
 
     @Async("archiveIngestorAsyncExecutor")
@@ -135,12 +141,13 @@ public class ArchiveIngestorAsyncTasks {
             containerLocator = containerIdentifier.toURL();
         }
         catch (URISyntaxException | MalformedURLException e) {
-            String resultMessage = "Failed to create URL with driver address " + driverSocket + " for story parsing.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(
+                    this.messageManager.createStoryURLExceptionMessage(driverSocket), logger, curResponse
+            );
         }
 
         RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
-        logger.info("Successfully created driver for story parsing.");
+        logger.info(this.messageManager.getLoggingInfoStoryCreatedDriver());
 
         // Navigate to the story URL
         driver.get(storyURL.toString());
@@ -151,36 +158,32 @@ public class ArchiveIngestorAsyncTasks {
         try {
             ArchiveIngestor archiveIngestor = new ArchiveIngestor(curResponse.getSessionInfo());
             newStory = archiveIngestor.createStory(driver);
-            logger.info("Successfully parsed link and extracted story.");
-        }
-        catch (InterruptedException e) {
-            String resultMessage = "Execution was unexpectedly interrupted during Thread.sleep() during story parsing.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            logger.info(this.messageManager.getLoggingInfoStoryParseSucceeded());
         }
         catch (IOException e) {
-            String resultMessage = "Archive ingestor could not read in json settings.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorParseFailedIO(), logger, curResponse);
+        }
+        catch (InterruptedException e) {
+            return returnFailedFuture(this.messageManager.getLoggingErrorStoryFailedInterrupt(), logger, curResponse);
         }
         catch (ChapterContentNotFoundError e) {
-            String resultMessage = "One of the chapter's paragraphs could not be found.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorStoryFailedContent(), logger, curResponse);
         }
         catch (IngestorElementNotFoundError e) {
-            String resultMessage = "The archive ingestor could not find a required element during parsing.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorParseFailedElement(), logger, curResponse);
         }
         catch (IngestorCanceledError e) {
-            String resultMessage = "The archive ingestor's task was canceled from parent service.";
-            return returnFailedFuture(resultMessage, logger, curResponse);
+            return returnFailedFuture(this.messageManager.getLoggingErrorParseFailedCanceled(), logger, curResponse);
         }
 
         // End the driver session
         driver.quit();
-        logger.info("Successfully quit driver for story parsing.");
+        logger.info(this.messageManager.getLoggingInfoStoryQuitDriver());
 
         // Set the response instance with the story's contents and return everything
         String newStoryJSONString = newStory.getJSONRep().toString();
-        String resultMessage = "Successfully retrieved JSON representation of new story.";
-        return returnCompletedFuture(newStoryJSONString, resultMessage, logger, curResponse);
+        return returnCompletedFuture(
+                newStoryJSONString, this.messageManager.getLoggingInfoStoryRetrievedJSON(), logger, curResponse
+        );
     }
 }

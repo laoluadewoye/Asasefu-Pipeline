@@ -44,21 +44,6 @@ REST-based live update system in Spring Boot:
 
 ------------------
 
-Response Model
-
-1) responseJSONString
-2) resultMessage
-3) sessionInfo
-3a) sessionID
-3b) sessionNickname
-3a) chaptersCompleted
-3b) chaptersTotal
-3c) lastMessage
-3d) isFinished
-3e) isCanceled
-
-------------------
-
 Angular frontend should be able to display:
 
 * Section that allows user to enter required settings for parsing
@@ -71,5 +56,35 @@ Angular frontend should be able to display:
 	** On any complex or atomic, you can select to download a json file of that object for safe keeping.
 		*** Maybe also a yaml and xml file.
 
+------------------
 
+States of the Session object
 
+1) New Session - just created by startParse functions. Always a full creation.
+2) Tracked Session (Active) - stored in session manager. Ongoing.
+3) Tracked Session (Canceled) - stored in session manager. Future thread is being canceled.
+4) Tracked Session (Finished) - stored in session manager. Finished.
+5) Tracked Session (Purged) - removed from session manager.
+
+Session in states 3, 4, and 5 can be accessed through API.
+
+------------------
+
+States of Response object and attribute
+
+1) Response object can be created with or without a sessionInfo block
+2) Response object is stored within Session object and is formatted in a way where it can just be sent as is through API.
+3) Response's responseJSONString can be empty or not empty. A not-empty should only happen when session is completed and not canceled.
+4) Response resultMessage is always set. Needs an Enum class.
+5) Response's sessionInfo is either set or created. There is a way to tell the difference assuming the sessionInfo has not been altered. Blank sessionInfos indicate that it is not necessary and is just there for compliance.
+
+------------------
+
+States of SessionInfo object and attribute
+
+1) SessionInfo object are only created in startParse functions or Response constructor. They are created fully set up every time.
+2) SessionInfo's creationTimestamp is used for update tracking and purge decisions.
+3) SessionInfo's sessionID is used for identifying the session.
+4) SessionInfo's sessionNickname is meant for the frontend.
+5) SessionInfo's chaptersCompeleted, chaptersTotal, and lastMessage is only updated by the archive ingestor.
+6) isFinished and isCanceled is modified during asynchronous tasks. no F means nothing is done. F and no C means a successful completion. F and C mean an interrupted competition.

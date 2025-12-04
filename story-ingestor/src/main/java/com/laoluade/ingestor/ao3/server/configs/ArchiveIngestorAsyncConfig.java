@@ -22,13 +22,16 @@ public class ArchiveIngestorAsyncConfig implements AsyncConfigurer {
     @Value("${archiveIngestor.async.executor.queueCapacity:10}")
     private Integer queueCapacity;
 
+    @Value("${archiveIngestor.async.executor.threadNamePrefix:archiveIngestorAsyncThread-}")
+    private String threadNamePrefix;
+
     @Bean(name = "archiveIngestorAsyncExecutor")
     public Executor getAsyncExecutor()  {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(this.corePoolSize);
         executor.setMaxPoolSize(this.maxPoolSize);
         executor.setQueueCapacity(this.queueCapacity);
-        executor.setThreadNamePrefix("archiveIngestorAsyncThread-");
+        executor.setThreadNamePrefix(this.threadNamePrefix);
         executor.initialize();
         return executor;
     }

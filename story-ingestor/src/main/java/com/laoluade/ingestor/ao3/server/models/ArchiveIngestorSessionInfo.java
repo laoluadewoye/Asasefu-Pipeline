@@ -4,7 +4,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class ArchiveIngestorSessionInfo {
-    private ZonedDateTime creationTimestamp;
+    private String creationTimestamp;
     private String sessionID;
     private String sessionNickname;
     private Integer chaptersCompleted;
@@ -14,27 +14,40 @@ public class ArchiveIngestorSessionInfo {
     private boolean isCanceled;
 
     // Empty constructor
-    public ArchiveIngestorSessionInfo() {}
-
-    // Default constructor
-    public ArchiveIngestorSessionInfo(String sessionID, String sessionNickname) {
-        this.creationTimestamp = ZonedDateTime.now(ZoneId.of("UTC"));
-        this.sessionID = sessionID;
-        this.sessionNickname = sessionNickname;
+    public ArchiveIngestorSessionInfo() {
+        this.creationTimestamp = ZonedDateTime.now(ZoneId.of("UTC")).toString();
+        this.sessionID = "";
+        this.sessionNickname = "";
         this.chaptersCompleted = 0;
         this.chaptersTotal = 0;
-        this.lastMessage = "";
+        this.lastMessage = "Started using empty constructor.";
         this.isFinished = false;
         this.isCanceled = false;
     }
 
-    public void refreshCreationTimestamp() { this.creationTimestamp = ZonedDateTime.now(ZoneId.of("UTC")); }
-
-    public void setCreationTimestamp(ZonedDateTime creationTimestamp) {
-        this.creationTimestamp = creationTimestamp;
+    // Default constructor
+    public ArchiveIngestorSessionInfo(String sessionID, String sessionNickname) {
+        this.creationTimestamp = ZonedDateTime.now(ZoneId.of("UTC")).toString();
+        this.sessionID = sessionID;
+        this.sessionNickname = sessionNickname;
+        this.chaptersCompleted = 0;
+        this.chaptersTotal = 0;
+        this.lastMessage = "Started using default constructor.";
+        this.isFinished = false;
+        this.isCanceled = false;
     }
 
-    public ZonedDateTime getCreationTimestamp() { return this.creationTimestamp; }
+    public void refreshCreationTimestamp() {
+        this.creationTimestamp = ZonedDateTime.now(ZoneId.of("UTC")).toString();
+    }
+
+    public void setCreationTimestamp(ZonedDateTime creationTimestamp) {
+        this.creationTimestamp = creationTimestamp.toString();
+    }
+
+    public void setCreationTimestamp(String creationTimestamp) { this.creationTimestamp = creationTimestamp;}
+
+    public String getCreationTimestamp() { return this.creationTimestamp; }
 
     public void setSessionID(String sessionID) { this.sessionID = sessionID; }
 
