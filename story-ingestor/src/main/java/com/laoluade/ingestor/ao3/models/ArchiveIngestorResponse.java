@@ -1,9 +1,11 @@
-package com.laoluade.ingestor.ao3.server.models;
+package com.laoluade.ingestor.ao3.models;
 
 public class ArchiveIngestorResponse {
     private String responseJSONString;
     private String resultMessage;
     private ArchiveIngestorSessionInfo sessionInfo;
+
+    public ArchiveIngestorResponse() {}
 
     public ArchiveIngestorResponse(String responseJSONString, String resultMessage) {
         this.responseJSONString = responseJSONString;

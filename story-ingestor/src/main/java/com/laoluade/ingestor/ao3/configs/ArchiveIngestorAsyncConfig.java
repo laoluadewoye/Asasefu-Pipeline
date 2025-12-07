@@ -1,4 +1,4 @@
-package com.laoluade.ingestor.ao3.server.configs;
+package com.laoluade.ingestor.ao3.configs;
 
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +29,7 @@ public class ArchiveIngestorAsyncConfig implements AsyncConfigurer {
     public Executor getAsyncExecutor()  {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(this.corePoolSize);
-        executor.setMaxPoolSize(this.maxPoolSize);
+        executor.setMaxPoolSize(this.maxPoolSize+1); // One additional thread for the session monitoring loop
         executor.setQueueCapacity(this.queueCapacity);
         executor.setThreadNamePrefix(this.threadNamePrefix);
         executor.initialize();

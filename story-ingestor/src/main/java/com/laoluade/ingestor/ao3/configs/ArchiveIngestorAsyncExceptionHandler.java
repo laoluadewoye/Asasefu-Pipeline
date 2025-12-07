@@ -1,4 +1,4 @@
-package com.laoluade.ingestor.ao3.server.configs;
+package com.laoluade.ingestor.ao3.configs;
 
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;

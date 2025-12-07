@@ -1,4 +1,4 @@
-package com.laoluade.ingestor.ao3.server;
+package com.laoluade.ingestor.ao3.services;
 
 import org.springframework.stereotype.Component;
 
@@ -59,9 +59,12 @@ public class ArchiveIngestorMessageManager {
     public String getTestAPIInfo() { return "Hello Archive Ingestor Version 1 API!"; }
     public String getInfoIOFailValue() { return "[Failed IO]"; }
     public String getInfoGenericFailValue() { return "[Failed Unknown]"; }
+    public String getUTCValue() { return "UTC"; }
+    public String getEmptyValue() { return ""; }
 
     // RESPONSE OBJECT MESSAGES
     // RESPONSE OBJECT MESSAGES
+    public String getResponseBadURLFormat() { return "Sent link was not a proper URL format."; }
     public String getResponseNewChapterSession() { return "New chapter parsing session created."; }
     public String getResponseNewStorySession() { return "New story parsing session created."; }
     public String getResponseGetSessionFailed() { return "Session either doesn't exist or has been deleted."; }
@@ -79,7 +82,10 @@ public class ArchiveIngestorMessageManager {
         }
     }
     public String createSessionPersistSecsMessage(Integer sessionPersistSecs) {
-        return "Session Persistence is set to " + sessionPersistSecs + " seconds.";
+        return "Session persistence is set to " + sessionPersistSecs + " seconds.";
+    }
+    public String createSessionCheckIntervalMessage(Integer checkIntervalMilli) {
+        return "Session validity check interval is set to is set to " + checkIntervalMilli + " seconds.";
     }
     public String createInfoSendingMessage(String aiVersion, String otwVersion) {
         return "Sending version number " + aiVersion + " and OTW Archive version " + otwVersion + ".";
@@ -95,5 +101,29 @@ public class ArchiveIngestorMessageManager {
     // MESSAGE CREATION - STORY
     public String createStoryURLExceptionMessage(String driverSocket) {
         return "Failed to create URL with driver address " + driverSocket + " for story parsing.";
+    }
+
+    // MESSAGE CREATION - SESSION MANAGER createAISMUpdatedSessionMessage
+    // MESSAGE CREATION - SESSION MANAGER
+    public String createAISMAddedSessionMessage(String newSessionID) {
+        return "Session manager added session " + newSessionID + ".";
+    }
+    public String createAISMGetSessionMessage(String sessionID) {
+        return "Session manager retrieved session " + sessionID + ".";
+    }
+    public String createAISMGetSessionFailedMessage(String sessionID) {
+        return "Session manager could not retrieve session " + sessionID + " and returned null.";
+    }
+    public String createAISMCancelSessionMessage(String sessionID) {
+        return "Session manager canceled session " + sessionID + ".";
+    }
+    public String createAISMCancelSessionFailedMessage(String sessionID) {
+        return "Session manager could not cancel session " + sessionID + ".";
+    }
+    public String createAISMDeleteSessionMessage(String sessionID) {
+        return "Session manager deleted stale session " + sessionID + ".";
+    }
+    public String createAISMUpdatedSessionMessage(String curSessionID) {
+        return "Session manager updated session " + curSessionID + ".";
     }
 }

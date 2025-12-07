@@ -1,4 +1,4 @@
-package com.laoluade.ingestor.ao3.server.models;
+package com.laoluade.ingestor.ao3.models;
 
 public class ArchiveIngestorTaskFuture {
     private String resultMessage;

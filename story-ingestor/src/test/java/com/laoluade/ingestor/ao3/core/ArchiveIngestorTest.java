@@ -139,7 +139,7 @@ public class ArchiveIngestorTest {
     public void testBadWork() {
         try {
             testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
-            testIngestor.createChapter(testDriver);
+            testIngestor.createChapter(testDriver, "");
         }
         catch (ArchiveVersionIncompatibleError | ChapterContentNotFoundError | IngestorCanceledError |
                IngestorElementNotFoundError e) {
@@ -157,7 +157,7 @@ public class ArchiveIngestorTest {
     public void testArchiveVersion() {
         testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
         try {
-            testIngestor.checkArchiveVersion(testDriver);
+            testIngestor.checkArchiveVersion(testDriver, "");
         } catch (ArchiveVersionIncompatibleError e) {
             Assertions.fail("Archive version is out of date. This is fine if it happens post-release but not here.");
         }
@@ -244,7 +244,7 @@ public class ArchiveIngestorTest {
             String testStoryName = testLinksKeys.next();
             String testStoryLink = chapterTestLinks.getString(testStoryName);
             testDriver.get(testStoryLink);
-            Chapter testChapter = testIngestor.createChapter(testDriver);
+            Chapter testChapter = testIngestor.createChapter(testDriver, "");
 
             // Test the chapter
             runChapterTests(testChapter, testChapter.parentStoryInfo.creationTimestamp.toString());
@@ -444,7 +444,7 @@ public class ArchiveIngestorTest {
             String testStoryName = testLinksKeys.next();
             String testStoryLink = storyTestLinks.getString(testStoryName);
             testDriver.get(testStoryLink);
-            Story testStory = testIngestor.createStory(testDriver);
+            Story testStory = testIngestor.createStory(testDriver, "");
 
             // Test the story
             runStoryTests(testStory);
