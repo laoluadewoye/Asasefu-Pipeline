@@ -2,6 +2,8 @@ package com.laoluade.ingestor.ao3.services;
 
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+
 @Component
 public class ArchiveIngestorMessageManager {
     // LOGGING INFO MESSAGES - GENERAL
@@ -120,8 +122,9 @@ public class ArchiveIngestorMessageManager {
     public String createAISMCancelSessionFailedMessage(String sessionID) {
         return "Session manager could not cancel session " + sessionID + ".";
     }
-    public String createAISMDeleteSessionMessage(String sessionID) {
-        return "Session manager deleted stale session " + sessionID + ".";
+    public String createAISMDeleteSessionMessage(ArrayList<String> sessionsToDelete) {
+        String ids = String.join(", ", sessionsToDelete);
+        return "Session manager deleted the following stale sessions: " + ids + ".";
     }
     public String createAISMUpdatedSessionMessage(String curSessionID) {
         return "Session manager updated session " + curSessionID + ".";

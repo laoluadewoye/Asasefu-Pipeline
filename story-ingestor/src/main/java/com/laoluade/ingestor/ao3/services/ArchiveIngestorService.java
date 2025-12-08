@@ -6,6 +6,7 @@ import com.laoluade.ingestor.ao3.models.*;
 
 // Third-party Classes
 import com.google.common.hash.Hashing;
+import com.laoluade.ingestor.ao3.repositories.ArchiveIngestorSessionEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -111,7 +112,7 @@ public class ArchiveIngestorService {
         );
 
         // Add session to session manager
-        this.sessionManager.addSession(newSessionID, new ArchiveIngestorSession(newResponse, newFuture));
+        this.sessionManager.addSession(newSessionID, new ArchiveIngestorSessionEntity(newSessionID, newFuture, newResponse));
 
         // Return the response
         return newResponse;
@@ -152,7 +153,7 @@ public class ArchiveIngestorService {
         );
 
         // Add session to session manager
-        this.sessionManager.addSession(newSessionID, new ArchiveIngestorSession(newResponse, newFuture));
+        this.sessionManager.addSession(newSessionID, new ArchiveIngestorSessionEntity(newSessionID, newFuture, newResponse));
 
         // Return the response
         return newResponse;
@@ -160,7 +161,7 @@ public class ArchiveIngestorService {
 
     public ArchiveIngestorResponse getSessionInformation(String sessionID) {
         // Get the session information or send a failed message
-        ArchiveIngestorSession session = this.sessionManager.getSession(sessionID);
+        ArchiveIngestorSessionEntity session = this.sessionManager.getSession(sessionID);
         if (session != null) {
             return session.getSessionResponse();
         }

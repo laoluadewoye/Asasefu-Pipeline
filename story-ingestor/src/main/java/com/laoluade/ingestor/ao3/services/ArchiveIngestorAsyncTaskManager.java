@@ -12,7 +12,7 @@ import com.laoluade.ingestor.ao3.errors.IngestorElementNotFoundError;
 
 // Server Model Classes
 import com.laoluade.ingestor.ao3.models.ArchiveIngestorResponse;
-import com.laoluade.ingestor.ao3.models.ArchiveIngestorSession;
+import com.laoluade.ingestor.ao3.repositories.ArchiveIngestorSessionEntity;
 import com.laoluade.ingestor.ao3.models.ArchiveIngestorSessionInfo;
 import com.laoluade.ingestor.ao3.models.ArchiveIngestorTaskFuture;
 
@@ -59,7 +59,7 @@ public class ArchiveIngestorAsyncTaskManager {
         this.logManager.createErrorLog(resultMessage);
 
         // Create session objects
-        ArchiveIngestorSession curSession = this.sessionManager.getSession(sessionID);
+        ArchiveIngestorSessionEntity curSession = this.sessionManager.getSession(sessionID);
         ArchiveIngestorResponse curResponse = curSession.getSessionResponse();
         ArchiveIngestorSessionInfo curSessionInfo = curResponse.getSessionInfo();
 
@@ -86,7 +86,7 @@ public class ArchiveIngestorAsyncTaskManager {
         this.logManager.createInfoLog(resultMessage);
 
         // Create session objects
-        ArchiveIngestorSession curSession = this.sessionManager.getSession(sessionID);
+        ArchiveIngestorSessionEntity curSession = this.sessionManager.getSession(sessionID);
         ArchiveIngestorResponse curResponse = curSession.getSessionResponse();
         ArchiveIngestorSessionInfo curSessionInfo = curResponse.getSessionInfo();
 

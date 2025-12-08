@@ -5,7 +5,7 @@ import com.laoluade.ingestor.ao3.errors.*;
 
 // Server Model Classes
 import com.laoluade.ingestor.ao3.models.ArchiveIngestorResponse;
-import com.laoluade.ingestor.ao3.models.ArchiveIngestorSession;
+import com.laoluade.ingestor.ao3.repositories.ArchiveIngestorSessionEntity;
 import com.laoluade.ingestor.ao3.models.ArchiveIngestorSessionInfo;
 import com.laoluade.ingestor.ao3.services.ArchiveIngestorLogManager;
 import com.laoluade.ingestor.ao3.services.ArchiveIngestorSessionManager;
@@ -124,7 +124,7 @@ public class ArchiveIngestor {
     private void updateLastMessage(String newMessage, String sessionID) {
         // Update last message and timestamp
         if (this.sessionManager != null) {
-            ArchiveIngestorSession curSession = this.sessionManager.getSession(sessionID);
+            ArchiveIngestorSessionEntity curSession = this.sessionManager.getSession(sessionID);
             ArchiveIngestorResponse curResponse = curSession.getSessionResponse();
             ArchiveIngestorSessionInfo curSessionInfo = curResponse.getSessionInfo();
 
@@ -143,7 +143,7 @@ public class ArchiveIngestor {
 
     private void updateTotalChapters(Integer chapterCount, String sessionID) {
         if (this.sessionManager != null) {
-            ArchiveIngestorSession curSession = this.sessionManager.getSession(sessionID);
+            ArchiveIngestorSessionEntity curSession = this.sessionManager.getSession(sessionID);
             ArchiveIngestorResponse curResponse = curSession.getSessionResponse();
             ArchiveIngestorSessionInfo curSessionInfo = curResponse.getSessionInfo();
 
@@ -157,7 +157,7 @@ public class ArchiveIngestor {
 
     private void updateCompletedChapters(Integer chapterCount, String sessionID) {
         if (this.sessionManager != null) {
-            ArchiveIngestorSession curSession = this.sessionManager.getSession(sessionID);
+            ArchiveIngestorSessionEntity curSession = this.sessionManager.getSession(sessionID);
             ArchiveIngestorResponse curResponse = curSession.getSessionResponse();
             ArchiveIngestorSessionInfo curSessionInfo = curResponse.getSessionInfo();
 
