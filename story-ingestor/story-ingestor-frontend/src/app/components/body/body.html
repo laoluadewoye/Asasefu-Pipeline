@@ -1,8 +1,8 @@
 <h2>Preface</h2>
 <p>
     Welcome to my passion project for parsing stories on Archive of our Own!
-    I’ve always been wanting to do something with my own stories for a while, 
-    but I had no creativity or motivation to do so. But now I do! 
+    I’ve always been wanting to do something with my own stories for a while,
+    but I had no creativity or motivation to do so. But now I do!
 </p>
 <p>
     Firstly, please don’t use this thing for Silicon Valley tech bro crap.
@@ -12,7 +12,7 @@
     That’s why it’s also admittedly limited in what it can do,
     as I’ve thought of coding ways to look at entire series and collections
     and realized that if I make it too easy,
-    there are going to be annoying people out there that will just abuse it. 
+    there are going to be annoying people out there that will just abuse it.
 </p>
 <p>
     As someone who has done research in machine learning,
@@ -30,13 +30,13 @@
 </p>
 <h2>Instructions</h2>
 <p>
-    After this introduction section is the <strong><u>“Set Parsing Details”</u></strong> section. 
-    This section will have three different buttons to select 
+    After this introduction section is the <strong><u>“Set Parsing Details”</u></strong> section.
+    This section will have three different buttons to select
     and a submission button to send the results of to the backend service.
 </p>
 <p>
-    The <strong><u>first option</u></strong> is a Parsing Method, 
-    where you can choose between parsing a single chapter or a whole story.
+    The <strong><u>first option</u></strong> is a Parsing Method,
+    where you can choose between parsing a single archiveChapter or a whole story.
     It can only be one or the other, and it is set to “Chapter” by default.
 </p>
 <p>
@@ -47,19 +47,19 @@
 </p>
 <ul>
     <li>
-        Links that don’t start like “https://archiveofourown.org/works” 
-        or “https://archiveofourown.org/works/XXXXXXXX/chapters” 
+        Links that don’t start like “https://archiveofourown.org/works”
+        or “https://archiveofourown.org/works/XXXXXXXX/archiveChapters”
         where “XXXXXXXX” represents a story id are automatically rejected.
         This is ONLY a story parser.
     </li>
     <li>
         “https://archiveofourown.org/works/XXXXXXXX” where “XXXXXXXX” represents a story id
-        is a valid link if you want to parse either a chapter or story.
+        is a valid link if you want to parse either a archiveChapter or story.
     </li>
     <li>
-        “https://archiveofourown.org/works/XXXXXXXX/chapters/YYYYYYYYY where 
-        “XXXXXXXX” represents a story id and “YYYYYYYYY” represents a chapter id
-        is only a valid link for parsing a chapter. If you choose story and then pass this link, 
+        “https://archiveofourown.org/works/XXXXXXXX/archiveChapters/YYYYYYYYY where
+        “XXXXXXXX” represents a story id and “YYYYYYYYY” represents a archiveChapter id
+        is only a valid link for parsing a archiveChapter. If you choose story and then pass this link,
         you WILL get an error notification.
     </li>
 </ul>
@@ -70,11 +70,11 @@
 </p>
 <p>
     The backend service will then start the parsing process,
-    and a real time chapter-by-chapter progress text will display until either the parsing is complete,
+    and a real time archiveChapter-by-archiveChapter progress text will display until either the parsing is complete,
     or something errors out and it shows you the problem found,
     or you cancel the parsing session.
     The “Set Parsing Details” section will be unavailable to edit
-    while the parsing session is going on and will be available when the parsing session ends. 
+    while the parsing session is going on and will be available when the parsing session ends.
 </p>
 <p>
     Once that’s done, you should see the parsed content in the “Completed Parsing Sessions” section.

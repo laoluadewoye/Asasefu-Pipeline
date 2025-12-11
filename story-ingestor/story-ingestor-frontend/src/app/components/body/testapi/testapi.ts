@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { TestAPIService } from '../../../services/testapi';
+import { TestAPIService } from '../../../services/test';
 import { TestAPIInfo } from '../../../models/test_api_info';
 import { catchError } from 'rxjs';
 

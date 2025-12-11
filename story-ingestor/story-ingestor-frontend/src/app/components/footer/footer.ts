@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { VersionService } from '../../services/version';
-import { VersionInfo } from '../../models/version_info';
+import { VersionService } from '../../services/spec';
+import { VersionInfo } from '../../models/spec_info';
 import { catchError } from 'rxjs';
 
 @Component({

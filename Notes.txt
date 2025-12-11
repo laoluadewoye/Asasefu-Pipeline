@@ -106,3 +106,50 @@ States of SessionInfo object and attribute
 
 2025-12-05T20:09:22.403-05:00  WARN 65392 --- [archive-ingestion-server] [           main] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.http.converter.HttpMessageNotReadableException: JSON parse error: Cannot construct instance of `com.laoluade.ingestor.ao3.server.models.ArchiveIngestorRequest` (although at least one Creator exists): cannot deserialize from Object value (no delegate- or property-based Creator)]
 
+------------------
+
+Info Model
+	ingestorVersion
+	otwArchiveVersion
+	serverVersion
+
+Request Model
+	pageLink
+	sessionNickname
+			
+Session Table
+	sessionId
+	sessionNickname
+	sessionCreated
+	sessionUpdated
+	sessionFinished
+	sessionCanceled
+	sessionExceptioned
+	sessionPurged
+	parseId
+
+Parse Table
+	parseId
+	parseType
+	parseTargetLink
+	parseResult
+	parseChaptersCompleted
+	parseChaptersTotal
+
+Session HashMap
+	sessionID
+	sessionContent
+		sessionFuture
+		sessionLastMessage
+
+Response Model
+	sessionId
+	sessionNickname
+	sessionFinished
+	sessionCanceled
+	sessionExceptioned
+	parseChaptersCompleted
+	parseChaptersTotal
+	parseResult
+	responseMessage
+	

@@ -1,7 +1,7 @@
 package com.laoluade.ingestor.ao3.core;
 
 // Core Error Package
-import com.laoluade.ingestor.ao3.errors.*;
+import com.laoluade.ingestor.ao3.exceptions.*;
 
 // JSON Packages
 import org.json.JSONException;
@@ -141,8 +141,8 @@ public class ArchiveIngestorTest {
             testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
             testIngestor.createChapter(testDriver, "");
         }
-        catch (ArchiveVersionIncompatibleError | ChapterContentNotFoundError | IngestorCanceledError |
-               IngestorElementNotFoundError e) {
+        catch (ArchiveVersionIncompatibleException | ArchiveParagraphsNotFoundException | ArchiveIngestorCanceledException |
+               ArchiveElementNotFoundException e) {
             System.out.println(e.toString());
         }
         catch (InterruptedException e) {
@@ -158,66 +158,67 @@ public class ArchiveIngestorTest {
         testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
         try {
             testIngestor.checkArchiveVersion(testDriver, "");
-        } catch (ArchiveVersionIncompatibleError e) {
+        } catch (ArchiveVersionIncompatibleException e) {
+            System.out.println(e);
             Assertions.fail("Archive version is out of date. This is fine if it happens post-release but not here.");
         }
     }
 
-    public void runChapterTests(Chapter testChapter, String storyCreationTimestamp) {
+    public void runChapterTests(ArchiveChapter testArchiveChapter, String storyCreationTimestamp) {
         // Assert chapter timestamps are good
         Assertions.assertInstanceOf(
-                ZonedDateTime.class, testChapter.creationTimestamp,
-                "Chapter " + testChapter.chapterTitle + " timestamp is not a ZonedDateTime object."
+                ZonedDateTime.class, testArchiveChapter.creationTimestamp,
+                "Chapter " + testArchiveChapter.chapterTitle + " timestamp is not a ZonedDateTime object."
         );
         Assertions.assertEquals(
-                "UTC", testChapter.creationTimestamp.getZone().toString(),
-                "Chapter " + testChapter.chapterTitle + " timestamp is not set to UTC."
+                "UTC", testArchiveChapter.creationTimestamp.getZone().toString(),
+                "Chapter " + testArchiveChapter.chapterTitle + " timestamp is not set to UTC."
         );
         Assertions.assertNotEquals(
-                testChapter.parentStoryInfo.creationTimestamp.toString(), testChapter.creationTimestamp.toString(),
-                "Chapter " + testChapter.chapterTitle + " timestamp is the same as the parent story info timestamp."
+                testArchiveChapter.parentArchiveStoryInfo.creationTimestamp.toString(), testArchiveChapter.creationTimestamp.toString(),
+                "Chapter " + testArchiveChapter.chapterTitle + " timestamp is the same as the parent story info timestamp."
         );
         Assertions.assertNotEquals(
-                storyCreationTimestamp, testChapter.creationTimestamp.toString(),
-                "Chapter " + testChapter.chapterTitle + " timestamp is the same as the parent story timestamp."
+                storyCreationTimestamp, testArchiveChapter.creationTimestamp.toString(),
+                "Chapter " + testArchiveChapter.chapterTitle + " timestamp is the same as the parent story timestamp."
         );
 
         // Assert that the pageLink supplied is valid
         try {
-            URI testURI = new URI(testChapter.pageLink);
+            URI testURI = new URI(testArchiveChapter.pageLink);
             URL testURL = testURI.toURL();
         }
         catch (MalformedURLException | URISyntaxException e) {
-            Assertions.fail("Chapter " + testChapter.chapterTitle + " page link is bad.");
+            Assertions.fail("Chapter " + testArchiveChapter.chapterTitle + " page link is bad.");
         }
 
         // Assert that the paragraph list is not empty
         Assertions.assertNotEquals(
-                0, testChapter.paragraphs.size(),
-                "Chapter " + testChapter.chapterTitle + " does not contain the actual chapter."
+                0, testArchiveChapter.paragraphs.size(),
+                "Chapter " + testArchiveChapter.chapterTitle + " does not contain the actual chapter."
         );
 
         // Assert JSONs can return properly
-        JSONObject testJSONFatherful = testChapter.getJSONRepWithParent();
-        JSONObject testJSONFatherless = testChapter.getJSONRepWithoutParent();
+        JSONObject testJSONFatherful = testArchiveChapter.getJSONRepWithParent();
+        JSONObject testJSONFatherless = testArchiveChapter.getJSONRepWithoutParent();
 
         Assertions.assertInstanceOf(
                 JSONObject.class, testJSONFatherful,
-                "Chapter " + testChapter.chapterTitle +
+                "Chapter " + testArchiveChapter.chapterTitle +
                         " JSON representation with parent is not a JSONObject object."
         );
         Assertions.assertInstanceOf(
                 JSONObject.class, testJSONFatherless,
-                "Chapter " + testChapter.chapterTitle +
+                "Chapter " + testArchiveChapter.chapterTitle +
                         " JSON representation without parent is not a JSONObject object."
         );
 
         // Assert JSON contains all values
         try {
-            for (Field field : Chapter.class.getDeclaredFields()) {
-                if (field.getName().equals("parentStoryInfo")) {
+            for (Field field : ArchiveChapter.class.getDeclaredFields()) {
+                if (field.getName().equals("parentArchiveStoryInfo")) {
                     JSONObject psi = testJSONFatherful.getJSONObject(field.getName());
-                    for (Field innerField : StoryInfo.class.getDeclaredFields()) {
+                    for (Field innerField : ArchiveStoryInfo.class.getDeclaredFields()) {
                         if (!innerField.getName().equals("isSet")) {
                             psi.get(innerField.getName());
                         }
@@ -235,8 +236,8 @@ public class ArchiveIngestorTest {
     }
 
     @Test
-    public void testChapterParse() throws InterruptedException, ChapterContentNotFoundError, IngestorCanceledError,
-            IngestorElementNotFoundError {
+    public void testChapterParse() throws InterruptedException, ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException,
+            ArchiveElementNotFoundException {
         JSONObject chapterTestLinks = testLinks.getJSONObject("Chapter");
         Iterator<String> testLinksKeys = chapterTestLinks.keys();
         while (testLinksKeys.hasNext()) {
@@ -244,190 +245,190 @@ public class ArchiveIngestorTest {
             String testStoryName = testLinksKeys.next();
             String testStoryLink = chapterTestLinks.getString(testStoryName);
             testDriver.get(testStoryLink);
-            Chapter testChapter = testIngestor.createChapter(testDriver, "");
+            ArchiveChapter testArchiveChapter = testIngestor.createChapter(testDriver, "");
 
             // Test the chapter
-            runChapterTests(testChapter, testChapter.parentStoryInfo.creationTimestamp.toString());
+            runChapterTests(testArchiveChapter, testArchiveChapter.parentArchiveStoryInfo.creationTimestamp.toString());
         }
     }
 
-    public void runStoryTests(Story testStory) {
+    public void runStoryTests(ArchiveStory testArchiveStory) {
         // Assert story timestamps are good
         Assertions.assertInstanceOf(
-                ZonedDateTime.class, testStory.creationTimestamp,
+                ZonedDateTime.class, testArchiveStory.creationTimestamp,
                 "Story timestamp is not a ZonedDateTime object."
         );
         Assertions.assertEquals(
-                "UTC", testStory.creationTimestamp.getZone().toString(),
+                "UTC", testArchiveStory.creationTimestamp.getZone().toString(),
                 "Story timestamp is not set to UTC."
         );
         Assertions.assertInstanceOf(
-                ZonedDateTime.class, testStory.storyInfo.creationTimestamp,
+                ZonedDateTime.class, testArchiveStory.archiveStoryInfo.creationTimestamp,
                 "Story info timestamp is not a ZonedDateTime object."
         );
         Assertions.assertEquals(
-                "UTC", testStory.storyInfo.creationTimestamp.getZone().toString(),
+                "UTC", testArchiveStory.archiveStoryInfo.creationTimestamp.getZone().toString(),
                 "Story info timestamp is not set to UTC."
         );
         Assertions.assertNotEquals(
-                testStory.creationTimestamp.toString(), testStory.storyInfo.toString(),
-                "Story " + testStory.storyInfo.title + " timestamp is the same as the story info timestamp."
+                testArchiveStory.creationTimestamp.toString(), testArchiveStory.archiveStoryInfo.toString(),
+                "Story " + testArchiveStory.archiveStoryInfo.title + " timestamp is the same as the story info timestamp."
         );
 
         // Assert that the author list is not empty
         Assertions.assertNotEquals(
-                0, testStory.storyInfo.authors.size(),
-                "Story " + testStory.storyInfo.title + " does not contain the author(s)."
+                0, testArchiveStory.archiveStoryInfo.authors.size(),
+                "Story " + testArchiveStory.archiveStoryInfo.title + " does not contain the author(s)."
         );
 
         // Assert that the kudos math checks out
-        Integer totalKudos = testStory.storyInfo.registeredKudos.size() +
-                testStory.storyInfo.unnamedRegisteredKudos +
-                testStory.storyInfo.guestKudos;
+        Integer totalKudos = testArchiveStory.archiveStoryInfo.registeredKudos.size() +
+                testArchiveStory.archiveStoryInfo.unnamedRegisteredKudos +
+                testArchiveStory.archiveStoryInfo.guestKudos;
         Assertions.assertEquals(
-                testStory.storyInfo.kudos, totalKudos,
-                "Story " + testStory.storyInfo.title + " kudos calculations are off."
+                testArchiveStory.archiveStoryInfo.kudos, totalKudos,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " kudos calculations are off."
         );
 
         // Assert that the status doesn't have a colon
         Assertions.assertFalse(
-                testStory.storyInfo.status.contains(":"),
-                "Story " + testStory.storyInfo.title + " status contains a colon."
+                testArchiveStory.archiveStoryInfo.status.contains(":"),
+                "Story " + testArchiveStory.archiveStoryInfo.title + " status contains a colon."
         );
 
         // Assert the rating is right
         Assertions.assertEquals(
-                1, testStory.storyInfo.ratings.size(),
-                "Story " + testStory.storyInfo.title + " contains more than one rating."
+                1, testArchiveStory.archiveStoryInfo.ratings.size(),
+                "Story " + testArchiveStory.archiveStoryInfo.title + " contains more than one rating."
         );
         Assertions.assertTrue(expectedRatings.contains(
-                        testStory.storyInfo.ratings.getFirst()),
-                "Story " + testStory.storyInfo.title + " rating is invalid."
+                        testArchiveStory.archiveStoryInfo.ratings.getFirst()),
+                "Story " + testArchiveStory.archiveStoryInfo.title + " rating is invalid."
         );
 
         // Assert the warning items is good
-        for (String warningItem : testStory.storyInfo.warnings) {
+        for (String warningItem : testArchiveStory.archiveStoryInfo.warnings) {
             Assertions.assertTrue(
                     expectedWarnings.contains(warningItem),
-                    "Story " + testStory.storyInfo.title + " warning " + warningItem + " is invalid."
+                    "Story " + testArchiveStory.archiveStoryInfo.title + " warning " + warningItem + " is invalid."
             );
         }
 
         // Assert the category items are good
-        for (String categoryItem : testStory.storyInfo.categories) {
+        for (String categoryItem : testArchiveStory.archiveStoryInfo.categories) {
             Assertions.assertTrue(
                     expectedCategories.contains(categoryItem),
-                    "Story " + testStory.storyInfo.title + " category " + categoryItem + " is invalid."
+                    "Story " + testArchiveStory.archiveStoryInfo.title + " category " + categoryItem + " is invalid."
             );
         }
 
         // Assert time statistics are good
         Assertions.assertInstanceOf(
-                LocalDate.class, testStory.storyInfo.published,
-                "Story " + testStory.storyInfo.title +
+                LocalDate.class, testArchiveStory.archiveStoryInfo.published,
+                "Story " + testArchiveStory.archiveStoryInfo.title +
                         " parent story info publish date is not a LocalDate Object."
         );
         Assertions.assertInstanceOf(
-                LocalDate.class, testStory.storyInfo.statusWhen,
-                "Story " + testStory.storyInfo.title +
+                LocalDate.class, testArchiveStory.archiveStoryInfo.statusWhen,
+                "Story " + testArchiveStory.archiveStoryInfo.title +
                         " parent story info status date is not a LocalDate Object."
         );
 
-        boolean publishBefore = testStory.storyInfo.published.isBefore(testStory.storyInfo.statusWhen);
-        boolean publishEqual = testStory.storyInfo.published.isEqual(testStory.storyInfo.statusWhen);
+        boolean publishBefore = testArchiveStory.archiveStoryInfo.published.isBefore(testArchiveStory.archiveStoryInfo.statusWhen);
+        boolean publishEqual = testArchiveStory.archiveStoryInfo.published.isEqual(testArchiveStory.archiveStoryInfo.statusWhen);
         Assertions.assertTrue(
                 publishBefore | publishEqual,
-                "Story " + testStory.storyInfo.title +
+                "Story " + testArchiveStory.archiveStoryInfo.title +
                         " parent story info publish date is after the updated/completed date."
         );
 
         // Assert the status is good
         Assertions.assertTrue(
-                expectedStatuses.contains(testStory.storyInfo.status),
-                "Story " + testStory.storyInfo.title + " parent story info status is invalid."
+                expectedStatuses.contains(testArchiveStory.archiveStoryInfo.status),
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info status is invalid."
         );
 
         // Assert series items are good
-        for (String series : testStory.storyInfo.series) {
+        for (String series : testArchiveStory.archiveStoryInfo.series) {
             Assertions.assertFalse(
                     series.contains("Part"),
-                    "Story " + testStory.storyInfo.title + " parent story series " + series + " is invalid."
+                    "Story " + testArchiveStory.archiveStoryInfo.title + " parent story series " + series + " is invalid."
             );
         }
 
         // Assert numbers are good
         Assertions.assertTrue(
-                testStory.storyInfo.words > -2,
-                "Story " + testStory.storyInfo.title + " parent story info word count is invalid."
+                testArchiveStory.archiveStoryInfo.words > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info word count is invalid."
         );
         Assertions.assertTrue(
-                testStory.storyInfo.currentChapters > -2,
-                "Story " + testStory.storyInfo.title + " parent story info current chapter count is invalid."
+                testArchiveStory.archiveStoryInfo.currentChapters > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info current chapter count is invalid."
         );
         Assertions.assertTrue(
-                testStory.storyInfo.totalChapters > -2,
-                "Story " + testStory.storyInfo.title + " parent story info total chapter count is invalid."
+                testArchiveStory.archiveStoryInfo.totalChapters > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info total chapter count is invalid."
         );
         Assertions.assertTrue(
-                testStory.storyInfo.comments > -2,
-                "Story " + testStory.storyInfo.title + " parent story info comment count is invalid."
+                testArchiveStory.archiveStoryInfo.comments > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info comment count is invalid."
         );
         Assertions.assertTrue(
-                testStory.storyInfo.kudos > -2,
-                "Story " + testStory.storyInfo.title + " parent story info kudos count is invalid."
+                testArchiveStory.archiveStoryInfo.kudos > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info kudos count is invalid."
         );
         Assertions.assertTrue(
-                testStory.storyInfo.bookmarks > -2,
-                "Story " + testStory.storyInfo.title + " parent story info bookmark count is invalid."
+                testArchiveStory.archiveStoryInfo.bookmarks > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info bookmark count is invalid."
         );
         Assertions.assertTrue(
-                testStory.storyInfo.hits > -2,
-                "Story " + testStory.storyInfo.title + " parent story info hit count is invalid."
+                testArchiveStory.archiveStoryInfo.hits > -2,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " parent story info hit count is invalid."
         );
 
         // Assert current chapters are less than story chapters (Unless there was a ?)
-        if (testStory.storyInfo.totalChapters > -1) { // gt comparison to confirm only counting numbers are used
+        if (testArchiveStory.archiveStoryInfo.totalChapters > -1) { // gt comparison to confirm only counting numbers are used
             Assertions.assertTrue(
-                    testStory.storyInfo.currentChapters <= testStory.storyInfo.totalChapters,
-                    "Story " + testStory.storyInfo.title +
+                    testArchiveStory.archiveStoryInfo.currentChapters <= testArchiveStory.archiveStoryInfo.totalChapters,
+                    "Story " + testArchiveStory.archiveStoryInfo.title +
                             " parent story info current chapter count more than total chapter count."
             );
         }
 
         // Start asserting that object hashes are different from each other
         Assertions.assertNotEquals(
-                testStory.creationHash, testStory.storyInfo.creationHash,
-                "Story " + testStory.storyInfo.title + " hash matches its story info hash."
+                testArchiveStory.creationHash, testArchiveStory.archiveStoryInfo.creationHash,
+                "Story " + testArchiveStory.archiveStoryInfo.title + " hash matches its story info hash."
         );
 
         ArrayList<String> testHashList = new ArrayList<>();
-        testHashList.add(testStory.creationHash);
-        testHashList.add(testStory.storyInfo.creationHash);
+        testHashList.add(testArchiveStory.creationHash);
+        testHashList.add(testArchiveStory.archiveStoryInfo.creationHash);
 
         // Run chapter specific tests in a loop
-        for (Chapter testChapter : testStory.chapters) {
+        for (ArchiveChapter testArchiveChapter : testArchiveStory.archiveChapters) {
             // Call runChapterTests
-            runChapterTests(testChapter, testStory.creationTimestamp.toString());
+            runChapterTests(testArchiveChapter, testArchiveStory.creationTimestamp.toString());
 
             // Assert that there is no duplicate hashes
             Assertions.assertFalse(
-                    testHashList.contains(testChapter.creationHash),
-                    "Chapter " + testChapter.chapterTitle + " hash matches other hashes."
+                    testHashList.contains(testArchiveChapter.creationHash),
+                    "Chapter " + testArchiveChapter.chapterTitle + " hash matches other hashes."
             );
-            testHashList.add(testChapter.creationHash);
+            testHashList.add(testArchiveChapter.creationHash);
 
-            if (testStory.chapters.size() > 1) {
+            if (testArchiveStory.archiveChapters.size() > 1) {
                 // Assert that story title and chapter titles are distinct if multi
                 Assertions.assertNotEquals(
-                        testStory.storyInfo.title, testChapter.chapterTitle,
-                        "Chapter " + testChapter.chapterTitle + " title matches story title."
+                        testArchiveStory.archiveStoryInfo.title, testArchiveChapter.chapterTitle,
+                        "Chapter " + testArchiveChapter.chapterTitle + " title matches story title."
                 );
             }
             else {
                 // Assert that story title and chapter titles are the same if single
                 Assertions.assertTrue(
-                        testChapter.chapterTitle.contains(testStory.storyInfo.title),
-                        "Chapter " + testChapter.chapterTitle +
+                        testArchiveChapter.chapterTitle.contains(testArchiveStory.archiveStoryInfo.title),
+                        "Chapter " + testArchiveChapter.chapterTitle +
                                 " (single chapter) title does not contain story title."
                 );
             }
@@ -435,8 +436,8 @@ public class ArchiveIngestorTest {
     }
 
     @Test
-    public void testStoryParse() throws InterruptedException, ChapterContentNotFoundError, IngestorCanceledError,
-            IngestorElementNotFoundError {
+    public void testStoryParse() throws InterruptedException, ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException,
+            ArchiveElementNotFoundException {
         JSONObject storyTestLinks = testLinks.getJSONObject("Story");
         Iterator<String> testLinksKeys = storyTestLinks.keys();
         while (testLinksKeys.hasNext()) {
@@ -444,10 +445,10 @@ public class ArchiveIngestorTest {
             String testStoryName = testLinksKeys.next();
             String testStoryLink = storyTestLinks.getString(testStoryName);
             testDriver.get(testStoryLink);
-            Story testStory = testIngestor.createStory(testDriver, "");
+            ArchiveStory testArchiveStory = testIngestor.createStory(testDriver, "");
 
             // Test the story
-            runStoryTests(testStory);
+            runStoryTests(testArchiveStory);
         }
     }
 
