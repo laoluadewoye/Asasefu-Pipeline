@@ -40,7 +40,6 @@ public class ArchiveService {
         this.messageService = messageService;
         this.sessionService = sessionService;
 
-        // TODO: Figure out why this needs transactional annotation
         // Start task monitoring
         this.sessionService.sessionTaskMonitor();
     }
@@ -91,6 +90,7 @@ public class ArchiveService {
 
         // TODO: Figure out why this doesn't create the thread I want
         // Start the chapter parsing process
+        this.archiveIngestor.startCreateChapterTaskTest(chapterLink, newSessionId);
         CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateChapterTask(
                 chapterLink, newSessionId
         );
@@ -128,6 +128,7 @@ public class ArchiveService {
 
         // TODO: Figure out why this doesn't create the thread I want
         // Start the story parsing process
+        this.archiveIngestor.startCreateStoryTaskTest(storyLink, newSessionId);
         CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateStoryTask(
                 storyLink, newSessionId
         );

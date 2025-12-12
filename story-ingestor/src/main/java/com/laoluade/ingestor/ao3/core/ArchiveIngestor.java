@@ -28,7 +28,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 // I/O Classes
 import java.io.IOException;
@@ -48,7 +48,7 @@ import java.util.List;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
-@Component
+@Service
 public class ArchiveIngestor {
     // Public Class Constants
     public static final String VERSION = "0.1";
@@ -80,20 +80,20 @@ public class ArchiveIngestor {
 
     private final String driverSocket;
 
-    public ArchiveIngestor() throws IOException {
-        System.out.println("Creating new Archive Ingestor...");
-
-        System.out.println("Loading story links...");
-        this.storyLinks = getJSONFromResource("story_links.json");
-
-        System.out.println("Loading version table...");
-        this.versionTable = getJSONFromResource("version_table.json");
-
-        this.logService = null;
-        this.messageService = null;
-        this.sessionService = null;
-        this.driverSocket = null;
-    }
+//    public ArchiveIngestor() throws IOException {
+//        System.out.println("Creating new Archive Ingestor...");
+//
+//        System.out.println("Loading story links...");
+//        this.storyLinks = getJSONFromResource("story_links.json");
+//
+//        System.out.println("Loading version table...");
+//        this.versionTable = getJSONFromResource("version_table.json");
+//
+//        this.logService = null;
+//        this.messageService = null;
+//        this.sessionService = null;
+//        this.driverSocket = null;
+//    }
 
     public ArchiveIngestor(ArchiveLogService logService, ArchiveMessageService messageService,
                            ArchiveSessionService sessionService,
@@ -1021,6 +1021,26 @@ public class ArchiveIngestor {
     }
 
     @Async("archiveIngestorAsyncExecutor")
+    public void startCreateChapterTaskTest(String chapterLink, String sessionId) {
+        // Create a Selenium driver
+        ChromeOptions options = new ChromeOptions();
+        URL containerLocator;
+
+        try {
+            System.out.println(this.driverSocket);
+            URI containerIdentifier = new URI(this.driverSocket);
+            containerLocator = containerIdentifier.toURL();
+
+            RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
+            this.logService.createInfoLog(this.messageService.getLoggingInfoStoryCreatedDriver());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            this.logService.createInfoLog(this.messageService.createStoryURLExceptionMessage(this.driverSocket));
+        }
+    }
+
+    @Async("archiveIngestorAsyncExecutor")
     public CompletableFuture<ArchiveServerFutureData> startCreateStoryTask(String storyLink, String sessionId) {
         // Create a Selenium driver
         ChromeOptions options = new ChromeOptions();
@@ -1071,5 +1091,10 @@ public class ArchiveIngestor {
         return returnCompletedFuture(
                 newStoryJSONString, this.messageService.getLoggingInfoStoryRetrievedJSON(), sessionId
         );
+    }
+
+    @Async("archiveIngestorAsyncExecutor")
+    public void startCreateStoryTaskTest(String storyLink, String sessionId) {
+        System.out.println("startCreateStoryTaskTest");
     }
 }

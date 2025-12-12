@@ -1,12 +1,12 @@
 package com.laoluade.ingestor.ao3.services;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
-@Component
+@Service
 public class ArchiveMessageService {
     // LOGGING INFO MESSAGES - GENERAL
     // LOGGING INFO MESSAGES - GENERAL

@@ -8,7 +8,7 @@ import com.laoluade.ingestor.ao3.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 // Java Classes
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-@Component
+@Service
 public class ArchiveSessionService {
     // Service components
     @Autowired
@@ -233,7 +233,6 @@ public class ArchiveSessionService {
         this.logService.createInfoLog(this.messageService.createASMPurgeSessionMessage(sessionsToDelete));
     }
 
-    // TODO: Figure out why this needs transactional annotation
     @Async("archiveIngestorAsyncExecutor")
     public void sessionTaskMonitor() throws InterruptedException {
         while (true) {

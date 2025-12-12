@@ -19,7 +19,7 @@ public class ArchiveServerAsyncConfig implements AsyncConfigurer {
     @Value("${archiveIngestor.async.executor.maxPoolSize:4}")
     private Integer maxPoolSize;
 
-    @Value("${archiveIngestor.async.executor.queueCapacity:10}")
+    @Value("${archiveIngestor.async.executor.queueCapacity:2}")
     private Integer queueCapacity;
 
     @Value("${archiveIngestor.async.executor.threadNamePrefix:archiveIngestorAsyncThread-}")
