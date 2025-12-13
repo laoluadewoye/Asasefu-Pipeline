@@ -173,27 +173,28 @@ public class ArchiveServerTest {
                 "Mock Server returned incorrect archive ingestor version from /api/v1/spec."
         );
         Assertions.assertEquals(
-                "otwarchive v0.9.447.1", testSpecInstance.getLatestOTWArchiveVersion(),
+                "otwarchive v0.9.449.0", testSpecInstance.getLatestOTWArchiveVersion(),
                 "Mock Server returned incorrect OTWArchive version from /api/v1/spec."
         );
     }
 
-    // TODO: Add more tests for the response object
     public void runResultTests(ArchiveServerResponseData response, String sessionId, boolean isInit,
                                boolean usesNickname) {
         // General assertions
         Assertions.assertFalse(sessionId.isEmpty(), "Response did not return a session ID.");
+        Assertions.assertFalse(response.getResponseMessage().isEmpty(), "Response did not return a response message.");
+        Assertions.assertEquals(sessionId, response.getSessionId(),
+                "Session id setting for session " + sessionId + "'s initial response is not properly set."
+        );
 
         // Init-dependent assertions
         if (isInit) {
-            Assertions.assertEquals(
-                    testMessageManager.getResponseNewChapterSession(), response.getResponseMessage(),
-                    "Initial response for session " + sessionId +
-                            " did not return the correct new chapter session response."
-            );
+            boolean isNewChapterMsg = response.getResponseMessage().equals(testMessageManager.getResponseNewChapterSession());
+            boolean isNewStoryMsg = response.getResponseMessage().equals(testMessageManager.getResponseNewStorySession());
             Assertions.assertTrue(
-                    response.getParseResult().isEmpty(),
-                    "Initial response for session " + sessionId + " returned something in parse result."
+                    isNewChapterMsg | isNewStoryMsg,
+                    "Initial response for session " + sessionId +
+                            " did not return the correct new session response."
             );
             Assertions.assertFalse(
                     response.isSessionFinished(),
@@ -203,13 +204,38 @@ public class ArchiveServerTest {
                     response.isSessionCanceled(),
                     "Is Canceled setting for session " + sessionId + "'s initial response is not properly set."
             );
+            Assertions.assertFalse(
+                    response.isSessionException(),
+                    "Is Exception setting for session " + sessionId + "'s initial response is not properly set."
+            );
+            Assertions.assertEquals(0, response.getParseChaptersCompleted(),
+                    "Chapters Completed setting for session " + sessionId + "'s initial response is not properly set."
+            );
+            Assertions.assertEquals(0, response.getParseChaptersTotal(),
+                    "Chapters Total setting for session " + sessionId + "'s initial response is not properly set."
+            );
         }
         else {
             Assertions.assertFalse(
                     response.isSessionCanceled(),
-                    "Is Canceled setting for session " + sessionId +
-                            "'s update response indicates something went wrong."
+                    "Is Canceled setting for session " + sessionId + "'s update response indicates something went wrong."
             );
+            Assertions.assertFalse(
+                    response.isSessionException(),
+                    "Is Exception setting for session " + sessionId + "'s update response indicates something went wrong."
+            );
+            boolean totalChaptersUnknown = response.getParseChaptersTotal() == -1;
+            boolean completedLessThanEqualToTotal = response.getParseChaptersCompleted() <= response.getParseChaptersTotal();
+            Assertions.assertTrue(
+                    totalChaptersUnknown | completedLessThanEqualToTotal,
+                    "Completed chapters is greater than total chapters in a bad way for session " + sessionId + "."
+            );
+            if (!totalChaptersUnknown) {
+                Assertions.assertTrue(
+                        response.getParseChaptersTotal() >= 0,
+                        "Total chapters is not at least zero in session " + sessionId + "."
+                );
+            }
         }
 
         // Nickname assertion
@@ -223,6 +249,14 @@ public class ArchiveServerTest {
             Assertions.assertEquals(
                     sessionId, response.getSessionNickname(),
                     "Nickname for session " + sessionId + " is not properly set to session ID by default."
+            );
+        }
+
+        // Non-finished assertion
+        if (!response.isSessionFinished()) {
+            Assertions.assertTrue(
+                    response.getParseResult().isEmpty(),
+                    "Initial response for session " + sessionId + " returned something in parse result."
             );
         }
     }
@@ -264,7 +298,6 @@ public class ArchiveServerTest {
             // Parse update result
             String updateResultString = updateResult.getResponse().getContentAsString();
             ArchiveServerResponseData updateResponse = new ObjectMapper().readValue(updateResultString, ArchiveServerResponseData.class);
-            System.out.println(updateResponse.getResponseMessage());
 
             // Analyze the update
             runResultTests(updateResponse, sessionId, false, usesNickname);
@@ -327,14 +360,8 @@ public class ArchiveServerTest {
         String chapterTestLink = testLinks.getString("Chapter");
         testAPIParse(mvc, chapterTestLink, "/api/v1/parse/chapter", true);
 
-        // Run the chapter without nickname test
-        testAPIParse(mvc, chapterTestLink, "/api/v1/parse/chapter", false);
-
-        // Run the story with nickname test
-        String storyTestLink = testLinks.getString("Story");
-        testAPIParse(mvc, storyTestLink, "/api/v1/parse/story", true);
-
         // Run the story without nickname test
+        String storyTestLink = testLinks.getString("Story");
         testAPIParse(mvc, storyTestLink, "/api/v1/parse/story", false);
     }
 
@@ -359,13 +386,6 @@ public class ArchiveServerTest {
     }
 
     @Test
-    public void testSessionInfoModification(@Autowired MockMvc mvc) {
-        // Create a session info using two different ways and ensure it works expectedly
-        // Assert the non modification of sessionInfo during instances where parsing is not taking place
-        //      and a session is not be retrieved.
-    }
-
-    @Test
     public void testValidSessionAccess (@Autowired MockMvc mvc) {
         // Test both session info getting and session deleting
         // Test that once the session is deleted, it is unable to be retrieved.
@@ -382,10 +402,6 @@ public class ArchiveServerTest {
         // startParse but a bad page link is sent to force interruption by exception catching.
         // startParse but a bad page link is sent to force interruption by URL checker.
     }
-
-    // TODO: Check if a test configuration is needed for this
-    @Test
-    public void testAsyncTasks(@Autowired MockMvc mvc) {}
 
     @AfterAll
     public static void shutdownSelenium() throws InterruptedException {

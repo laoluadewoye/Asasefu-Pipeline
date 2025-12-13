@@ -119,7 +119,10 @@ public class ArchiveIngestor {
 
         System.out.println("Setting up driver socket...");
         this.driverSocket = driverSocket;
-        this.logService.createInfoLog(this.messageService.createDriverSocketMessage(this.driverSocket));
+
+        if (this.driverSocket != null) {
+            this.logService.createInfoLog(this.messageService.createDriverSocketMessage(this.driverSocket));
+        }
     }
 
     public static JSONObject getJSONFromFilepath(String filePath) throws IOException {
@@ -167,8 +170,10 @@ public class ArchiveIngestor {
     }
 
     private void checkForCancel(String sessionId) throws ArchiveIngestorCanceledException {
-        if (this.sessionService.getCanceledStatus(sessionId)) {
-            throw new ArchiveIngestorCanceledException();
+        if (this.sessionService != null) {
+            if (this.sessionService.getCanceledStatus(sessionId)) {
+                throw new ArchiveIngestorCanceledException();
+            }
         }
     }
 
