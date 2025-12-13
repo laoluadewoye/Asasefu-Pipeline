@@ -79,22 +79,22 @@ public class ArchiveSessionService {
                 this.messageService.getDefaultRecordedMessage(), newParseEntity
         ));
 
-        this.logService.createInfoLog(this.messageService.createASMAddedSessionMessage(newSessionId));
+        this.logService.createInfoLog(this.messageService.createASSAddedSessionMessage(newSessionId));
     }
 
     public synchronized void addToSessionMap(String newSessionId, CompletableFuture<ArchiveServerFutureData> newFuture) {
         this.sessionMap.put(newSessionId, newFuture);
-        this.logService.createInfoLog(this.messageService.createASMAddedSessionMapMessage(newSessionId));
+        this.logService.createInfoLog(this.messageService.createASSAddedSessionMapMessage(newSessionId));
     }
 
     public synchronized ArchiveSession getSession(String sessionId) {
         Optional<ArchiveSession> requestedSessionEntity = this.sessionRepository.findById(sessionId);
         if (requestedSessionEntity.isPresent()) {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionMessage(sessionId));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionMessage(sessionId));
             return requestedSessionEntity.get();
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Get Full"));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Get Full"));
             return null;
         }
     }
@@ -102,11 +102,11 @@ public class ArchiveSessionService {
     public synchronized boolean getCanceledStatus(String sessionId) {
         ArchiveSession sessionEntity = this.getSession(sessionId);
         if (sessionEntity != null) {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionCancelMessage(sessionId));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionCancelMessage(sessionId));
             return sessionEntity.isSessionCanceled();
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Get Canceled Status"));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Get Canceled Status"));
             return false;
         }
     }
@@ -116,12 +116,12 @@ public class ArchiveSessionService {
         ArchiveSession requestedSessionEntity = this.getSession(sessionId);
         if (requestedSessionEntity != null) {
             this.sessionRepository.updateCanceledStatus(sessionId);
-            this.logService.createInfoLog(this.messageService.createASMCancelSessionMessage(sessionId));
+            this.logService.createInfoLog(this.messageService.createASSCancelSessionMessage(sessionId));
             return true;
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Cancel"));
-            this.logService.createInfoLog(this.messageService.createASMCancelSessionFailedMessage(sessionId));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Cancel"));
+            this.logService.createInfoLog(this.messageService.createASSCancelSessionFailedMessage(sessionId));
             return false;
         }
     }
@@ -131,10 +131,10 @@ public class ArchiveSessionService {
         ArchiveSession oldSessionEntity = this.getSession(sessionId);
         if (oldSessionEntity != null) {
             this.sessionRepository.save(updatedSessionEntity);
-            this.logService.createInfoLog(this.messageService.createASMUpdatedSessionFullMessage(sessionId));
+            this.logService.createInfoLog(this.messageService.createASSUpdatedSessionFullMessage(sessionId));
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Full Update"));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Full Update"));
         }
     }
 
@@ -148,10 +148,10 @@ public class ArchiveSessionService {
             // Update the session updated timestamp
             this.sessionRepository.updateSessionUpdatedTimestamp(sessionId, this.messageService.getNowTimestampString());
 
-            this.logService.createInfoLog(this.messageService.createASMUpdateLastRecordedMessage(sessionId, newLastRecordedMessage));
+            this.logService.createInfoLog(this.messageService.createASSUpdateLastRecordedMessage(sessionId, newLastRecordedMessage));
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Last Message Update"));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Last Message Update"));
         }
     }
 
@@ -165,10 +165,10 @@ public class ArchiveSessionService {
             // Update the session updated timestamp
             this.sessionRepository.updateSessionUpdatedTimestamp(sessionId, this.messageService.getNowTimestampString());
 
-            this.logService.createInfoLog(this.messageService.createASMUpdateChaptersTotal(sessionId, chapterCount));
+            this.logService.createInfoLog(this.messageService.createASSUpdateChaptersTotal(sessionId, chapterCount));
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Chapter Total Update"));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Chapter Total Update"));
         }
     }
 
@@ -182,10 +182,10 @@ public class ArchiveSessionService {
             // Update the session updated timestamp
             this.sessionRepository.updateSessionUpdatedTimestamp(sessionId, this.messageService.getNowTimestampString());
 
-            this.logService.createInfoLog(this.messageService.createASMUpdateChaptersCompleted(sessionId, chapterCount));
+            this.logService.createInfoLog(this.messageService.createASSUpdateChaptersCompleted(sessionId, chapterCount));
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Chapter Completed Update"));
+            this.logService.createInfoLog(this.messageService.createASSGetSessionFailedMessage(sessionId, "Chapter Completed Update"));
         }
     }
 
@@ -209,7 +209,7 @@ public class ArchiveSessionService {
         for (Map.Entry<String, CompletableFuture<ArchiveServerFutureData>> sessionContentEntry : this.sessionMap.entrySet()) {
             // Obtain session entity
             String curSessionId = sessionContentEntry.getKey();
-            this.logService.createInfoLog(this.messageService.createASMPurgeCheckMessage(curSessionId));
+            this.logService.createInfoLog(this.messageService.createASSPurgeCheckMessage(curSessionId));
             ArchiveSession curSessionEntity = this.getSession(curSessionId);
 
             if (curSessionEntity != null) {
@@ -236,7 +236,7 @@ public class ArchiveSessionService {
                 }
             }
             else {
-                this.logService.createErrorLog(this.messageService.createASMPurgeAssertFailed(curSessionId));
+                this.logService.createErrorLog(this.messageService.createASSPurgeAssertFailed(curSessionId));
             }
         }
 
@@ -250,7 +250,7 @@ public class ArchiveSessionService {
         }
 
         if (!sessionsToDelete.isEmpty()) {
-            this.logService.createInfoLog(this.messageService.createASMPurgeSessionMessage(sessionsToDelete));
+            this.logService.createInfoLog(this.messageService.createASSPurgeSessionMessage(sessionsToDelete));
         }
     }
 

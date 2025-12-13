@@ -74,7 +74,7 @@ public class ArchiveMessageService {
     public String getResponseNewStorySession() { return "New story parsing session created."; }
     public String getResponseGetSessionFailed() { return "Session doesn't exist in database."; }
     public String getResponseCancelSucceeded() { return "Sent cancel signal to the task."; }
-    public String getResponseCancelFailed() { return "Session does not exist in session manager."; }
+    public String getResponseCancelFailed() { return "Session does not exist in session service."; }
 
     // MESSAGE CREATION - GENERAL
     // MESSAGE CREATION - GENERAL
@@ -108,55 +108,55 @@ public class ArchiveMessageService {
         return "Failed to create URL with driver address " + driverSocket + " for story parsing.";
     }
 
-    // MESSAGE CREATION - SESSION MANAGER
-    // MESSAGE CREATION - SESSION MANAGER
-    public String createASMAddedSessionMessage(String newSessionId) {
-        return "Session manager added session " + newSessionId + " to session repository.";
+    // MESSAGE CREATION - SESSION service
+    // MESSAGE CREATION - SESSION service
+    public String createASSAddedSessionMessage(String newSessionId) {
+        return "Session service added session " + newSessionId + " to session repository.";
     }
-    public String createASMAddedSessionMapMessage(String newSessionId) {
-        return "Session manager added session " + newSessionId + " to session map.";
+    public String createASSAddedSessionMapMessage(String newSessionId) {
+        return "Session service added session " + newSessionId + " to session map.";
     }
-    public String createASMGetSessionMessage(String sessionId) {
-        return "Session manager retrieved session " + sessionId + ".";
+    public String createASSGetSessionMessage(String sessionId) {
+        return "Session service retrieved session " + sessionId + ".";
     }
-    public String createASMGetSessionFailedMessage(String sessionId, String requestType) {
-        return "Session manager could not retrieve session " + sessionId + " for " + requestType + ".";
+    public String createASSGetSessionFailedMessage(String sessionId, String requestType) {
+        return "Session service could not retrieve session " + sessionId + " for " + requestType + ".";
     }
-    public String createASMGetSessionCancelMessage(String sessionId) {
-        return "Session manager retrieved canceled status for session " + sessionId + ".";
+    public String createASSGetSessionCancelMessage(String sessionId) {
+        return "Session service retrieved canceled status for session " + sessionId + ".";
     }
-    public String createASMGetLastResponseMessage(String sessionId) {
-        return "Session manager retrieved last response for session " + sessionId + ".";
+    public String createASSGetLastResponseMessage(String sessionId) {
+        return "Session service retrieved last response for session " + sessionId + ".";
     }
-    public String createASMGetLastResponseFailedMessage(String sessionId) {
-        return "Session manager could not retrieve last response for session " + sessionId + ".";
+    public String createASSGetLastResponseFailedMessage(String sessionId) {
+        return "Session service could not retrieve last response for session " + sessionId + ".";
     }
-    public String createASMCancelSessionMessage(String sessionId) {
-        return "Session manager canceled session " + sessionId + ".";
+    public String createASSCancelSessionMessage(String sessionId) {
+        return "Session service canceled session " + sessionId + ".";
     }
-    public String createASMCancelSessionFailedMessage(String sessionId) {
-        return "Session manager could not cancel session " + sessionId + ".";
+    public String createASSCancelSessionFailedMessage(String sessionId) {
+        return "Session service could not cancel session " + sessionId + ".";
     }
-    public String createASMUpdatedSessionFullMessage(String curSessionId) {
-        return "Session manager updated all session information for " + curSessionId + ".";
+    public String createASSUpdatedSessionFullMessage(String curSessionId) {
+        return "Session service updated all session information for " + curSessionId + ".";
     }
-    public String createASMUpdateLastRecordedMessage(String curSessionId, String newLastRecordedMessage) {
-        return "Session manager updated last recorded message for session " + curSessionId + " to: " + newLastRecordedMessage;
+    public String createASSUpdateLastRecordedMessage(String curSessionId, String newLastRecordedMessage) {
+        return "Session service updated last recorded message for session " + curSessionId + " to: " + newLastRecordedMessage;
     }
-    public String createASMUpdateChaptersTotal(String curSessionId, Integer chapterCount) {
-        return "Session manager updated total chapter count for session " + curSessionId + " to: " + chapterCount;
+    public String createASSUpdateChaptersTotal(String curSessionId, Integer chapterCount) {
+        return "Session service updated total chapter count for session " + curSessionId + " to: " + chapterCount;
     }
-    public String createASMUpdateChaptersCompleted(String curSessionId, Integer chapterCount) {
-        return "Session manager updated completed chapter count for session " + curSessionId + " to: " + chapterCount;
+    public String createASSUpdateChaptersCompleted(String curSessionId, Integer chapterCount) {
+        return "Session service updated completed chapter count for session " + curSessionId + " to: " + chapterCount;
     }
-    public String createASMPurgeCheckMessage(String curSessionId) {
-        return "Session manager is checking entry " + curSessionId + " for purge.";
+    public String createASSPurgeCheckMessage(String curSessionId) {
+        return "Session service is checking entry " + curSessionId + " for purge.";
     }
-    public String createASMPurgeSessionMessage(ArrayList<String> sessionsToDelete) {
+    public String createASSPurgeSessionMessage(ArrayList<String> sessionsToDelete) {
         String ids = String.join(", ", sessionsToDelete);
-        return "Session manager deleted the following stale sessions: " + ids + ".";
+        return "Session service deleted the following stale sessions: " + ids + ".";
     }
-    public String createASMPurgeAssertFailed(String curSessionId) {
-        return "Session manager found session " + curSessionId + " in future map and was unable to verify in database for purging.";
+    public String createASSPurgeAssertFailed(String curSessionId) {
+        return "Session service found session " + curSessionId + " in future map and was unable to verify in database for purging.";
     }
 }
