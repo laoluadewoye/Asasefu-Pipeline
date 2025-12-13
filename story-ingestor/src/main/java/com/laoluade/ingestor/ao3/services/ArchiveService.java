@@ -81,16 +81,17 @@ public class ArchiveService {
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
-        if (sessionNickname.isEmpty()) {
+        if (sessionNickname == null) {
+            sessionNickname = newSessionId;
+        }
+        else if (sessionNickname.isEmpty()) {
             sessionNickname = newSessionId;
         }
 
         // Create a session entry
         this.sessionService.addSession(newSessionId, sessionNickname, ArchiveParseType.CHAPTER, chapterLink);
 
-        // TODO: Figure out why this doesn't create the thread I want
         // Start the chapter parsing process
-        this.archiveIngestor.startCreateChapterTaskTest(chapterLink, newSessionId);
         CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateChapterTask(
                 chapterLink, newSessionId
         );
@@ -119,7 +120,10 @@ public class ArchiveService {
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
-        if (sessionNickname.isEmpty()) {
+        if (sessionNickname == null) {
+            sessionNickname = newSessionId;
+        }
+        else if (sessionNickname.isEmpty()) {
             sessionNickname = newSessionId;
         }
 
@@ -128,7 +132,6 @@ public class ArchiveService {
 
         // TODO: Figure out why this doesn't create the thread I want
         // Start the story parsing process
-        this.archiveIngestor.startCreateStoryTaskTest(storyLink, newSessionId);
         CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateStoryTask(
                 storyLink, newSessionId
         );
@@ -145,12 +148,11 @@ public class ArchiveService {
         ArchiveSession sessionEntity = this.sessionService.getSession(sessionId);
         if (sessionEntity != null) {
             ArchiveParse parseEntity = sessionEntity.getParseEntity();
-            String lastResponseMessage = this.sessionService.getLastResponseMessage(sessionId);
             return new ArchiveServerResponseData(
                     sessionEntity.getId(), sessionEntity.getSessionNickname(), sessionEntity.isSessionFinished(),
                     sessionEntity.isSessionCanceled(), sessionEntity.isSessionException(),
                     parseEntity.getParseChaptersCompleted(), parseEntity.getParseChaptersTotal(),
-                    parseEntity.getParseResult(), lastResponseMessage
+                    parseEntity.getParseResult(), sessionEntity.getSessionLastMessage()
             );
         }
         else {

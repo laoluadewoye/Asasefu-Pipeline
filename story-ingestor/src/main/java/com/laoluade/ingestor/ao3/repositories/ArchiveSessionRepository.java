@@ -14,6 +14,11 @@ public interface ArchiveSessionRepository extends JpaRepository<ArchiveSession, 
 
     @Modifying(flushAutomatically = true)
     @Transactional
+    @Query("UPDATE ArchiveSession s SET s.sessionLastMessage = :newLastMessage WHERE s.id = :sessionId")
+    void updateLastMessage(@Param("sessionId") String sessionId, @Param("newLastMessage") String newLastMessage);
+
+    @Modifying(flushAutomatically = true)
+    @Transactional
     @Query("UPDATE ArchiveSession s SET s.sessionFinished = true WHERE s.id = :sessionId")
     void updateFinishedStatus(@Param("sessionId") String sessionId);
 

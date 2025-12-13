@@ -18,7 +18,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class ArchiveSessionService {
@@ -37,7 +39,7 @@ public class ArchiveSessionService {
     private ArchiveParseRepository parseRepository;
 
     // Attributes and constants
-    private final HashMap<String, ArchiveSessionContent> sessionMap;
+    private final HashMap<String, CompletableFuture<ArchiveServerFutureData>> sessionMap;
     private final Integer sessionPersistSecs;
     private final Integer checkIntervalMilli;
 
@@ -50,7 +52,7 @@ public class ArchiveSessionService {
         this.messageService = messageService;
 
         // Set up attributes
-        this.sessionMap = new HashMap<String, ArchiveSessionContent>();
+        this.sessionMap = new HashMap<>();
         this.sessionPersistSecs = sessionPersistSecs;
         this.checkIntervalMilli = checkIntervalMilli;
 
@@ -64,7 +66,7 @@ public class ArchiveSessionService {
                                         String parseTargetLink) {
         // Create a parse entry
         ArchiveParse newParseEntity = new ArchiveParse(
-                parseType, parseTargetLink, "", 0, 0
+                parseType, parseTargetLink, 0, 0, ""
         );
 
         // Create session timestamp
@@ -73,16 +75,15 @@ public class ArchiveSessionService {
         // Create and save a session entry
         this.sessionRepository.save(new ArchiveSession(
                 newSessionId, sessionNickname, creationTimestamp, creationTimestamp,
-                false, false, false, false, newParseEntity
+                false, false, false, false,
+                this.messageService.getDefaultRecordedMessage(), newParseEntity
         ));
 
         this.logService.createInfoLog(this.messageService.createASMAddedSessionMessage(newSessionId));
     }
 
     public synchronized void addToSessionMap(String newSessionId, CompletableFuture<ArchiveServerFutureData> newFuture) {
-        this.sessionMap.put(newSessionId, new ArchiveSessionContent(
-                newFuture, this.messageService.getDefaultRecordedMessage()
-        ));
+        this.sessionMap.put(newSessionId, newFuture);
         this.logService.createInfoLog(this.messageService.createASMAddedSessionMapMessage(newSessionId));
     }
 
@@ -93,20 +94,20 @@ public class ArchiveSessionService {
             return requestedSessionEntity.get();
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Get"));
+            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Get Full"));
             return null;
         }
     }
 
-    public synchronized String getLastResponseMessage(String sessionId) {
-        ArchiveSessionContent sessionContent = this.sessionMap.get(sessionId);
-        if (sessionContent != null) {
-            this.logService.createInfoLog(this.messageService.createASMGetLastResponseMessage(sessionId));
-            return sessionContent.getLastRecordedMessage();
+    public synchronized boolean getCanceledStatus(String sessionId) {
+        ArchiveSession sessionEntity = this.getSession(sessionId);
+        if (sessionEntity != null) {
+            this.logService.createInfoLog(this.messageService.createASMGetSessionCancelMessage(sessionId));
+            return sessionEntity.isSessionCanceled();
         }
         else {
-            this.logService.createInfoLog(this.messageService.createASMGetLastResponseFailedMessage(sessionId));
-            return null;
+            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Get Canceled Status"));
+            return false;
         }
     }
 
@@ -114,13 +115,8 @@ public class ArchiveSessionService {
     public synchronized boolean cancelSession(String sessionId) {
         ArchiveSession requestedSessionEntity = this.getSession(sessionId);
         if (requestedSessionEntity != null) {
-            // Cancel running task
-            this.sessionMap.get(sessionId).getFuture().cancel(true);
-            this.logService.createInfoLog(this.messageService.createASMCancelSessionMessage(sessionId));
-
-            // Update cancel status in database
             this.sessionRepository.updateCanceledStatus(sessionId);
-            
+            this.logService.createInfoLog(this.messageService.createASMCancelSessionMessage(sessionId));
             return true;
         }
         else {
@@ -144,14 +140,19 @@ public class ArchiveSessionService {
 
     @Transactional
     public synchronized void updateLastRecordedMessage(String sessionId, String newLastRecordedMessage) {
-        // Update the last recorded message
-        ArchiveSessionContent sessionContent = this.sessionMap.get(sessionId);
-        sessionContent.setLastRecordedMessage(newLastRecordedMessage);
+        ArchiveSession sessionEntity = this.getSession(sessionId);
+        if (sessionEntity != null) {
+            // Update the total chapter count
+            this.sessionRepository.updateLastMessage(sessionId, newLastRecordedMessage);
 
-        // Update the session updated timestamp
-        this.sessionRepository.updateSessionUpdatedTimestamp(sessionId, this.messageService.getNowTimestampString());
+            // Update the session updated timestamp
+            this.sessionRepository.updateSessionUpdatedTimestamp(sessionId, this.messageService.getNowTimestampString());
 
-        this.logService.createInfoLog(this.messageService.createASMUpdateLastRecordedMessage(sessionId, newLastRecordedMessage));
+            this.logService.createInfoLog(this.messageService.createASMUpdateLastRecordedMessage(sessionId, newLastRecordedMessage));
+        }
+        else {
+            this.logService.createInfoLog(this.messageService.createASMGetSessionFailedMessage(sessionId, "Last Message Update"));
+        }
     }
 
     @Transactional
@@ -189,9 +190,11 @@ public class ArchiveSessionService {
     }
 
     @Transactional
-    public synchronized void updatePurgeStatus(ArrayList<String> sessionsToDelete) {
-        for (String sessionId : sessionsToDelete) {
-            this.sessionRepository.updatePurgedStatus(sessionId);
+    public synchronized void updatePurgeStatus(ArrayList<String> sessionsToDelete,
+                                               ArrayList<String> finalSessionMessages) {
+        for (int i = 0; i < sessionsToDelete.size(); i++) {
+            this.sessionRepository.updatePurgedStatus(sessionsToDelete.get(i));
+            this.sessionRepository.updateLastMessage(sessionsToDelete.get(i), finalSessionMessages.get(i));
         }
     }
 
@@ -200,39 +203,58 @@ public class ArchiveSessionService {
         //      delete something it's not supposed to.
         // Get session IDs to delete
         ArrayList<String> sessionsToDelete = new ArrayList<>();
+        ArrayList<String> finalSessionMessages = new ArrayList<>();
         ZonedDateTime currentTimestamp = this.messageService.getNowTimestamp();
 
-        for (Map.Entry<String, ArchiveSessionContent> sessionContentEntry : this.sessionMap.entrySet()) {
+        for (Map.Entry<String, CompletableFuture<ArchiveServerFutureData>> sessionContentEntry : this.sessionMap.entrySet()) {
             // Obtain session entity
-            ArchiveSession sessionEntity = this.getSession(sessionContentEntry.getKey());
+            String curSessionId = sessionContentEntry.getKey();
+            this.logService.createInfoLog(this.messageService.createASMPurgeCheckMessage(curSessionId));
+            ArchiveSession curSessionEntity = this.getSession(curSessionId);
 
-            if (sessionEntity != null) {
-                ZonedDateTime lastSessionUpdated = ZonedDateTime.parse(sessionEntity.getSessionUpdated());
+            if (curSessionEntity != null) {
+                ZonedDateTime lastSessionUpdated = ZonedDateTime.parse(curSessionEntity.getSessionUpdated());
                 ZonedDateTime lastValidSessionTime = lastSessionUpdated.plusSeconds(this.sessionPersistSecs);
 
                 if (currentTimestamp.isAfter(lastValidSessionTime)) {
-                    sessionsToDelete.add(sessionEntity.getId());
+                    // Add id
+                    sessionsToDelete.add(curSessionId);
+
+                    // Add message
+                    CompletableFuture<ArchiveServerFutureData> curFuture = this.sessionMap.get(curSessionId);
+                    if (curFuture.isDone()) {
+                        try {
+                            finalSessionMessages.add(curFuture.get().getResultMessage());
+                        }
+                        catch (CancellationException | ExecutionException | InterruptedException e) {
+                            finalSessionMessages.add(curSessionEntity.getSessionLastMessage());
+                        }
+                    }
+                    else {
+                        finalSessionMessages.add(curSessionEntity.getSessionLastMessage());
+                    }
                 }
             }
             else {
-                this.logService.createErrorLog(
-                        this.messageService.createASMPurgeAssertFailed(sessionContentEntry.getKey())
-                );
+                this.logService.createErrorLog(this.messageService.createASMPurgeAssertFailed(curSessionId));
             }
         }
 
         // Update purge status in database
-        this.updatePurgeStatus(sessionsToDelete);
+        this.updatePurgeStatus(sessionsToDelete, finalSessionMessages);
 
         // Canceling and purging sessions by their session ID
         for (String sessionId : sessionsToDelete) {
-            this.sessionMap.get(sessionId).getFuture().cancel(true);
+            this.sessionMap.get(sessionId).cancel(true);
             this.sessionMap.remove(sessionId);
         }
 
-        this.logService.createInfoLog(this.messageService.createASMPurgeSessionMessage(sessionsToDelete));
+        if (!sessionsToDelete.isEmpty()) {
+            this.logService.createInfoLog(this.messageService.createASMPurgeSessionMessage(sessionsToDelete));
+        }
     }
 
+    // TODO: Figure out a way to force async threads to stop when the server stops
     @Async("archiveIngestorAsyncExecutor")
     public void sessionTaskMonitor() throws InterruptedException {
         while (true) {

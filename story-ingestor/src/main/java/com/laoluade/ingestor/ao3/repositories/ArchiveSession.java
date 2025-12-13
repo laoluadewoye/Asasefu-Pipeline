@@ -24,6 +24,10 @@ public class ArchiveSession {
     private boolean sessionException;
     private boolean sessionPurged;
 
+    // Create a custom result column
+    @Column(columnDefinition = "TEXT")
+    private String sessionLastMessage;
+
     // Join the tables
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "parseId", referencedColumnName = "id")

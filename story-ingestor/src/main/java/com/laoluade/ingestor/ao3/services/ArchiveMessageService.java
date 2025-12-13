@@ -122,6 +122,9 @@ public class ArchiveMessageService {
     public String createASMGetSessionFailedMessage(String sessionId, String requestType) {
         return "Session manager could not retrieve session " + sessionId + " for " + requestType + ".";
     }
+    public String createASMGetSessionCancelMessage(String sessionId) {
+        return "Session manager retrieved canceled status for session " + sessionId + ".";
+    }
     public String createASMGetLastResponseMessage(String sessionId) {
         return "Session manager retrieved last response for session " + sessionId + ".";
     }
@@ -135,7 +138,7 @@ public class ArchiveMessageService {
         return "Session manager could not cancel session " + sessionId + ".";
     }
     public String createASMUpdatedSessionFullMessage(String curSessionId) {
-        return "Session manager updated all session information " + curSessionId + ".";
+        return "Session manager updated all session information for " + curSessionId + ".";
     }
     public String createASMUpdateLastRecordedMessage(String curSessionId, String newLastRecordedMessage) {
         return "Session manager updated last recorded message for session " + curSessionId + " to: " + newLastRecordedMessage;
@@ -145,6 +148,9 @@ public class ArchiveMessageService {
     }
     public String createASMUpdateChaptersCompleted(String curSessionId, Integer chapterCount) {
         return "Session manager updated completed chapter count for session " + curSessionId + " to: " + chapterCount;
+    }
+    public String createASMPurgeCheckMessage(String curSessionId) {
+        return "Session manager is checking entry " + curSessionId + " for purge.";
     }
     public String createASMPurgeSessionMessage(ArrayList<String> sessionsToDelete) {
         String ids = String.join(", ", sessionsToDelete);

@@ -4,6 +4,9 @@ package com.laoluade.ingestor.ao3.core;
 import com.laoluade.ingestor.ao3.exceptions.*;
 
 // JSON Packages
+import com.laoluade.ingestor.ao3.services.ArchiveLogService;
+import com.laoluade.ingestor.ao3.services.ArchiveMessageService;
+import com.laoluade.ingestor.ao3.services.ArchiveSessionService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -84,7 +87,7 @@ public class ArchiveIngestorTest {
         testLinks = ArchiveIngestor.getJSONFromFilepath(testLinksPathDecoded);
 
         System.out.println("Creating archive ingestor instance...");
-        testIngestor = new ArchiveIngestor();
+        testIngestor = new ArchiveIngestor(null, null, null, null);
 
         System.out.println("Creating Selenium container...");
         try {
@@ -135,6 +138,7 @@ public class ArchiveIngestorTest {
         }
     }
 
+    // TODO: Test that the test driver is quit somehow
     @Test
     public void testBadWork() {
         try {
