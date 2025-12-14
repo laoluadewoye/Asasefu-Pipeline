@@ -1,14 +1,14 @@
 import { inject, Injectable } from '@angular/core';
-import { SpecInfo } from '../models/spec_info';
+import { ArchiveServerSpecData } from '../models/archiveServerSpecData';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
 })
-export class SpecService {
+export class ArchiveServerSpecService {
     httpClient = inject(HttpClient);
     
     getArchiveServerSpecData() {
-        return this.httpClient.get<SpecInfo>("http://localhost:8080/api/v1/spec")
+        return this.httpClient.get<ArchiveServerSpecData>("http://localhost:8080/api/v1/spec")
     }
 }

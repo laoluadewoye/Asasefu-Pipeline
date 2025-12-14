@@ -65,7 +65,7 @@ public class ArchiveMessageService {
 
     // NON-RESPONSE OBJECT MESSAGES
     // NON-RESPONSE OBJECT MESSAGES
-    public String getTestDataValue() { return "Hello Archive Ingestor Version 1 API!"; }
+    public String getTestDataValue() { return "Hello Archive Ingestor Version 1 API! API is Working!"; }
     public String getInfoGenericFailValue() { return "[Failed Unknown]"; }
     public String getDefaultRecordedMessage() { return "Starting new session..."; }
     public String getArchiveNotFoundPageTitle() { return "404 Error | Archive of Our Own"; }

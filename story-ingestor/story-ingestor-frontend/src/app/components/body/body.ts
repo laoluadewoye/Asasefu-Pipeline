@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { TestAPI } from "./testapi/testapi";
+import { Tester } from "./tester/tester";
 
 @Component({
   selector: 'app-body',
-  imports: [TestAPI],
+  imports: [Tester],
   templateUrl: './body.html',
   styleUrl: './body.css',
 })
