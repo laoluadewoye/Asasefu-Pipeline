@@ -226,6 +226,7 @@ public class ArchiveServerTest {
             );
             boolean totalChaptersUnknown = response.getParseChaptersTotal() == -1;
             boolean completedLessThanEqualToTotal = response.getParseChaptersCompleted() <= response.getParseChaptersTotal();
+            // TODO: This failed somewhere
             Assertions.assertTrue(
                     totalChaptersUnknown | completedLessThanEqualToTotal,
                     "Completed chapters is greater than total chapters in a bad way for session " + sessionId + "."
@@ -366,41 +367,277 @@ public class ArchiveServerTest {
     }
 
     @Test
-    public void testAPISessionCanceling(@Autowired MockMvc mvc) {
+    public void testAPISessionCanceling(@Autowired MockMvc mvc) throws UnsupportedEncodingException {
+        // Run the story without nickname test
+        String storyTestLink = testLinks.getString("Story");
+        ArchiveServerRequestData newRequest = new ArchiveServerRequestData(storyTestLink);
+        String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        MvcResult testInitResult = null;
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/story").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/story.");
+        }
+
         // Cancel the parsing midway
+        String testInitString = testInitResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        String sessionId = testInitResponse.getSessionId();
+        String sessionCancelingPath = "/api/v1/parse/session/" + sessionId + "/cancel";
+
+        MvcResult testCancelResult = null;
+        try {
+            testCancelResult = mvc.perform(get(sessionCancelingPath))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for " + sessionCancelingPath + ".");
+        }
+
+        String testCancelString = testCancelResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testCancelResponse = new ObjectMapper().readValue(testCancelString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseCancelSucceeded(), testCancelResponse.getResponseMessage(),
+                "Mock Server returned the wrong response message for canceling a session."
+        );
+
+        // Get an update
+        sessionId = testCancelResponse.getSessionId();
+        String sessionGettingPath = "/api/v1/parse/session/" + sessionId;
+
+        MvcResult testUpdateResult = null;
+        try {
+            testUpdateResult = mvc.perform(get(sessionGettingPath))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for " + sessionGettingPath + ".");
+        }
+
+        String testUpdateString = testUpdateResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testUpdateResponse = new ObjectMapper().readValue(testUpdateString, ArchiveServerResponseData.class);
+        Assertions.assertTrue(
+                testUpdateResponse.isSessionCanceled(),
+                "Mock Server did not update the session cancel flag after canceling a session."
+        );
+        Assertions.assertFalse(
+                testUpdateResponse.isSessionFinished(),
+                "Mock Server updated the session finished flag after canceling a session."
+        );
+        Assertions.assertFalse(
+                testUpdateResponse.isSessionException(),
+                "Mock Server updated the session exception flag after canceling a session."
+        );
     }
 
     @Test
-    public void testResponseOutcomes(@Autowired MockMvc mvc) {
-        // Outcomes
-        //      - Session completes successfully
-        //          * JSON-formatted json string
-        //          * only finished flag is set
-        //          * chapter count attributes are modified
-        //      - Session is canceled
-        //          * empty json string
-        //          * only canceled flag is set
-        //      - Session errors out (but properly)
-        //          * empty json string
-        //          * finished and canceled flags are both set
+    public void testInvalidSessionAccess (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
+        // Test session getting
+        String sessionGettingPath = "/api/v1/parse/session/abc123";
+        MvcResult testGetResult = null;
+        try {
+            testGetResult = mvc.perform(get(sessionGettingPath))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for " + sessionGettingPath + ".");
+        }
+        String testGetString = testGetResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testGetResponse = new ObjectMapper().readValue(testGetString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseGetSessionFailed(), testGetResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying that a session get request failed."
+        );
+
+        // Test session deleting
+        String sessionCancelingPath = "/api/v1/parse/session/abc123/cancel";
+        MvcResult testCancelResult = null;
+        try {
+            testCancelResult = mvc.perform(get(sessionCancelingPath))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for " + sessionGettingPath + ".");
+        }
+        String testCancelString = testCancelResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testCancelResponse = new ObjectMapper().readValue(testCancelString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseCancelFailed(), testCancelResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying that a session cancel request failed."
+        );
     }
 
     @Test
-    public void testValidSessionAccess (@Autowired MockMvc mvc) {
-        // Test both session info getting and session deleting
-        // Test that once the session is deleted, it is unable to be retrieved.
-        // Test that the session's place in session manager can expire on its own, and it is unable to be retrieved.
+    public void testBadPageLinkResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException,
+            InterruptedException {
+        // Run the chapter with nickname test and bad ao3 URL
+        ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
+                "https://archiveofourown.org/works/1111", sessionNickname
+        );
+        String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        MvcResult testInitResult = null;
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/chapter").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/chapter.");
+        }
+
+        String testInitString = testInitResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        String sessionId = testInitResponse.getSessionId();
+
+        // Get a final result
+        Thread.sleep(8000);
+        String sessionGettingPath = "/api/v1/parse/session/" + sessionId;
+        MvcResult testUpdateResult = null;
+        try {
+            testUpdateResult = mvc.perform(get(sessionGettingPath))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for " + sessionGettingPath + ".");
+        }
+
+        String testUpdateString = testUpdateResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testUpdateResponse = new ObjectMapper().readValue(testUpdateString, ArchiveServerResponseData.class);
+//        Assertions.assertTrue(
+//                testUpdateResponse.isSessionException(),
+//                "Mock Server did not update the session exception flag after catching an exception during parsing."
+//        );
+        Assertions.assertFalse(
+                testUpdateResponse.isSessionCanceled(),
+                "Mock Server updated the session canceled flag after canceling a session."
+        );
+        Assertions.assertFalse(
+                testUpdateResponse.isSessionFinished(),
+                "Mock Server updated the session finished flag after canceling a session."
+        );
+        Assertions.assertTrue(
+                testUpdateResponse.getParseResult().isEmpty(),
+                "Mock server put something in parse result after canceling a session."
+        );
+        boolean messageIsURLError = testUpdateResponse.getResponseMessage().equals(
+                testMessageManager.getResponseBadURLFormat()
+        );
+        boolean messageIsNotFound = testUpdateResponse.getResponseMessage().equals(
+                testMessageManager.getLoggingErrorParseFailedNotFound()
+        );
+        Assertions.assertTrue(
+                messageIsURLError | messageIsNotFound,
+                "Mock server did not return the proper response for notifying of an element parsing failed."
+        );
+
+        // Run the chapter with a badly formatted link
+        newRequest = new ArchiveServerRequestData("abc123def456");
+        newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/chapter").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return proper error response to get request for /api/v1/parse/chapter.");
+        }
+
+        testInitString = testInitResult.getResponse().getContentAsString();
+        testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseBadURLFormat(), testInitResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying of a badly formatted link."
+        );
     }
 
     @Test
-    public void testInvalidSessionAccess (@Autowired MockMvc mvc) {
-        // Test both session info getting and session deleting
+    public void testBadNicknameResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
+        String chapterTestLink = testLinks.getString("Chapter");
+        ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
+                chapterTestLink, "This nickname has spaces and quotes"
+        );
+        String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        MvcResult testInitResult = null;
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/chapter").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/chapter.");
+        }
+
+        String testInitString = testInitResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseBadNicknameFormat(), testInitResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying of a badly formatted nickname for chapter parsing."
+        );
+
+        newRequest = new ArchiveServerRequestData(
+                chapterTestLink, "' OR '1'='1/cancel"
+        );
+        newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/story").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/chapter.");
+        }
+
+        testInitString = testInitResult.getResponse().getContentAsString();
+        testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseBadNicknameFormat(), testInitResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying of a badly formatted nickname for story parsing."
+        );
     }
 
     @Test
-    public void testBadPageLinkResponse (@Autowired MockMvc mvc) {
-        // startParse but a bad page link is sent to force interruption by exception catching.
-        // startParse but a bad page link is sent to force interruption by URL checker.
+    public void testBadSessionIdResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
+        // Try when getting session information
+        MvcResult testGetResult = null;
+        try {
+            testGetResult = mvc.perform(get("/api/v1/parse/session/' OR '1'='1"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to bad session ID for get request.");
+        }
+        String testGetString = testGetResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testGetResponse = new ObjectMapper().readValue(testGetString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseBadSessionId(), testGetResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying of a badly formatted session id for get request."
+        );
+        
+        // Try when canceling session
+        MvcResult testCancelResult = null;
+        try {
+            testCancelResult = mvc.perform(get("/api/v1/parse/session/' OR '1'='1/cancel"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to bad session ID for get request.");
+        }
+        String testCancelString = testCancelResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testCancelResponse = new ObjectMapper().readValue(testCancelString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseBadSessionId(), testCancelResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying of a badly formatted session id for cancel request."
+        );
     }
 
     @AfterAll

@@ -11,6 +11,8 @@ public class ArchiveMessageService {
     // LOGGING INFO MESSAGES - GENERAL
     // LOGGING INFO MESSAGES - GENERAL
     public String getLoggingInfoTestAPISend() { return "Sending test API string."; }
+    public String getLoggingInfoActiveSessionFound() { return "Active Selenium session found. Closing it to start new session..."; }
+    public String getLoggingInfoNoActiveSessionFound() { return "No active Selenium session found. Starting new session..."; }
 
     // LOGGING INFO MESSAGES - CHAPTER
     // LOGGING INFO MESSAGES - CHAPTER
@@ -43,6 +45,9 @@ public class ArchiveMessageService {
     public String getLoggingErrorParseFailedCanceled() {
         return "The archive ingestor's task was canceled from parent service.";
     }
+    public String getLoggingErrorParseFailedNotFound() {
+        return "The archive ingestor came across the archive's 404 page and stopped parsing.";
+    }
 
     // LOGGING ERROR MESSAGES - CHAPTER
     // LOGGING ERROR MESSAGES - CHAPTER
@@ -63,13 +68,22 @@ public class ArchiveMessageService {
     public String getTestDataValue() { return "Hello Archive Ingestor Version 1 API!"; }
     public String getInfoGenericFailValue() { return "[Failed Unknown]"; }
     public String getDefaultRecordedMessage() { return "Starting new session..."; }
+    public String getArchiveNotFoundPageTitle() { return "404 Error | Archive of Our Own"; }
     public ZonedDateTime getNowTimestamp() { return ZonedDateTime.now(ZoneId.of("UTC")); }
     public String getNowTimestampString() { return this.getNowTimestamp().toString(); }
     public String getEmptyValue() { return ""; }
 
     // RESPONSE OBJECT MESSAGES
     // RESPONSE OBJECT MESSAGES
-    public String getResponseBadURLFormat() { return "Sent link was not a proper URL format."; }
+    public String getResponseBadURLFormat() {
+        return "Sent link was not a proper URL format. Ensure you are using a work link " +
+                "(i.e. https://archiveofourown.org/works/XXXXXXX/chapters/XXXXXXXXX or one without the chapters bit)";
+    }
+    public String getResponseBadNicknameFormat() {
+        return "Sent nickname was not a proper URL format. " +
+                "Ensure your nickname has only alphanumeric characters, underscore, or hyphen";
+    }
+    public String getResponseBadSessionId() { return "Sent session ID was not in expected form."; }
     public String getResponseNewChapterSession() { return "New chapter parsing session created."; }
     public String getResponseNewStorySession() { return "New story parsing session created."; }
     public String getResponseGetSessionFailed() { return "Session doesn't exist in database."; }

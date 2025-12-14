@@ -80,22 +80,6 @@ public class ArchiveIngestor {
 
     private final String driverSocket;
 
-//    TODO: Figure out how to bring this back
-//    public ArchiveIngestor() throws IOException {
-//        System.out.println("Creating new Archive Ingestor...");
-//
-//        System.out.println("Loading story links...");
-//        this.storyLinks = getJSONFromResource("story_links.json");
-//
-//        System.out.println("Loading version table...");
-//        this.versionTable = getJSONFromResource("version_table.json");
-//
-//        this.logService = null;
-//        this.messageService = null;
-//        this.sessionService = null;
-//        this.driverSocket = null;
-//    }
-
     public ArchiveIngestor(ArchiveLogService logService, ArchiveMessageService messageService,
                            ArchiveSessionService sessionService,
                            @Value("${archiveIngestor.driver.socket}") String driverSocket)
@@ -794,7 +778,8 @@ public class ArchiveIngestor {
     }
 
     public ArchiveChapter createChapter(RemoteWebDriver driver, String sessionId) throws InterruptedException,
-            ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException {
+            ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException,
+            ArchivePageNotFoundException {
         try {
             updateLastRecordedMessage("Opening website " + driver.getCurrentUrl() + "...", sessionId);
 
@@ -811,12 +796,18 @@ public class ArchiveIngestor {
                 );
             }
 
-            // Set the chapter completed count
-            updateCompletedChapters(1, sessionId);
-
             // Get the title
             updateLastRecordedMessage("Getting website page title...", sessionId);
             String pageTitle = driver.getTitle();
+            if (pageTitle == null) {
+                throw new ArchivePageNotFoundException();
+            }
+            if (this.messageService != null) {
+                if (pageTitle.equals(this.messageService.getArchiveNotFoundPageTitle())) {
+                    updateLastRecordedMessage(this.messageService.getLoggingErrorParseFailedNotFound(), sessionId);
+                    throw new ArchivePageNotFoundException();
+                }
+            }
             updateLastRecordedMessage("Parsing a chapter of " + pageTitle, sessionId);
 
             // Get story information
@@ -824,6 +815,9 @@ public class ArchiveIngestor {
 
             // Save total chapter count
             updateTotalChapters(newArchiveStoryInfo.totalChapters, sessionId);
+
+            // Set the chapter completed count
+            updateCompletedChapters(1, sessionId);
 
             // Create a chapter object
             updateLastRecordedMessage("Creating new Chapter instance...", sessionId);
@@ -867,7 +861,8 @@ public class ArchiveIngestor {
     }
 
     public ArchiveStory createStory(RemoteWebDriver driver, String sessionId) throws InterruptedException,
-            ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException {
+            ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException,
+            ArchivePageNotFoundException {
         try {
             // Do the first chapter
             updateLastRecordedMessage("Parsing chapter 1 of " + driver.getTitle(), sessionId);
@@ -980,9 +975,8 @@ public class ArchiveIngestor {
         return CompletableFuture.completedFuture(new ArchiveServerFutureData(resultMessage, true));
     }
 
-    @Async("archiveIngestorAsyncExecutor")
-    public CompletableFuture<ArchiveServerFutureData> startCreateChapterTask(String chapterLink, String sessionId) {
-        // Create a Selenium driver
+    // TODO: Reset any possible session and navigate to the chapter URL
+    public RemoteWebDriver createDriver() {
         ChromeOptions options = new ChromeOptions();
         URL containerLocator;
 
@@ -991,22 +985,34 @@ public class ArchiveIngestor {
             containerLocator = containerIdentifier.toURL();
         }
         catch (URISyntaxException | MalformedURLException e) {
-            return returnFailedFuture(
-                    this.messageService.createChapterURLExceptionMessage(this.driverSocket), sessionId
-            );
+            this.logService.createInfoLog(this.messageService.createChapterURLExceptionMessage(this.driverSocket));
+            return null;
         }
 
         RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
         this.logService.createInfoLog(this.messageService.getLoggingInfoChapterCreatedDriver());
 
-        // Navigate to the chapter URL
-        driver.get(chapterLink);
+        if (driver.getSessionId() != null) {
+            this.logService.createInfoLog(this.messageService.getLoggingInfoActiveSessionFound());
+            driver.quit();
+            driver = new RemoteWebDriver(containerLocator, options);
+        }
+        else {
+            this.logService.createInfoLog(this.messageService.getLoggingInfoNoActiveSessionFound());
+        }
 
-        // Create a chapter object
+        return driver;
+    }
+
+    @Async("archiveIngestorAsyncExecutor")
+    public CompletableFuture<ArchiveServerFutureData> startCreateChapterTask(String chapterLink, String sessionId) {
+        // Create a driver and chapter objects
+        RemoteWebDriver driver = this.createDriver();
         ArchiveChapter newArchiveChapter;
 
         // Try to parse and quit the driver after the attempt
         try {
+            driver.get(chapterLink);
             newArchiveChapter = this.createChapter(driver, sessionId);
             this.logService.createInfoLog(this.messageService.getLoggingInfoChapterParseSucceeded());
             driver.quit();
@@ -1032,6 +1038,11 @@ public class ArchiveIngestor {
             this.logService.createInfoLog(this.messageService.getLoggingInfoChapterQuitDriver());
             return returnFailedFuture(this.messageService.getLoggingErrorParseFailedCanceled(), sessionId);
         }
+        catch (ArchivePageNotFoundException e) {
+            driver.quit();
+            this.logService.createInfoLog(this.messageService.getLoggingInfoChapterQuitDriver());
+            return returnFailedFuture(this.messageService.getLoggingErrorParseFailedNotFound(), sessionId);
+        }
 
         // Set the response instance with the chapter's contents and return everything
         String newChapterJSONString = newArchiveChapter.getJSONRepWithParent().toString();
@@ -1042,30 +1053,12 @@ public class ArchiveIngestor {
 
     @Async("archiveIngestorAsyncExecutor")
     public CompletableFuture<ArchiveServerFutureData> startCreateStoryTask(String storyLink, String sessionId) {
-        // Create a Selenium driver
-        ChromeOptions options = new ChromeOptions();
-        URL containerLocator;
-
-        try {
-            URI containerIdentifier = new URI(this.driverSocket);
-            containerLocator = containerIdentifier.toURL();
-        }
-        catch (URISyntaxException | MalformedURLException e) {
-            return returnFailedFuture(
-                    this.messageService.createStoryURLExceptionMessage(this.driverSocket), sessionId
-            );
-        }
-
-        RemoteWebDriver driver = new RemoteWebDriver(containerLocator, options);
-        this.logService.createInfoLog(this.messageService.getLoggingInfoStoryCreatedDriver());
-
-        // Navigate to the story URL
-        driver.get(storyLink);
-
-        // Create a story object
+        // Create a driver and story objects
+        RemoteWebDriver driver = this.createDriver();
         ArchiveStory newArchiveStory;
 
         try {
+            driver.get(storyLink);
             newArchiveStory = this.createStory(driver, sessionId);
             this.logService.createInfoLog(this.messageService.getLoggingInfoStoryParseSucceeded());
             driver.quit();
@@ -1090,6 +1083,11 @@ public class ArchiveIngestor {
             driver.quit();
             this.logService.createInfoLog(this.messageService.getLoggingInfoStoryQuitDriver());
             return returnFailedFuture(this.messageService.getLoggingErrorParseFailedCanceled(), sessionId);
+        }
+        catch (ArchivePageNotFoundException e) {
+            driver.quit();
+            this.logService.createInfoLog(this.messageService.getLoggingInfoChapterQuitDriver());
+            return returnFailedFuture(this.messageService.getLoggingErrorParseFailedNotFound(), sessionId);
         }
 
         // Set the response instance with the story's contents and return everything

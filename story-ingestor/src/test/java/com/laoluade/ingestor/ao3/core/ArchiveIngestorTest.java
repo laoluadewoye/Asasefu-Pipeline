@@ -135,7 +135,6 @@ public class ArchiveIngestorTest {
         }
     }
 
-    // TODO: Test that the test driver is quit somehow
     @Test
     public void testBadWork() {
         try {
@@ -143,7 +142,7 @@ public class ArchiveIngestorTest {
             testIngestor.createChapter(testDriver, "");
         }
         catch (ArchiveVersionIncompatibleException | ArchiveParagraphsNotFoundException | ArchiveIngestorCanceledException |
-               ArchiveElementNotFoundException e) {
+               ArchiveElementNotFoundException | ArchivePageNotFoundException e) {
             System.out.println(e.toString());
         }
         catch (InterruptedException e) {
@@ -238,7 +237,7 @@ public class ArchiveIngestorTest {
 
     @Test
     public void testChapterParse() throws InterruptedException, ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException,
-            ArchiveElementNotFoundException {
+            ArchiveElementNotFoundException, ArchivePageNotFoundException {
         JSONObject chapterTestLinks = testLinks.getJSONObject("Chapter");
         Iterator<String> testLinksKeys = chapterTestLinks.keys();
         while (testLinksKeys.hasNext()) {
@@ -438,7 +437,7 @@ public class ArchiveIngestorTest {
 
     @Test
     public void testStoryParse() throws InterruptedException, ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException,
-            ArchiveElementNotFoundException {
+            ArchiveElementNotFoundException, ArchivePageNotFoundException {
         JSONObject storyTestLinks = testLinks.getJSONObject("Story");
         Iterator<String> testLinksKeys = storyTestLinks.keys();
         while (testLinksKeys.hasNext()) {

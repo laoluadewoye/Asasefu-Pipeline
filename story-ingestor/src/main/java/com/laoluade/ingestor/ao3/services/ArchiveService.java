@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 // Java Classes
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 @Service
 public class ArchiveService {
@@ -68,11 +69,15 @@ public class ArchiveService {
         // Extract request items
         String chapterLink = request.getPageLink();
         String sessionNickname = request.getSessionNickname();
+        boolean nicknameSent = request.isNicknameSent();
         this.logService.createInfoLog(this.messageService.getLoggingInfoChapterObtainRequest());
 
-        // Check if chapter link passed inspection
+        // Check if request passed inspection
         if (chapterLink.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
+        }
+        if (nicknameSent && sessionNickname.isEmpty()) {
+            return new ArchiveServerResponseData(this.messageService.getResponseBadNicknameFormat());
         }
 
         // Create a session ID
@@ -81,10 +86,7 @@ public class ArchiveService {
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
-        if (sessionNickname == null) {
-            sessionNickname = newSessionId;
-        }
-        else if (sessionNickname.isEmpty()) {
+        if (sessionNickname.isBlank()) {
             sessionNickname = newSessionId;
         }
 
@@ -107,11 +109,15 @@ public class ArchiveService {
         // Extract request items
         String storyLink = request.getPageLink();
         String sessionNickname = request.getSessionNickname();
+        boolean nicknameSent = request.isNicknameSent();
         this.logService.createInfoLog(this.messageService.getLoggingInfoStoryObtainRequest());
 
-        // Check if story link passed inspection
+        // Check if request passed inspection
         if (storyLink.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
+        }
+        if (nicknameSent && sessionNickname.isEmpty()) {
+            return new ArchiveServerResponseData(this.messageService.getResponseBadNicknameFormat());
         }
 
         // Create a session ID
@@ -120,17 +126,13 @@ public class ArchiveService {
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
-        if (sessionNickname == null) {
-            sessionNickname = newSessionId;
-        }
-        else if (sessionNickname.isEmpty()) {
+        if (sessionNickname.isBlank()) {
             sessionNickname = newSessionId;
         }
 
         // Create a session entry
         this.sessionService.addSession(newSessionId, sessionNickname, ArchiveParseType.STORY, storyLink);
 
-        // TODO: Figure out why this doesn't create the thread I want
         // Start the story parsing process
         CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateStoryTask(
                 storyLink, newSessionId
@@ -143,7 +145,18 @@ public class ArchiveService {
         return new ArchiveServerResponseData(newSessionId, sessionNickname, this.messageService.getResponseNewStorySession());
     }
 
+    public boolean validateSessionId(String sessionId) {
+        Pattern sessionIdPattern = Pattern.compile("^[a-fA-F0-9]*$", Pattern.CASE_INSENSITIVE);
+        return sessionIdPattern.matcher(sessionId).matches();
+    }
+
     public ArchiveServerResponseData getSessionInformation(String sessionId) {
+        // Validate the session ID
+        boolean sessionIdValid = this.validateSessionId(sessionId);
+        if (!sessionIdValid) {
+            return new ArchiveServerResponseData(sessionId, this.messageService.getResponseBadSessionId());
+        }
+
         // Get the session information or send a failed message
         ArchiveSession sessionEntity = this.sessionService.getSession(sessionId);
         if (sessionEntity != null) {
@@ -161,6 +174,12 @@ public class ArchiveService {
     }
 
     public ArchiveServerResponseData cancelSession(String sessionId) {
+        // Validate the session ID
+        boolean sessionIdValid = this.validateSessionId(sessionId);
+        if (!sessionIdValid) {
+            return new ArchiveServerResponseData(sessionId, this.messageService.getResponseBadSessionId());
+        }
+
         // Cancel the session's async task
         boolean success = this.sessionService.cancelSession(sessionId);
         if (success) {
