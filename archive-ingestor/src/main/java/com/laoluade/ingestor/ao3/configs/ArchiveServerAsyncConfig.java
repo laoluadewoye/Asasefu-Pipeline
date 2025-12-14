@@ -13,10 +13,10 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 public class ArchiveServerAsyncConfig implements AsyncConfigurer {
-    @Value("${archiveServer.async.executor.corePoolSize:2}")
+    @Value("${archiveServer.async.executor.corePoolSize:3}")
     private Integer corePoolSize;
 
-    @Value("${archiveServer.async.executor.maxPoolSize:4}")
+    @Value("${archiveServer.async.executor.maxPoolSize:5}")
     private Integer maxPoolSize;
 
     @Value("${archiveServer.async.executor.queueCapacity:2}")
@@ -29,7 +29,8 @@ public class ArchiveServerAsyncConfig implements AsyncConfigurer {
     public Executor getAsyncExecutor()  {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(this.corePoolSize);
-        executor.setMaxPoolSize(this.maxPoolSize+1); // One additional thread for the session monitoring loop
+        // Two additional thread for the session monitoring loop and driver creation
+        executor.setMaxPoolSize(this.maxPoolSize+2);
         executor.setQueueCapacity(this.queueCapacity);
         executor.setThreadNamePrefix(this.threadNamePrefix);
         executor.initialize();

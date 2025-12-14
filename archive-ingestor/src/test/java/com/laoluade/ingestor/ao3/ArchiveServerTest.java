@@ -52,7 +52,7 @@ public class ArchiveServerTest {
 
     // Test values to check and use
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
-            "app-root", "app-header", "app-body", "app-testapi", "app-footer"
+            "app-root", "app-header", "app-body", "app-tester", "app-footer"
     ));
     private static final String sessionNickname = "testParseSession";
     private static final Integer sessionUpdateIntervalMilli = 2000;
@@ -226,7 +226,6 @@ public class ArchiveServerTest {
             );
             boolean totalChaptersUnknown = response.getParseChaptersTotal() == -1;
             boolean completedLessThanEqualToTotal = response.getParseChaptersCompleted() <= response.getParseChaptersTotal();
-            // TODO: This failed somewhere
             Assertions.assertTrue(
                     totalChaptersUnknown | completedLessThanEqualToTotal,
                     "Completed chapters is greater than total chapters in a bad way for session " + sessionId + "."
@@ -517,7 +516,7 @@ public class ArchiveServerTest {
         String sessionId = testInitResponse.getSessionId();
 
         // Get a final result
-        Thread.sleep(8000);
+        Thread.sleep(11000);
         String sessionGettingPath = "/api/v1/parse/session/" + sessionId;
         MvcResult testUpdateResult = null;
         try {

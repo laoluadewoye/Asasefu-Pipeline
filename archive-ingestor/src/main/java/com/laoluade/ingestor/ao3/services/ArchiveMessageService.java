@@ -11,17 +11,21 @@ public class ArchiveMessageService {
     // LOGGING INFO MESSAGES - GENERAL
     // LOGGING INFO MESSAGES - GENERAL
     public String getLoggingInfoTestAPISend() { return "Sending test API string."; }
-    public String getLoggingInfoActiveSessionFound() { return "Active Selenium session found. Closing it to start new session..."; }
-    public String getLoggingInfoNoActiveSessionFound() { return "No active Selenium session found. Starting new session..."; }
+    public String getLoggingInfoActiveSessionFound() {
+        return "Active Selenium session found. Closing it to start new session...";
+    }
+    public String getLoggingInfoNoActiveSessionFound() {
+        return "No active Selenium session found. Starting new session...";
+    }
+    public String getLoggingInfoCreatedDriver() { return "Successfully created driver for parsing."; }
+    public String getLoggingInfoQuitDriver() { return "Successfully quit driver after parsing."; }
 
     // LOGGING INFO MESSAGES - CHAPTER
     // LOGGING INFO MESSAGES - CHAPTER
     public String getLoggingInfoChapterObtainRequest() {
         return "Successfully obtained chapter parsing request contents.";
     }
-    public String getLoggingInfoChapterCreatedDriver() { return "Successfully created driver for chapter parsing."; }
     public String getLoggingInfoChapterParseSucceeded() { return "Successfully parsed link and extracted chapter."; }
-    public String getLoggingInfoChapterQuitDriver() { return "Successfully quit driver for chapter parsing."; }
     public String getLoggingInfoChapterRetrievedJSON() {
         return "Successfully retrieved JSON representation of new chapter.";
     }
@@ -29,15 +33,16 @@ public class ArchiveMessageService {
     // LOGGING INFO MESSAGES - STORY
     // LOGGING INFO MESSAGES - STORY
     public String getLoggingInfoStoryObtainRequest() { return "Successfully obtained story parsing request contents."; }
-    public String getLoggingInfoStoryCreatedDriver() { return "Successfully created driver for story parsing."; }
     public String getLoggingInfoStoryParseSucceeded() { return "Successfully parsed link and extracted story."; }
-    public String getLoggingInfoStoryQuitDriver() { return "Successfully quit driver for story parsing."; }
     public String getLoggingInfoStoryRetrievedJSON() {
         return "Successfully retrieved JSON representation of new story.";
     }
 
     // LOGGING ERROR MESSAGES - GENERAL
     // LOGGING ERROR MESSAGES - GENERAL
+    public String getLoggingErrorCreatedDriverFailed() {
+        return "The driver service could not create a driver for parsing.";
+    }
     public String getLoggingErrorParseFailedIO() { return "The archive ingestor could not read in json settings."; }
     public String getLoggingErrorParseFailedElement() {
         return "The archive ingestor could not find a required element during parsing.";
@@ -47,6 +52,9 @@ public class ArchiveMessageService {
     }
     public String getLoggingErrorParseFailedNotFound() {
         return "The archive ingestor came across the archive's 404 page and stopped parsing.";
+    }
+    public String getLoggingErrorBadParseType() {
+        return "A bad parse type was fed into the archive ingestion service.";
     }
 
     // LOGGING ERROR MESSAGES - CHAPTER
@@ -71,7 +79,6 @@ public class ArchiveMessageService {
     public String getArchiveNotFoundPageTitle() { return "404 Error | Archive of Our Own"; }
     public ZonedDateTime getNowTimestamp() { return ZonedDateTime.now(ZoneId.of("UTC")); }
     public String getNowTimestampString() { return this.getNowTimestamp().toString(); }
-    public String getEmptyValue() { return ""; }
 
     // RESPONSE OBJECT MESSAGES
     // RESPONSE OBJECT MESSAGES
@@ -109,21 +116,12 @@ public class ArchiveMessageService {
     public String createSpecDataMessage(String aiVersion, String otwVersion) {
         return "Sending version number " + aiVersion + " and OTW Archive version " + otwVersion + ".";
     }
-
-    // MESSAGE CREATION - CHAPTER
-    // MESSAGE CREATION - CHAPTER
-    public String createChapterURLExceptionMessage(String driverSocket) {
-        return "Failed to create URL with driver address " + driverSocket + " for chapter parsing.";
+    public String createURLExceptionMessage(String driverSocket) {
+        return "Failed to create URL with driver address " + driverSocket + " for parsing.";
     }
 
-    // MESSAGE CREATION - STORY
-    // MESSAGE CREATION - STORY
-    public String createStoryURLExceptionMessage(String driverSocket) {
-        return "Failed to create URL with driver address " + driverSocket + " for story parsing.";
-    }
-
-    // MESSAGE CREATION - SESSION service
-    // MESSAGE CREATION - SESSION service
+    // MESSAGE CREATION - SESSION SERVICE
+    // MESSAGE CREATION - SESSION SERVICE
     public String createASSAddedSessionMessage(String newSessionId) {
         return "Session service added session " + newSessionId + " to session repository.";
     }
@@ -139,12 +137,6 @@ public class ArchiveMessageService {
     public String createASSGetSessionCancelMessage(String sessionId) {
         return "Session service retrieved canceled status for session " + sessionId + ".";
     }
-    public String createASSGetLastResponseMessage(String sessionId) {
-        return "Session service retrieved last response for session " + sessionId + ".";
-    }
-    public String createASSGetLastResponseFailedMessage(String sessionId) {
-        return "Session service could not retrieve last response for session " + sessionId + ".";
-    }
     public String createASSCancelSessionMessage(String sessionId) {
         return "Session service canceled session " + sessionId + ".";
     }
@@ -155,7 +147,8 @@ public class ArchiveMessageService {
         return "Session service updated all session information for " + curSessionId + ".";
     }
     public String createASSUpdateLastRecordedMessage(String curSessionId, String newLastRecordedMessage) {
-        return "Session service updated last recorded message for session " + curSessionId + " to: " + newLastRecordedMessage;
+        return "Session service updated last recorded message for session " +
+                curSessionId + " to: " + newLastRecordedMessage;
     }
     public String createASSUpdateChaptersTotal(String curSessionId, Integer chapterCount) {
         return "Session service updated total chapter count for session " + curSessionId + " to: " + chapterCount;
@@ -171,6 +164,7 @@ public class ArchiveMessageService {
         return "Session service deleted the following stale sessions: " + ids + ".";
     }
     public String createASSPurgeAssertFailed(String curSessionId) {
-        return "Session service found session " + curSessionId + " in future map and was unable to verify in database for purging.";
+        return "Session service found session " + curSessionId +
+                " in future map and was unable to verify in database for purging.";
     }
 }

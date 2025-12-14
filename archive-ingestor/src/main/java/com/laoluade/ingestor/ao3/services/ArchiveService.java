@@ -97,8 +97,8 @@ public class ArchiveService {
         this.sessionService.addSession(newSessionId, sessionNickname, ArchiveParseType.CHAPTER, chapterLink);
 
         // Start the chapter parsing process
-        CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateChapterTask(
-                chapterLink, newSessionId
+        CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateTask(
+                chapterLink, newSessionId, ArchiveParseType.CHAPTER
         );
 
         // Save the completable future reference
@@ -140,8 +140,8 @@ public class ArchiveService {
         this.sessionService.addSession(newSessionId, sessionNickname, ArchiveParseType.STORY, storyLink);
 
         // Start the story parsing process
-        CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateStoryTask(
-                storyLink, newSessionId
+        CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateTask(
+                storyLink, newSessionId, ArchiveParseType.STORY
         );
 
         // Save the completable future reference
