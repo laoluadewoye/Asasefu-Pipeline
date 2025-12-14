@@ -262,7 +262,7 @@ public class ArchiveServerTest {
         }
     }
 
-    public String runSessionTest(MockMvc mvc, MvcResult initialResult, boolean usesNickname)
+    public void runSessionTest(MockMvc mvc, MvcResult initialResult, boolean usesNickname)
             throws UnsupportedEncodingException, InterruptedException {
         // Parse initial result
         String initialResultString = initialResult.getResponse().getContentAsString();
@@ -275,7 +275,8 @@ public class ArchiveServerTest {
 
         // Start a cycle of update getting until a value is returned
         int updateCount = 1;
-        while(true) {
+        boolean notFinished = true;
+        while(notFinished) {
             // Print the update count
             System.out.println("On update " + updateCount + " for session ID " + sessionId + "...");
 
@@ -312,7 +313,34 @@ public class ArchiveServerTest {
                                 " did not return the JSON string on update " + updateCount +
                                 " even though the finished flag is set."
                 );
-                return updateResponse.getParseResult();
+
+                // Try creating a JSON from the string
+                JSONObject finalResultJSON = null;
+                try {
+                    finalResultJSON = new JSONObject(updateResponse.getParseResult());
+                    System.out.println(finalResultJSON.toString(4));
+                } catch (JSONException e) {
+                    Assertions.fail("JSON string returned from parsing was unreadable.");
+                }
+
+                // Ensure that response facts line up with JSON facts
+                JSONObject finalstoryInfo = null;
+                try {
+                    finalstoryInfo = finalResultJSON.getJSONObject("parentArchiveStoryInfo");
+                }
+                catch (JSONException e) {
+                    finalstoryInfo = finalResultJSON.getJSONObject("archiveStoryInfo");
+                }
+                Assertions.assertEquals(
+                        finalstoryInfo.getInt("currentChapters"), updateResponse.getParseChaptersCompleted(),
+                        "Update response's completed chapters count does not line up with returned JSON."
+                );
+                Assertions.assertEquals(
+                        finalstoryInfo.getInt("totalChapters"), updateResponse.getParseChaptersTotal(),
+                        "Update response's total chapters count does not line up with returned JSON."
+                );
+
+                notFinished = false;
             }
 
             // Update the update count
@@ -343,15 +371,7 @@ public class ArchiveServerTest {
         }
 
         // Run the rest of the session testing
-        String finalResultString = runSessionTest(mvc, testInfoResult, usesNickname);
-
-        // Try creating a JSON from the string
-        try {
-            JSONObject finalResultJSON = new JSONObject(finalResultString);
-            System.out.println(finalResultJSON.toString(4));
-        } catch (JSONException e) {
-            Assertions.fail("JSON string returned from parsing was unreadable.");
-        }
+        runSessionTest(mvc, testInfoResult, usesNickname);
     }
 
     @Test

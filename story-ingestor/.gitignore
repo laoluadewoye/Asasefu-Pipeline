@@ -10,6 +10,7 @@ asasefu-pipeline.zip
 *.iws
 *.iml
 *.ipr
+*.pptx
 
 ### Eclipse ###
 .apt_generated

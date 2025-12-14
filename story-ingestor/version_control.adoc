@@ -9,8 +9,6 @@ Latest Version: 0.1
 
 |Version 0.1
 a|* Initial project.
-* Good for otwarchive version 0.9.442.1.
-
+* Good for otwarchive v0.9.449.0.
 
 |===
-

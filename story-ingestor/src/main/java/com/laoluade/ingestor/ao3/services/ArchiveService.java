@@ -86,7 +86,10 @@ public class ArchiveService {
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
-        if (sessionNickname.isBlank()) {
+        if (sessionNickname == null) {
+            sessionNickname = newSessionId;
+        }
+        else if (sessionNickname.isBlank()) {
             sessionNickname = newSessionId;
         }
 
@@ -126,7 +129,10 @@ public class ArchiveService {
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
-        if (sessionNickname.isBlank()) {
+        if (sessionNickname == null) {
+            sessionNickname = newSessionId;
+        }
+        else if (sessionNickname.isBlank()) {
             sessionNickname = newSessionId;
         }
 
