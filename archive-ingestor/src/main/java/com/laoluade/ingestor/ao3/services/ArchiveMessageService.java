@@ -86,6 +86,10 @@ public class ArchiveMessageService {
         return "Sent link was not a proper URL format. Ensure you are using a work link " +
                 "(i.e. https://archiveofourown.org/works/XXXXXXX/chapters/XXXXXXXXX or one without the chapters bit)";
     }
+    public String getResponseBadStoryLink() {
+        return "Sent link was a chapter-specific link. Only send a work-wide link like " +
+                "https://archiveofourown.org/works/XXXXXXX";
+    }
     public String getResponseBadNicknameFormat() {
         return "Sent nickname was not a proper URL format. " +
                 "Ensure your nickname has only alphanumeric characters, underscore, or hyphen";

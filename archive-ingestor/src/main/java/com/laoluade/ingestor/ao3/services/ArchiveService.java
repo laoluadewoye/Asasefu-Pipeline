@@ -119,6 +119,9 @@ public class ArchiveService {
         if (storyLink.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
         }
+        if (storyLink.contains("chapters")) { // TODO: Create a test for this
+            return new ArchiveServerResponseData(this.messageService.getResponseBadStoryLink());
+        }
         if (nicknameSent && sessionNickname.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadNicknameFormat());
         }

@@ -11,10 +11,11 @@ import { catchError } from 'rxjs';
 })
 export class Tester {
     archiveServerTestService = inject(ArchiveServerTestService);
-    archiveServerTestData = signal<ArchiveServerTestData>({testData: ""})
+    archiveServerTestData = signal<ArchiveServerTestData>({testData: ""});
+    buttonText = "Test API";
 
     onTesterButtonClick() {
-        this.archiveServerTestService.getArchiveIngestorTestData().pipe(
+        this.archiveServerTestService.getArchiveServerTestData().pipe(
             catchError((err) => {
                 console.log(err);
                 throw err;

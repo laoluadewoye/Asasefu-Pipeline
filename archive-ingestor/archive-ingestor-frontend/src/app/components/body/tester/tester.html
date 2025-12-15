@@ -1,2 +1,11 @@
-<button id="testerButton" (click)="onTesterButtonClick()">Test API</button>
-<p>{{ archiveServerTestData().testData }}</p>
+<p>
+    Now that everything is covered, you should first test the API
+    to make sure the front end and back end is connected properly.
+    Click the "{{ buttonText }}" button below to see if it's working properly.
+    If you see a new message pop up to it's right,
+    that means that the backend of this web app is running properly.
+</p>
+<div class="center-content">
+    <button class="button-padding" (click)="onTesterButtonClick()">{{ buttonText }}</button>
+    <p>{{ archiveServerTestData().testData }}</p>
+</div>

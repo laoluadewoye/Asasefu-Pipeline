@@ -496,23 +496,45 @@ public class ArchiveServerTest {
     @Test
     public void testBadPageLinkResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException,
             InterruptedException {
-        // Run the chapter with nickname test and bad ao3 URL
+        // Run a chapter link on a story branch
         ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
-                "https://archiveofourown.org/works/1111", sessionNickname
+                "https://archiveofourown.org/works/1111/chapters/22222"
         );
         String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
         MvcResult testInitResult = null;
         try {
             testInitResult = mvc.perform(
-                    post("/api/v1/parse/chapter").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+                    post("/api/v1/parse/story").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
             ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
         } catch (Exception e) {
-            Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/chapter.");
+            Assertions.fail("Mock Server was unable to return response to post request for /api/v1/parse/chapter.");
         }
 
         String testInitString = testInitResult.getResponse().getContentAsString();
         ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(
+                testMessageManager.getResponseBadStoryLink(), testInitResponse.getResponseMessage(),
+                "Mock server did not return the proper response for notifying that a story service got a chapter link."
+        );
+
+        // Run the chapter with nickname test and bad ao3 URL
+        newRequest = new ArchiveServerRequestData(
+                "https://archiveofourown.org/works/999999999999", sessionNickname
+        );
+        newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        testInitResult = null;
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/chapter").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to post request for /api/v1/parse/chapter.");
+        }
+
+        testInitString = testInitResult.getResponse().getContentAsString();
+        testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
         String sessionId = testInitResponse.getSessionId();
 
         // Get a final result
