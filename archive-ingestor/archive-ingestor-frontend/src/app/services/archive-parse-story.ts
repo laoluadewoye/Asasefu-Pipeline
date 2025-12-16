@@ -7,7 +7,7 @@ import { ArchiveServerResponseData } from '../models/archive-server-response-dat
   providedIn: 'root',
 })
 export class ArchiveParseStoryService {
-    httpClient = inject(HttpClient);
+    httpClient: HttpClient = inject(HttpClient);
 
     postParseStoryRequest(archiveServerRequestData: ArchiveServerRequestData) {
         return this.httpClient.post<ArchiveServerResponseData>(

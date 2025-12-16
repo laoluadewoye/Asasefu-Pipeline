@@ -6,7 +6,7 @@ import { ArchiveServerTestData } from '../models/archive-server-test-data';
   providedIn: 'root',
 })
 export class ArchiveServerTestService {
-    httpClient = inject(HttpClient);
+    httpClient: HttpClient = inject(HttpClient);
 
     getArchiveServerTestData() {
         return this.httpClient.get<ArchiveServerTestData>("http://localhost:8080/api/v1");

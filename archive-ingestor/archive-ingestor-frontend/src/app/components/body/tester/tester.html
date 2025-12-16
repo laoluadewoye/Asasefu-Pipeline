@@ -4,8 +4,12 @@
     Click the "{{ buttonText }}" button below to see if it's working properly.
     If you see a new message pop up to it's right,
     that means that the backend of this web app is running properly.
+    If you instead see <strong>{{ recievedDefaultValue }}</strong>, then that means the connection
+    is not working.
 </p>
 <div class="center-content">
     <button class="button-padding" (click)="onTesterButtonClick()">{{ buttonText }}</button>
-    <p>{{ archiveServerTestData().testData }}</p>
+    @if (buttonPressed()) {
+        <p class="fade-in" animate.leave="fade-out">{{ archiveServerTestData().testData }}</p>
+    }
 </div>

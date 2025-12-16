@@ -1,0 +1,9 @@
+button {
+    background-color: var(--theme-red-color);
+    color: var(--theme-white-color);
+}
+
+button:hover {
+    background-color: var(--theme-white-color);
+    color: var(--theme-red-color);
+}

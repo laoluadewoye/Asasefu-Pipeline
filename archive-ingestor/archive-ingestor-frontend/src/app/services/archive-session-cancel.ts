@@ -6,7 +6,7 @@ import { ArchiveServerResponseData } from '../models/archive-server-response-dat
   providedIn: 'root',
 })
 export class ArchiveSessionCancelService {
-    httpClient = inject(HttpClient);
+    httpClient: HttpClient = inject(HttpClient);
 
     getCancelSessionResponse(sessionId: string) {
         return this.httpClient.get<ArchiveServerResponseData>(

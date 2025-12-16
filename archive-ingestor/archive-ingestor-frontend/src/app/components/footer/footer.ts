@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, Inject, inject, Input, OnInit, signal } from '@angular/core';
 import { ArchiveServerSpecService } from '../../services/archive-server-spec';
 import { ArchiveServerSpecData } from '../../models/archive-server-spec-data';
 import { catchError } from 'rxjs';
@@ -10,13 +10,18 @@ import { catchError } from 'rxjs';
   styleUrl: './footer.css',
 })
 export class Footer implements OnInit {
-    archiveServerSpecService = inject(ArchiveServerSpecService);
+    @Input() recievedDefaultValue!: string;
+    
+    archiveServerSpecService: ArchiveServerSpecService = inject(ArchiveServerSpecService);
     archiveServerSpecData = signal<ArchiveServerSpecData>({
-        archiveIngestorVersion: "[Not Available]", 
-        latestOTWArchiveVersion: "[Not Available]"
+        archiveIngestorVersion: "", latestOTWArchiveVersion: ""
     });
 
     ngOnInit(): void {
+        this.archiveServerSpecData.set({
+            archiveIngestorVersion: this.recievedDefaultValue, 
+            latestOTWArchiveVersion: this.recievedDefaultValue
+        });
         this.archiveServerSpecService.getArchiveServerSpecData().pipe(
             catchError((err) => {
                 console.log(err);

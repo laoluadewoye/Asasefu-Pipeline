@@ -1,0 +1,56 @@
+<div id="settings-div" class="red-background">
+    <div [class.dimming-layer]="isDisabled()" [class.undimming-layer]="!isDisabled()">
+        <h2>Set Parsing Details</h2>
+        <form [formGroup]="settingsFormGroup" (submit)="submitSettingsFormGroup()">
+            @if (settingsFormGroup.get('parseType')?.invalid) {
+                <div class="error fade-in" animate.leave="fade-out">
+                    <p>Error: Please pick a parsing method. You cannot proceed until you do.</p>
+                </div>
+            }
+            <span>
+                <h3>Parsing Method (Required):</h3>
+                <div id="parseType-radio">
+                    <input type="radio" id="parseType-chapter" name="parseType" value="chapter" formControlName="parseType">
+                    <label for="parseType-chapter">Chapter</label>
+                    <input type="radio" id="parseType-story" name="parseType" value="story" formControlName="parseType">
+                    <label for="parseType-story">Story</label>
+                </div>
+            </span>
+            @if (settingsFormGroup.get('parseLink')?.dirty && settingsFormGroup.get('parseLink')?.invalid) {
+                <div class="error fade-in" animate.leave="fade-out">
+                    <p>
+                        Error: The typed/copied link cannot be used. Please look at the instructions above and try again.
+                        Also, in case you missed it, chapter links are not allowed to be used for story parses.
+                    </p>
+                </div>
+            }
+            <span>
+                <label for="parseLink"><h3>Chapter or Story Link (Required):</h3></label>
+                <input type="text" id="parseLink" name="parseLink" formControlName="parseLink">
+            </span>
+            @if (settingsFormGroup.get('parseNickname')?.dirty && settingsFormGroup.get('parseNickname')?.invalid) {
+                <div class="error fade-in" animate.leave="fade-out">
+                    <p>Error: The typed nickname cannot be used. Only use alphanumeric characters, underscores, or dashes.</p>
+                </div>
+            }
+            <span>
+                <label for="parseNickname"><h3>Nickname (Optional):</h3></label>
+                <input type="text" id="parseNickname" name="parseNickname" formControlName="parseNickname">
+            </span>
+            @if (!isDisabled()) {
+                <div class="center-content">
+                    <input [class.dimming-layer]="settingsFormGroup.invalid" [disabled]="settingsFormGroup.invalid" type="submit" value="Start Parsing">
+                </div>
+            }
+        </form>
+    </div>
+    <p>Session ID: {{ latestResponse().sessionId }}</p>
+    <p>Session Nickname: {{ latestResponse().sessionNickname }}</p>
+    <p>Session Finished: {{ latestResponse().sessionFinished }}</p>
+    <p>Session Canceled: {{ latestResponse().sessionCanceled }}</p>
+    <p>Session Exception: {{ latestResponse().sessionException }}</p>
+    <p>Session Chapters Completed: {{ latestResponse().parseChaptersCompleted }}</p>
+    <p>Session Chapters Total: {{ latestResponse().parseChaptersTotal }}</p>
+    <p>Session Parse Result: {{ latestResponse().parseResult }}</p>
+    <p>Session Response Message: {{ latestResponse().responseMessage }}</p>
+</div>

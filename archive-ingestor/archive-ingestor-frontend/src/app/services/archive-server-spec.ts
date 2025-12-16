@@ -6,7 +6,7 @@ import { ArchiveServerSpecData } from '../models/archive-server-spec-data';
   providedIn: 'root',
 })
 export class ArchiveServerSpecService {
-    httpClient = inject(HttpClient);
+    httpClient: HttpClient = inject(HttpClient);
     
     getArchiveServerSpecData() {
         return this.httpClient.get<ArchiveServerSpecData>("http://localhost:8080/api/v1/spec");
