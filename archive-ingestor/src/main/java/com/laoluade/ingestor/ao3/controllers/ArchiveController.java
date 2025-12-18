@@ -40,13 +40,20 @@ public class ArchiveController {
         return archiveService.startParseStory(request);
     }
 
-    @GetMapping("/api/v1/parse/session/{sessionID}")
-    public ArchiveServerResponseData getSessionInformation(@PathVariable String sessionID) {
-        return archiveService.getSessionInformation(sessionID);
+    @GetMapping("/api/v1/parse/session/{sessionId}")
+    public ArchiveServerResponseData getSessionInformation(@PathVariable String sessionId) {
+        return archiveService.getSessionInformation(sessionId);
     }
 
-    @GetMapping("/api/v1/parse/session/{sessionID}/cancel")
-    public ArchiveServerResponseData cancelSession(@PathVariable String sessionID) {
-        return archiveService.cancelSession(sessionID);
+    // TODO: Create a test for this
+    // TODO: Add functionality to search the database for session information
+    @GetMapping("/api/v1/parse/session/{sessionId}/live")
+    public ArchiveServerResponseData getSessionInformationLive(@PathVariable String sessionId) throws InterruptedException {
+        return archiveService.getSessionInformationLive(sessionId);
+    }
+
+    @GetMapping("/api/v1/parse/session/{sessionId}/cancel")
+    public ArchiveServerResponseData cancelSession(@PathVariable String sessionId) {
+        return archiveService.cancelSession(sessionId);
     }
 }

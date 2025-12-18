@@ -10,6 +10,9 @@ import com.laoluade.ingestor.ao3.repositories.ArchiveParse;
 import com.laoluade.ingestor.ao3.repositories.ArchiveParseType;
 import com.laoluade.ingestor.ao3.repositories.ArchiveSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 // Java Classes
@@ -19,7 +22,6 @@ import java.util.regex.Pattern;
 
 @Service
 public class ArchiveService {
-    // Service components
     @Autowired
     private final ArchiveIngestor archiveIngestor;
     
@@ -32,14 +34,25 @@ public class ArchiveService {
     @Autowired
     private final ArchiveSessionService sessionService;
 
+    @Autowired
+    private final SimpMessagingTemplate websocketTemplate;
+
+    private final Integer sendIntervalMilli;
+
     public ArchiveService(ArchiveIngestor archiveIngestor, ArchiveLogService logService,
-                          ArchiveMessageService messageService, ArchiveSessionService sessionService)
+                          ArchiveMessageService messageService, ArchiveSessionService sessionService,
+                          SimpMessagingTemplate websocketTemplate,
+                          @Value("${archiveSever.websocket.sendIntervalMilli:300}") Integer sendIntervalMilli)
             throws InterruptedException {
         // Initialize components
         this.archiveIngestor = archiveIngestor;
         this.logService = logService;
         this.messageService = messageService;
         this.sessionService = sessionService;
+
+        // Set websocket attributes
+        this.websocketTemplate = websocketTemplate;
+        this.sendIntervalMilli = sendIntervalMilli;
 
         // Start task monitoring
         this.sessionService.sessionTaskMonitor();
@@ -180,6 +193,42 @@ public class ArchiveService {
         else {
             return new ArchiveServerResponseData(sessionId, this.messageService.getResponseGetSessionFailed());
         }
+    }
+
+    @Async("archiveServerAsyncExecutor")
+    public void runLiveSessionFeed(String sessionId) throws InterruptedException {
+        ArchiveServerResponseData responseData;
+        boolean sessionStillLive;
+        do {
+            // Get and send information
+            Thread.sleep(this.sendIntervalMilli);
+            responseData = getSessionInformation(sessionId);
+            this.websocketTemplate.convertAndSend("/api/v1/websocket/topic/get-session-live", responseData);
+
+            this.logService.createInfoLog(this.messageService.createWSSentMessage(sessionId));
+
+            // Run a check to decide if to continue
+            boolean messageIsFail = responseData.getResponseMessage().equals(
+                    this.messageService.getResponseGetSessionFailed()
+            );
+            boolean sessionComplete = responseData.isSessionFinished() || responseData.isSessionCanceled() ||
+                    responseData.isSessionException();
+            sessionStillLive = !messageIsFail && !sessionComplete;
+        } while (sessionStillLive);
+    }
+
+    public ArchiveServerResponseData getSessionInformationLive(String sessionId) throws InterruptedException {
+        // Validate the session ID
+        boolean sessionIdValid = this.validateSessionId(sessionId);
+        if (!sessionIdValid) {
+            return new ArchiveServerResponseData(sessionId, this.messageService.getResponseBadSessionId());
+        }
+
+        // Start sending through websockets
+        this.runLiveSessionFeed(sessionId);
+
+        // Return the response
+        return new ArchiveServerResponseData(sessionId, this.messageService.getResponseNewSessionFeed());
     }
 
     public ArchiveServerResponseData cancelSession(String sessionId) {

@@ -98,6 +98,7 @@ public class ArchiveMessageService {
     public String getResponseNewChapterSession() { return "New chapter parsing session created."; }
     public String getResponseNewStorySession() { return "New story parsing session created."; }
     public String getResponseGetSessionFailed() { return "Session doesn't exist in database."; }
+    public String getResponseNewSessionFeed() { return "New live session websocket feed started."; }
     public String getResponseCancelSucceeded() { return "Sent cancel signal to the task."; }
     public String getResponseCancelFailed() { return "Session does not exist in session service."; }
 
@@ -122,6 +123,12 @@ public class ArchiveMessageService {
     }
     public String createURLExceptionMessage(String driverSocket) {
         return "Failed to create URL with driver address " + driverSocket + " for parsing.";
+    }
+
+    // MESSAGE CREATION - WEBSOCKET
+    // MESSAGE CREATION - WEBSOCKET
+    public String createWSSentMessage(String sessionId) {
+        return "Published session information for session " + sessionId + " to websocket feed.";
     }
 
     // MESSAGE CREATION - SESSION SERVICE

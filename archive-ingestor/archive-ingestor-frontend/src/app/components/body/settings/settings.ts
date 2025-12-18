@@ -5,9 +5,8 @@ import { ArchiveSessionGetService } from '../../../services/archive-session-get'
 import { ArchiveParseChapterService } from '../../../services/archive-parse-chapter';
 import { ArchiveParseStoryService } from '../../../services/archive-parse-story';
 import { ArchiveServerRequestData } from '../../../models/archive-server-request-data';
-import { catchError, Observable, Subscription } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 import { ArchiveServerResponseData } from '../../../models/archive-server-response-data';
-
 
 @Component({
   selector: 'app-settings',
@@ -25,8 +24,7 @@ export class Settings {
     archiveParseChapterService: ArchiveParseChapterService = inject(ArchiveParseChapterService);
     archiveParseStoryService: ArchiveParseStoryService = inject(ArchiveParseStoryService);
     archiveSessionGetService: ArchiveSessionGetService = inject(ArchiveSessionGetService);
-    latestResponse$!: Observable<ArchiveServerResponseData | null>;
-    latestSubscription$!: Subscription;
+    getLatestSubscription!: Subscription;
     latestResponse = signal<ArchiveServerResponseData>({
         sessionId: "",
         sessionNickname: "",
@@ -39,7 +37,6 @@ export class Settings {
         responseMessage: ""
     });
     curSessionId = signal<string>("");
-
 
     callParse() {
         // Create request
@@ -75,39 +72,37 @@ export class Settings {
         }
 
         // Monitor session
-        this.latestResponse$ = this.archiveSessionGetService.monitorSessionProgress(this.curSessionId());
-        this.latestSubscription$ = this.latestResponse$.subscribe((result) => {
-            if (result) {
-                this.latestResponse.set(result);
-            }
-            else {
-                this.latestResponse.set({
-                    sessionId: this.curSessionId(),
-                    sessionNickname: "",
-                    sessionFinished: false,
-                    sessionCanceled: false,
-                    sessionException: true,
-                    parseChaptersCompleted: 0,
-                    parseChaptersTotal: 0,
-                    parseResult: "",
-                    responseMessage: "Recieved null result from ArchiveSessionGetService."
-                });
+        this.getLatestSubscription = this.archiveSessionGetService.monitorSessionProgress(
+            this.curSessionId(), 200
+        ).subscribe((result) => {
+            // Set latest response
+            this.latestResponse.set(result);
+
+            // Check flags
+            let sF: boolean = this.latestResponse().sessionFinished;
+            let sC: boolean = this.latestResponse().sessionCanceled;
+            let sE: boolean = this.latestResponse().sessionException;
+
+            // Manually end the session
+            if (sF || sC || sE) {
+                this.isDisabled.set(false);
+                this.settingsFormGroup.enable();
+                this.getLatestSubscription.unsubscribe();
             }
         });
     }
 
     submitSettingsFormGroup() {
+        // Disable settings
         this.isDisabled.set(true);
         this.settingsFormGroup.disable();
 
+        // Call the parse job
         try {
             this.callParse();
         }
         catch (err) {
             console.log(err);
         }
-
-        this.isDisabled.set(false);
-        this.settingsFormGroup.enable();
     }
 }
