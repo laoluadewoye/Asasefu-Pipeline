@@ -127,8 +127,9 @@ public class ArchiveMessageService {
 
     // MESSAGE CREATION - WEBSOCKET
     // MESSAGE CREATION - WEBSOCKET
-    public String createWSSentMessage(String sessionId) {
-        return "Published session information for session " + sessionId + " to websocket feed.";
+    public String createWSSentMessage(String sessionId, String responseMessage) {
+        return "Published session information for session " + sessionId + " to websocket feed." +
+                "Latest message was: " + responseMessage;
     }
 
     // MESSAGE CREATION - SESSION SERVICE

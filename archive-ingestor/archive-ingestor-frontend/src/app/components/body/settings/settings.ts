@@ -5,7 +5,7 @@ import { ArchiveSessionGetService } from '../../../services/archive-session-get'
 import { ArchiveParseChapterService } from '../../../services/archive-parse-chapter';
 import { ArchiveParseStoryService } from '../../../services/archive-parse-story';
 import { ArchiveServerRequestData } from '../../../models/archive-server-request-data';
-import { catchError, of, Subscription } from 'rxjs';
+import { catchError, Subscription } from 'rxjs';
 import { ArchiveServerResponseData } from '../../../models/archive-server-response-data';
 
 @Component({
@@ -36,9 +36,12 @@ export class Settings {
         parseResult: "",
         responseMessage: ""
     });
-    curSessionId = signal<string>("");
+    curSessionId = signal("");
 
-    callParse() {
+    async callParse() {
+        // Setup waiting check
+        let lastSessionId: string = this.curSessionId();
+
         // Create request
         let newArchiveServerRequest: ArchiveServerRequestData = new ArchiveServerRequestData();
         newArchiveServerRequest.pageLink = this.settingsFormGroup.get('parseLink')?.value;
@@ -51,10 +54,7 @@ export class Settings {
                     console.log(err);
                     throw err;
                 })
-            ).subscribe((result) => {
-                this.latestResponse.set(result);
-                this.curSessionId.set(this.latestResponse().sessionId);
-            })
+            ).subscribe((result) => this.latestResponse.set(result));
         }
         else if (this.settingsFormGroup.get('parseType')?.value === "story") {
             this.archiveParseStoryService.postParseStoryRequest(newArchiveServerRequest).pipe(
@@ -62,18 +62,23 @@ export class Settings {
                     console.log(err);
                     throw err;
                 })
-            ).subscribe((result) => {
-                this.latestResponse.set(result);
-                this.curSessionId.set(this.latestResponse().sessionId);
-            })
+            ).subscribe((result) => this.latestResponse.set(result));
         }
         else {
             throw new TypeError("Bad type of parseType.");
         }
 
+        // Wait for confirmation response
+        let waitingForResponse: boolean = true;
+        while (waitingForResponse) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            waitingForResponse = lastSessionId === this.latestResponse().sessionId;
+        }
+
         // Monitor session
-        this.getLatestSubscription = this.archiveSessionGetService.monitorSessionProgress(
-            this.curSessionId(), 200
+        this.curSessionId.set(this.latestResponse().sessionId);
+        this.getLatestSubscription = this.archiveSessionGetService.getSessionInformationLive(
+            this.curSessionId()
         ).subscribe((result) => {
             // Set latest response
             this.latestResponse.set(result);
@@ -83,11 +88,12 @@ export class Settings {
             let sC: boolean = this.latestResponse().sessionCanceled;
             let sE: boolean = this.latestResponse().sessionException;
 
-            // Manually end the session
+            // Manually end the session if any flag set
             if (sF || sC || sE) {
                 this.isDisabled.set(false);
                 this.settingsFormGroup.enable();
                 this.getLatestSubscription.unsubscribe();
+                this.archiveSessionGetService.unsubscribeFromStomp();
             }
         });
     }

@@ -42,7 +42,7 @@ public class ArchiveService {
     public ArchiveService(ArchiveIngestor archiveIngestor, ArchiveLogService logService,
                           ArchiveMessageService messageService, ArchiveSessionService sessionService,
                           SimpMessagingTemplate websocketTemplate,
-                          @Value("${archiveSever.websocket.sendIntervalMilli:300}") Integer sendIntervalMilli)
+                          @Value("${archiveServer.websocket.sendIntervalMilli:1000}") Integer sendIntervalMilli)
             throws InterruptedException {
         // Initialize components
         this.archiveIngestor = archiveIngestor;
@@ -200,12 +200,15 @@ public class ArchiveService {
         ArchiveServerResponseData responseData;
         boolean sessionStillLive;
         do {
-            // Get and send information
+            // Get session entity information
             Thread.sleep(this.sendIntervalMilli);
-            responseData = getSessionInformation(sessionId);
+            responseData = this.getSessionInformation(sessionId);
+
+            // Send response data
             this.websocketTemplate.convertAndSend("/api/v1/websocket/topic/get-session-live", responseData);
 
-            this.logService.createInfoLog(this.messageService.createWSSentMessage(sessionId));
+            // Log it
+            this.logService.createInfoLog(this.messageService.createWSSentMessage(sessionId, responseData.getResponseMessage()));
 
             // Run a check to decide if to continue
             boolean messageIsFail = responseData.getResponseMessage().equals(
@@ -213,6 +216,7 @@ public class ArchiveService {
             );
             boolean sessionComplete = responseData.isSessionFinished() || responseData.isSessionCanceled() ||
                     responseData.isSessionException();
+
             sessionStillLive = !messageIsFail && !sessionComplete;
         } while (sessionStillLive);
     }

@@ -417,8 +417,11 @@ public class ArchiveIngestor {
 
             // Expand kudos list
             try {
+                WebElement kudosMoreLink;
                 while (!kudos.findElements(By.id("kudos_more_link")).isEmpty()) {
-                    kudos.findElement(By.id("kudos_more_link")).click();
+                    kudosMoreLink = kudos.findElement(By.id("kudos_more_link"));
+                    updateLastRecordedMessage("Found " + kudosMoreLink.getText() + " who left kudos...", sessionId);
+                    kudosMoreLink.click();
                 }
             }
             catch (StaleElementReferenceException | NoSuchElementException e) {
@@ -456,13 +459,19 @@ public class ArchiveIngestor {
             WebElement bookmarkLink = storyBookmarks.getLast();
             bookmarkLink.findElement(By.tagName("a")).click();
 
+            updateLastRecordedMessage("Getting list of users who left a bookmark...", sessionId);
+
             // Wait for new elements to appear
             newSiteWait.until(d -> d.findElement(By.xpath("//*[@id=\"main\"]/ol")));
 
+            // TODO: Bookmarks can be paginated as proof by HDG. Update the code to handle this
             // Get to the organized list and copy the users
             WebElement bookmarks = driver.findElement(By.xpath("//*[@id=\"main\"]/ol"));
+            String bookmarkLeaver;
             for (WebElement bookmarkBlurb : bookmarks.findElements(By.className("short"))) {
-                bookmarkList.add(bookmarkBlurb.findElement(By.tagName("a")).getText());
+                bookmarkLeaver = bookmarkBlurb.findElement(By.tagName("a")).getText();
+                bookmarkList.add(bookmarkLeaver);
+                updateLastRecordedMessage(bookmarkLeaver + " left a bookmark...", sessionId);
             }
 
             // Go back to the last page

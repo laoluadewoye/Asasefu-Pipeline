@@ -301,6 +301,7 @@ public class ArchiveServerTest {
             ArchiveServerResponseData updateResponse = new ObjectMapper().readValue(updateResultString, ArchiveServerResponseData.class);
 
             // Analyze the update
+            System.out.println("Response message -> " + updateResponse.getResponseMessage());
             runResultTests(updateResponse, sessionId, false, usesNickname);
 
             // Check if a proper end has been reached

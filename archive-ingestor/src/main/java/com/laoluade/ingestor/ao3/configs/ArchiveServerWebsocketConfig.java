@@ -5,15 +5,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 @Configuration
 @EnableWebSocketMessageBroker
-public class ArchiveServerWebsocketConfig {
-    public void registerStompEndpoints(StompEndpointRegistry websocketRegistry,
-                                       @Value("${server.port:8080}") Integer port) {
+public class ArchiveServerWebsocketConfig implements WebSocketMessageBrokerConfigurer {
+    @Value("${archiveServer.websocket.port:8080}")
+    private Integer port;
+
+    public void registerStompEndpoints(StompEndpointRegistry websocketRegistry) {
         websocketRegistry.addEndpoint("/api/v1/websocket")
-                .setAllowedOriginPatterns("http://localhost:" + port)
-                .withSockJS();
+                .setAllowedOriginPatterns("http://localhost:" + this.port + "*");
     }
 
     public void configureMessageBroker(MessageBrokerRegistry brokerRegistry) {
