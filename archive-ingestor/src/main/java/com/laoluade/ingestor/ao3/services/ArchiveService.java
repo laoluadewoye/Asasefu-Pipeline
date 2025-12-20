@@ -10,9 +10,6 @@ import com.laoluade.ingestor.ao3.repositories.ArchiveParse;
 import com.laoluade.ingestor.ao3.repositories.ArchiveParseType;
 import com.laoluade.ingestor.ao3.repositories.ArchiveSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 // Java Classes
@@ -35,24 +32,18 @@ public class ArchiveService {
     private final ArchiveSessionService sessionService;
 
     @Autowired
-    private final SimpMessagingTemplate websocketTemplate;
-
-    private final Integer sendIntervalMilli;
+    private final ArchiveWebsocketService websocketService;
 
     public ArchiveService(ArchiveIngestor archiveIngestor, ArchiveLogService logService,
                           ArchiveMessageService messageService, ArchiveSessionService sessionService,
-                          SimpMessagingTemplate websocketTemplate,
-                          @Value("${archiveServer.websocket.sendIntervalMilli:1000}") Integer sendIntervalMilli)
+                          ArchiveWebsocketService websocketService)
             throws InterruptedException {
         // Initialize components
         this.archiveIngestor = archiveIngestor;
         this.logService = logService;
         this.messageService = messageService;
         this.sessionService = sessionService;
-
-        // Set websocket attributes
-        this.websocketTemplate = websocketTemplate;
-        this.sendIntervalMilli = sendIntervalMilli;
+        this.websocketService = websocketService;
 
         // Start task monitoring
         this.sessionService.sessionTaskMonitor();
@@ -132,7 +123,7 @@ public class ArchiveService {
         if (storyLink.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
         }
-        if (storyLink.contains("chapters")) { // TODO: Create a test for this
+        if (storyLink.contains("chapters")) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadStoryLink());
         }
         if (nicknameSent && sessionNickname.isEmpty()) {
@@ -195,32 +186,6 @@ public class ArchiveService {
         }
     }
 
-    @Async("archiveServerAsyncExecutor")
-    public void runLiveSessionFeed(String sessionId) throws InterruptedException {
-        ArchiveServerResponseData responseData;
-        boolean sessionStillLive;
-        do {
-            // Get session entity information
-            Thread.sleep(this.sendIntervalMilli);
-            responseData = this.getSessionInformation(sessionId);
-
-            // Send response data
-            this.websocketTemplate.convertAndSend("/api/v1/websocket/topic/get-session-live", responseData);
-
-            // Log it
-            this.logService.createInfoLog(this.messageService.createWSSentMessage(sessionId, responseData.getResponseMessage()));
-
-            // Run a check to decide if to continue
-            boolean messageIsFail = responseData.getResponseMessage().equals(
-                    this.messageService.getResponseGetSessionFailed()
-            );
-            boolean sessionComplete = responseData.isSessionFinished() || responseData.isSessionCanceled() ||
-                    responseData.isSessionException();
-
-            sessionStillLive = !messageIsFail && !sessionComplete;
-        } while (sessionStillLive);
-    }
-
     public ArchiveServerResponseData getSessionInformationLive(String sessionId) throws InterruptedException {
         // Validate the session ID
         boolean sessionIdValid = this.validateSessionId(sessionId);
@@ -229,7 +194,7 @@ public class ArchiveService {
         }
 
         // Start sending through websockets
-        this.runLiveSessionFeed(sessionId);
+        this.websocketService.runLiveSessionFeed(sessionId);
 
         // Return the response
         return new ArchiveServerResponseData(sessionId, this.messageService.getResponseNewSessionFeed());
