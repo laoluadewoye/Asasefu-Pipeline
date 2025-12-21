@@ -11,7 +11,6 @@ import com.laoluade.ingestor.ao3.models.ArchiveServerTestData;
 import com.laoluade.ingestor.ao3.services.ArchiveMessageService;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -24,18 +23,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 // Spring boot function classes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.messaging.converter.JacksonJsonMessageConverter;
-import org.springframework.messaging.simp.stomp.StompFrameHandler;
-import org.springframework.messaging.simp.stomp.StompHeaders;
-import org.springframework.messaging.simp.stomp.StompSession;
-import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.simp.stomp.*;
+import org.springframework.messaging.support.AbstractSubscribableChannel;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.socket.client.WebSocketClient;
-import org.springframework.web.socket.client.standard.StandardWebSocketClient;
-import org.springframework.web.socket.messaging.WebSocketStompClient;
-import org.springframework.web.socket.sockjs.client.SockJsClient;
-import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import tools.jackson.databind.ObjectMapper;
 
 // Spring boot assertion classes
@@ -47,17 +39,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // Core java classes
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SpringBootTest(useMainMethod = SpringBootTest.UseMainMethod.ALWAYS)
 @AutoConfigureMockMvc
@@ -65,7 +52,6 @@ public class ArchiveServerTest {
     // Test objects
     private static JSONObject testLinks;
     private static ArchiveMessageService testMessageService;
-    private static WebSocketStompClient testStompClient;
 
     // Test values to check and use
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
@@ -73,6 +59,7 @@ public class ArchiveServerTest {
     ));
     private static final String sessionNickname = "testParseSession";
     private static final Integer sessionUpdateIntervalMilli = 2000;
+    private static final Integer websocketUpdateIntervalMilli = 500;
     private static final Integer ingestorCommentThreadDepth = 10;
     private static final Integer ingestorCommentPageLimit = 3;
     private static final Integer ingestorKudosPageLimit = 3;
@@ -94,8 +81,6 @@ public class ArchiveServerTest {
             "docker", "rm", "archive-ingestor-test-container"
     };
 
-
-
     @BeforeAll
     public static void setupTests() throws IOException, InterruptedException {
         System.out.println("Obtaining test links...");
@@ -106,13 +91,6 @@ public class ArchiveServerTest {
 
         System.out.println("Creating message manager...");
         testMessageService = new ArchiveMessageService();
-
-        System.out.println("Creating STOMP client...");
-        testStompClient = new WebSocketStompClient(new StandardWebSocketClient());
-
-//        testStompClient = new WebSocketStompClient(
-//                new SockJsClient(List.of(new WebSocketTransport(new StandardWebSocketClient())))
-//        );
 
         System.out.println("Creating Selenium container...");
         try {
@@ -726,8 +704,13 @@ public class ArchiveServerTest {
     }
     
     @Test
-    public void testWebsocketFeed (@Autowired MockMvc mvc) throws UnsupportedEncodingException, ExecutionException,
-            InterruptedException, TimeoutException {
+    public void testWebsocketFeed (@Autowired MockMvc mvc, @Autowired AbstractSubscribableChannel brokerChannel)
+            throws UnsupportedEncodingException, InterruptedException {
+        // Prepare STOMP websocket feed catcher
+        TestChannelInterceptor testBrokerChannelInterceptor = new TestChannelInterceptor();
+        testBrokerChannelInterceptor.setIncludedDestinations("/api/v1/websocket/topic/get-session-live");
+        brokerChannel.addInterceptor(testBrokerChannelInterceptor);
+
         // Send initial parse request
         String chapterTestLink = testLinks.getString("Chapter");
         ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
@@ -745,27 +728,6 @@ public class ArchiveServerTest {
             Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/chapter.");
         }
 
-        // Connect to STOMP websocket
-        testStompClient.setMessageConverter(new JacksonJsonMessageConverter());
-        StompSession testStompSession = testStompClient.connectAsync(
-                "ws://localhost:8080/api/v1/websocket/", new StompSessionHandlerAdapter() {}
-                ).get(3, SECONDS);
-
-        // Subscribe to live feed
-        testStompSession.subscribe("/api/v1/websocket/topic/get-socket-live", new StompFrameHandler() {
-            @Override
-            public Type getPayloadType(StompHeaders headers) {
-                return ArchiveServerResponseData.class;
-            }
-
-            @Override
-            public void handleFrame(StompHeaders headers, @Nullable Object payload) {
-                ArchiveServerResponseData responseData = (ArchiveServerResponseData) payload;
-                assert responseData != null;
-                System.out.println(responseData);
-            }
-        });
-
         // Send live feed request
         String testInitString = testInitResult.getResponse().getContentAsString();
         ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
@@ -776,15 +738,64 @@ public class ArchiveServerTest {
             testLiveResult = mvc.perform(get(sessionLiveAPI)).andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
         } catch (Exception e) {
-            Assertions.fail("Mock Server was unable to return response to bad session ID for get request.");
+            Assertions.fail("Mock Server was unable to return response to get request for " + sessionLiveAPI);
         }
 
         String testLiveString = testLiveResult.getResponse().getContentAsString();
         ArchiveServerResponseData testLiveResponse = new ObjectMapper().readValue(testLiveString, ArchiveServerResponseData.class);
-        Assertions.assertEquals(testMessageService.getResponseNewSessionFeed(), testLiveResponse.getResponseMessage());
+        Assertions.assertEquals(
+                testMessageService.getResponseNewSessionFeed(), testLiveResponse.getResponseMessage(),
+                "Mock Server did not return the new session feed message for test live response."
+        );
 
-        // Let it run for a bit
-        Thread.sleep(30000);
+        // Watch the responses
+        boolean waitingForEnd = true;
+        int waitingForEndCounter = 0;
+        while (waitingForEnd) {
+            // Wait for a new feed message with interval
+            waitingForEndCounter++;
+            Message<?> feedMessage = testBrokerChannelInterceptor.awaitMessage(5);
+            Assertions.assertNotNull(
+                    feedMessage, "Mock Server did not return a message on time on update " + waitingForEndCounter
+            );
+
+            // Check the headers
+            StompHeaderAccessor feedMessageWithHeaders = StompHeaderAccessor.wrap(feedMessage);
+            Assertions.assertEquals(
+                    "/api/v1/websocket/topic/get-session-live", feedMessageWithHeaders.getDestination(),
+                    "Mock Server did not return a websocket message with the correct destination on update " +
+                            waitingForEndCounter
+            );
+
+            // Check the payload
+            String feedMessagePayload = new String((byte[]) feedMessage.getPayload(), StandardCharsets.UTF_8);
+            ArchiveServerResponseData feedMessageResponse = new ObjectMapper().readValue(feedMessagePayload, ArchiveServerResponseData.class);
+            runResultTests(feedMessageResponse, testInitResponse.getSessionId(), false, false);
+            System.out.println(feedMessageResponse.getResponseMessage());
+
+            // Check if a proper end has been reached
+            if (feedMessageResponse.isSessionFinished()) {
+                // Check that the string is there
+                Assertions.assertFalse(
+                        feedMessageResponse.getParseResult().isEmpty(),
+                        "Update response for session " + testInitResponse.getSessionId() +
+                                " did not return the JSON string on update " + waitingForEndCounter +
+                                " even though the finished flag is set."
+                );
+
+                // Try creating a JSON from the string
+                JSONObject finalResultJSON = null;
+                try {
+                    finalResultJSON = new JSONObject(feedMessageResponse.getParseResult());
+                    System.out.println(finalResultJSON.toString(4));
+                } catch (JSONException e) {
+                    Assertions.fail("JSON string returned from parsing was unreadable.");
+                }
+
+                // Stop the loop
+                waitingForEnd = false;
+            }
+        }
     }
 
     @AfterAll
