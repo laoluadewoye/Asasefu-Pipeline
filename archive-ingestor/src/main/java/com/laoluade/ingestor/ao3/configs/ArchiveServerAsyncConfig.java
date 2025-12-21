@@ -13,16 +13,16 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 public class ArchiveServerAsyncConfig implements AsyncConfigurer {
-    @Value("${archiveServer.async.executor.corePoolSize:4}")
+    @Value("${archiveServer.async.executor.corePoolSize}")
     private Integer corePoolSize;
 
-    @Value("${archiveServer.async.executor.maxPoolSize:6}")
+    @Value("${archiveServer.async.executor.maxPoolSize}")
     private Integer maxPoolSize;
 
-    @Value("${archiveServer.async.executor.queueCapacity:2}")
+    @Value("${archiveServer.async.executor.queueCapacity}")
     private Integer queueCapacity;
 
-    @Value("${archiveServer.async.executor.threadNamePrefix:archiveServerAsyncThread-}")
+    @Value("${archiveServer.async.executor.threadNamePrefix}")
     private String threadNamePrefix;
 
     @Bean(name = "archiveServerAsyncExecutor")

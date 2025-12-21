@@ -10,7 +10,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class ArchiveServerWebsocketConfig implements WebSocketMessageBrokerConfigurer {
-    @Value("${archiveServer.websocket.port:8080}")
+    @Value("${archiveServer.websocket.port}")
     private Integer port;
 
     public void registerStompEndpoints(StompEndpointRegistry websocketRegistry) {

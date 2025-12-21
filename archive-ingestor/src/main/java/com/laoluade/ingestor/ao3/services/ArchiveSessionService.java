@@ -43,8 +43,8 @@ public class ArchiveSessionService {
     private final Integer sessionPersistSecs;
     private final Integer checkIntervalMilli;
 
-    public ArchiveSessionService(@Value("${archiveServer.session.persistSecs:10}") Integer sessionPersistSecs,
-                                 @Value("${archiveServer.session.checkIntervalMilli:2000}") Integer checkIntervalMilli,
+    public ArchiveSessionService(@Value("${archiveServer.session.persistSecs}") Integer sessionPersistSecs,
+                                 @Value("${archiveServer.session.checkIntervalMilli}") Integer checkIntervalMilli,
                                  ArchiveLogService logService,
                                  ArchiveMessageService messageService) {
         // Set up component managers

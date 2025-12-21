@@ -69,70 +69,33 @@ public class ArchiveService {
         }
     }
 
-    public ArchiveServerResponseData startParseChapter(ArchiveServerRequestData request) {
+    public ArchiveServerResponseData startParse(ArchiveServerRequestData request, ArchiveParseType parseType) {
         // Extract request items
-        String chapterLink = request.getPageLink();
+        String pageLink = request.getPageLink();
         String sessionNickname = request.getSessionNickname();
-        boolean nicknameSent = request.isNicknameSent();
-        this.logService.createInfoLog(this.messageService.getLoggingInfoChapterObtainRequest());
+        if (parseType.equals(ArchiveParseType.CHAPTER)) {
+            this.logService.createInfoLog(this.messageService.getLoggingInfoChapterObtainRequest());
+        }
+        else {
+            this.logService.createInfoLog(this.messageService.getLoggingInfoStoryObtainRequest());
+        }
 
         // Check if request passed inspection
-        if (chapterLink.isEmpty()) {
+        if (pageLink.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
         }
-        if (nicknameSent && sessionNickname.isEmpty()) {
+        if (request.isNicknameSent() && sessionNickname.isEmpty()) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadNicknameFormat());
         }
 
-        // Create a session ID
-        String timestamp = this.messageService.getNowTimestampString();
-        String hashString = chapterLink + timestamp;
-        String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
-
-        // Re-set the nickname if needed
-        if (sessionNickname == null) {
-            sessionNickname = newSessionId;
-        }
-        else if (sessionNickname.isBlank()) {
-            sessionNickname = newSessionId;
-        }
-
-        // Create a session entry
-        this.sessionService.addSession(newSessionId, sessionNickname, ArchiveParseType.CHAPTER, chapterLink);
-
-        // Start the chapter parsing process
-        CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateTask(
-                chapterLink, newSessionId, ArchiveParseType.CHAPTER
-        );
-
-        // Save the completable future reference
-        this.sessionService.addToSessionMap(newSessionId, newFuture);
-
-        // Return the response
-        return new ArchiveServerResponseData(newSessionId, sessionNickname, this.messageService.getResponseNewChapterSession());
-    }
-
-    public ArchiveServerResponseData startParseStory(ArchiveServerRequestData request) {
-        // Extract request items
-        String storyLink = request.getPageLink();
-        String sessionNickname = request.getSessionNickname();
-        boolean nicknameSent = request.isNicknameSent();
-        this.logService.createInfoLog(this.messageService.getLoggingInfoStoryObtainRequest());
-
-        // Check if request passed inspection
-        if (storyLink.isEmpty()) {
-            return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
-        }
-        if (storyLink.contains("chapters")) {
+        // Check if a chapter-specific link was sent for story parsing
+        if (pageLink.contains("chapters") && parseType.equals(ArchiveParseType.STORY)) {
             return new ArchiveServerResponseData(this.messageService.getResponseBadStoryLink());
         }
-        if (nicknameSent && sessionNickname.isEmpty()) {
-            return new ArchiveServerResponseData(this.messageService.getResponseBadNicknameFormat());
-        }
 
         // Create a session ID
         String timestamp = this.messageService.getNowTimestampString();
-        String hashString = storyLink + timestamp;
+        String hashString = pageLink + timestamp;
         String newSessionId = Hashing.sha256().hashString(hashString, StandardCharsets.UTF_8).toString();
 
         // Re-set the nickname if needed
@@ -144,18 +107,28 @@ public class ArchiveService {
         }
 
         // Create a session entry
-        this.sessionService.addSession(newSessionId, sessionNickname, ArchiveParseType.STORY, storyLink);
+        this.sessionService.addSession(newSessionId, sessionNickname, parseType, pageLink);
 
-        // Start the story parsing process
+        // Start the parsing process
         CompletableFuture<ArchiveServerFutureData> newFuture = this.archiveIngestor.startCreateTask(
-                storyLink, newSessionId, ArchiveParseType.STORY
+                pageLink, newSessionId, parseType, request.getMaxCommentThreadDepth(),
+                request.getMaxCommentPageLimit(), request.getMaxKudosPageLimit(), request.getMaxBookmarkPageLimit()
         );
 
         // Save the completable future reference
         this.sessionService.addToSessionMap(newSessionId, newFuture);
 
         // Return the response
-        return new ArchiveServerResponseData(newSessionId, sessionNickname, this.messageService.getResponseNewStorySession());
+        if (parseType.equals(ArchiveParseType.CHAPTER)) {
+            return new ArchiveServerResponseData(
+                    newSessionId, sessionNickname, this.messageService.getResponseNewChapterSession()
+            );
+        }
+        else {
+            return new ArchiveServerResponseData(
+                    newSessionId, sessionNickname, this.messageService.getResponseNewStorySession()
+            );
+        }
     }
 
     public boolean validateSessionId(String sessionId) {

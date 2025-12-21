@@ -11,6 +11,7 @@ import com.laoluade.ingestor.ao3.models.ArchiveServerTestData;
 import com.laoluade.ingestor.ao3.services.ArchiveMessageService;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,8 +24,18 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 // Spring boot function classes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
+import org.springframework.messaging.simp.stomp.StompFrameHandler;
+import org.springframework.messaging.simp.stomp.StompHeaders;
+import org.springframework.messaging.simp.stomp.StompSession;
+import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.socket.client.WebSocketClient;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
+import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import tools.jackson.databind.ObjectMapper;
 
 // Spring boot assertion classes
@@ -36,19 +47,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // Core java classes
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SpringBootTest(useMainMethod = SpringBootTest.UseMainMethod.ALWAYS)
 @AutoConfigureMockMvc
 public class ArchiveServerTest {
     // Test objects
     private static JSONObject testLinks;
-    private static ArchiveMessageService testMessageManager;
+    private static ArchiveMessageService testMessageService;
+    private static WebSocketStompClient testStompClient;
 
     // Test values to check and use
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
@@ -56,6 +73,10 @@ public class ArchiveServerTest {
     ));
     private static final String sessionNickname = "testParseSession";
     private static final Integer sessionUpdateIntervalMilli = 2000;
+    private static final Integer ingestorCommentThreadDepth = 10;
+    private static final Integer ingestorCommentPageLimit = 3;
+    private static final Integer ingestorKudosPageLimit = 3;
+    private static final Integer ingestorBookmarkPageLimit = 3;
 
     // Test runtime stuff
     private static final Runtime testRuntime = Runtime.getRuntime();
@@ -84,7 +105,14 @@ public class ArchiveServerTest {
         testLinks = ArchiveIngestor.getJSONFromFilepath(testLinksPathDecoded);
 
         System.out.println("Creating message manager...");
-        testMessageManager = new ArchiveMessageService();
+        testMessageService = new ArchiveMessageService();
+
+        System.out.println("Creating STOMP client...");
+        testStompClient = new WebSocketStompClient(new StandardWebSocketClient());
+
+//        testStompClient = new WebSocketStompClient(
+//                new SockJsClient(List.of(new WebSocketTransport(new StandardWebSocketClient())))
+//        );
 
         System.out.println("Creating Selenium container...");
         try {
@@ -107,7 +135,7 @@ public class ArchiveServerTest {
 
     @Test
     public void testIndex(@Autowired MockMvc mvc) throws UnsupportedEncodingException {
-        // Return html
+        // Return HTML
         MvcResult testIndex = null;
         try {
             testIndex = mvc.perform(get("/index.html"))
@@ -119,7 +147,7 @@ public class ArchiveServerTest {
             Assertions.fail("Mock Server was unable to return index.html.");
         }
 
-        // Assert that all initial components are present in the html string
+        // Assert that all initial components are present in the HTML string
         Assertions.assertNotNull(testIndex, "testIndex variable is null.");
         String testIndexHTML = testIndex.getResponse().getContentAsString();
         for (String expectedComponent : expectedComponents) {
@@ -173,7 +201,7 @@ public class ArchiveServerTest {
                 "Mock Server returned incorrect archive ingestor version from /api/v1/spec."
         );
         Assertions.assertEquals(
-                "otwarchive v0.9.449.0", testSpecInstance.getLatestOTWArchiveVersion(),
+                "otwarchive v0.9.451.1", testSpecInstance.getLatestOTWArchiveVersion(),
                 "Mock Server returned incorrect OTWArchive version from /api/v1/spec."
         );
     }
@@ -189,8 +217,8 @@ public class ArchiveServerTest {
 
         // Init-dependent assertions
         if (isInit) {
-            boolean isNewChapterMsg = response.getResponseMessage().equals(testMessageManager.getResponseNewChapterSession());
-            boolean isNewStoryMsg = response.getResponseMessage().equals(testMessageManager.getResponseNewStorySession());
+            boolean isNewChapterMsg = response.getResponseMessage().equals(testMessageService.getResponseNewChapterSession());
+            boolean isNewStoryMsg = response.getResponseMessage().equals(testMessageService.getResponseNewStorySession());
             Assertions.assertTrue(
                     isNewChapterMsg | isNewStoryMsg,
                     "Initial response for session " + sessionId +
@@ -324,19 +352,19 @@ public class ArchiveServerTest {
                 }
 
                 // Ensure that response facts line up with JSON facts
-                JSONObject finalstoryInfo = null;
+                JSONObject finalStoryInfo;
                 try {
-                    finalstoryInfo = finalResultJSON.getJSONObject("parentArchiveStoryInfo");
+                    finalStoryInfo = finalResultJSON.getJSONObject("parentArchiveStoryInfo");
                 }
                 catch (JSONException e) {
-                    finalstoryInfo = finalResultJSON.getJSONObject("archiveStoryInfo");
+                    finalStoryInfo = finalResultJSON.getJSONObject("archiveStoryInfo");
                 }
                 Assertions.assertEquals(
-                        finalstoryInfo.getInt("currentChapters"), updateResponse.getParseChaptersCompleted(),
+                        finalStoryInfo.getInt("currentChapters"), updateResponse.getParseChaptersCompleted(),
                         "Update response's completed chapters count does not line up with returned JSON."
                 );
                 Assertions.assertEquals(
-                        finalstoryInfo.getInt("totalChapters"), updateResponse.getParseChaptersTotal(),
+                        finalStoryInfo.getInt("totalChapters"), updateResponse.getParseChaptersTotal(),
                         "Update response's total chapters count does not line up with returned JSON."
                 );
 
@@ -351,15 +379,20 @@ public class ArchiveServerTest {
     public void testAPIParse(MockMvc mvc, String testLink, String parseURI, boolean usesNickname) throws
             UnsupportedEncodingException, InterruptedException {
         // Start the parsing
-        String newRequestJSON;
+        ArchiveServerRequestData newRequest;
         if (usesNickname) {
-            ArchiveServerRequestData newRequest = new ArchiveServerRequestData(testLink, sessionNickname);
-            newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+            newRequest = new ArchiveServerRequestData(
+                    testLink, sessionNickname, ingestorCommentThreadDepth, ingestorCommentPageLimit,
+                    ingestorKudosPageLimit, ingestorBookmarkPageLimit
+            );
         }
         else {
-            ArchiveServerRequestData newRequest = new ArchiveServerRequestData(testLink);
-            newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+            newRequest = new ArchiveServerRequestData(
+                    testLink, ingestorCommentThreadDepth, ingestorCommentPageLimit, ingestorKudosPageLimit,
+                    ingestorBookmarkPageLimit
+            );
         }
+        String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
         MvcResult testInfoResult = null;
         try {
@@ -390,7 +423,10 @@ public class ArchiveServerTest {
     public void testAPISessionCanceling(@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         // Run the story without nickname test
         String storyTestLink = testLinks.getString("Story");
-        ArchiveServerRequestData newRequest = new ArchiveServerRequestData(storyTestLink);
+        ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
+                storyTestLink, ingestorCommentThreadDepth, ingestorCommentPageLimit, ingestorKudosPageLimit,
+                ingestorBookmarkPageLimit
+        );
         String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
         MvcResult testInitResult = null;
@@ -421,7 +457,7 @@ public class ArchiveServerTest {
         String testCancelString = testCancelResult.getResponse().getContentAsString();
         ArchiveServerResponseData testCancelResponse = new ObjectMapper().readValue(testCancelString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseCancelSucceeded(), testCancelResponse.getResponseMessage(),
+                testMessageService.getResponseCancelSucceeded(), testCancelResponse.getResponseMessage(),
                 "Mock Server returned the wrong response message for canceling a session."
         );
 
@@ -471,7 +507,7 @@ public class ArchiveServerTest {
         String testGetString = testGetResult.getResponse().getContentAsString();
         ArchiveServerResponseData testGetResponse = new ObjectMapper().readValue(testGetString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseGetSessionFailed(), testGetResponse.getResponseMessage(),
+                testMessageService.getResponseGetSessionFailed(), testGetResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying that a session get request failed."
         );
 
@@ -489,7 +525,7 @@ public class ArchiveServerTest {
         String testCancelString = testCancelResult.getResponse().getContentAsString();
         ArchiveServerResponseData testCancelResponse = new ObjectMapper().readValue(testCancelString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseCancelFailed(), testCancelResponse.getResponseMessage(),
+                testMessageService.getResponseCancelFailed(), testCancelResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying that a session cancel request failed."
         );
     }
@@ -499,7 +535,8 @@ public class ArchiveServerTest {
             InterruptedException {
         // Run a chapter link on a story branch
         ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
-                "https://archiveofourown.org/works/1111/chapters/22222"
+                "https://archiveofourown.org/works/1111/chapters/22222", ingestorCommentThreadDepth,
+                ingestorCommentPageLimit, ingestorKudosPageLimit, ingestorBookmarkPageLimit
         );
         String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
@@ -515,13 +552,14 @@ public class ArchiveServerTest {
         String testInitString = testInitResult.getResponse().getContentAsString();
         ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseBadStoryLink(), testInitResponse.getResponseMessage(),
+                testMessageService.getResponseBadStoryLink(), testInitResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying that a story service got a chapter link."
         );
 
         // Run the chapter with nickname test and bad ao3 URL
         newRequest = new ArchiveServerRequestData(
-                "https://archiveofourown.org/works/999999999999", sessionNickname
+                "https://archiveofourown.org/works/999999999999", sessionNickname, ingestorCommentThreadDepth,
+                ingestorCommentPageLimit, ingestorKudosPageLimit, ingestorBookmarkPageLimit
         );
         newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
@@ -570,10 +608,10 @@ public class ArchiveServerTest {
                 "Mock server put something in parse result after canceling a session."
         );
         boolean messageIsURLError = testUpdateResponse.getResponseMessage().equals(
-                testMessageManager.getResponseBadURLFormat()
+                testMessageService.getResponseBadURLFormat()
         );
         boolean messageIsNotFound = testUpdateResponse.getResponseMessage().equals(
-                testMessageManager.getLoggingErrorParseFailedNotFound()
+                testMessageService.getLoggingErrorParseFailedNotFound()
         );
         Assertions.assertTrue(
                 messageIsURLError | messageIsNotFound,
@@ -581,7 +619,10 @@ public class ArchiveServerTest {
         );
 
         // Run the chapter with a badly formatted link
-        newRequest = new ArchiveServerRequestData("abc123def456");
+        newRequest = new ArchiveServerRequestData(
+                "abc123def456", ingestorCommentThreadDepth, ingestorCommentPageLimit, ingestorKudosPageLimit,
+                ingestorBookmarkPageLimit
+        );
         newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
         try {
@@ -595,7 +636,7 @@ public class ArchiveServerTest {
         testInitString = testInitResult.getResponse().getContentAsString();
         testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseBadURLFormat(), testInitResponse.getResponseMessage(),
+                testMessageService.getResponseBadURLFormat(), testInitResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying of a badly formatted link."
         );
     }
@@ -604,7 +645,8 @@ public class ArchiveServerTest {
     public void testBadNicknameResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         String chapterTestLink = testLinks.getString("Chapter");
         ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
-                chapterTestLink, "This nickname has spaces and quotes"
+                chapterTestLink, "This nickname has spaces and quotes", ingestorCommentThreadDepth,
+                ingestorCommentPageLimit, ingestorKudosPageLimit, ingestorBookmarkPageLimit
         );
         String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
@@ -620,12 +662,13 @@ public class ArchiveServerTest {
         String testInitString = testInitResult.getResponse().getContentAsString();
         ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseBadNicknameFormat(), testInitResponse.getResponseMessage(),
+                testMessageService.getResponseBadNicknameFormat(), testInitResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying of a badly formatted nickname for chapter parsing."
         );
 
         newRequest = new ArchiveServerRequestData(
-                chapterTestLink, "' OR '1'='1/cancel"
+                chapterTestLink, "' OR '1'='1/cancel", ingestorCommentThreadDepth,
+                ingestorCommentPageLimit, ingestorKudosPageLimit, ingestorBookmarkPageLimit
         );
         newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
 
@@ -640,7 +683,7 @@ public class ArchiveServerTest {
         testInitString = testInitResult.getResponse().getContentAsString();
         testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseBadNicknameFormat(), testInitResponse.getResponseMessage(),
+                testMessageService.getResponseBadNicknameFormat(), testInitResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying of a badly formatted nickname for story parsing."
         );
     }
@@ -660,7 +703,7 @@ public class ArchiveServerTest {
         String testGetString = testGetResult.getResponse().getContentAsString();
         ArchiveServerResponseData testGetResponse = new ObjectMapper().readValue(testGetString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseBadSessionId(), testGetResponse.getResponseMessage(),
+                testMessageService.getResponseBadSessionId(), testGetResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying of a badly formatted session id for get request."
         );
         
@@ -677,9 +720,71 @@ public class ArchiveServerTest {
         String testCancelString = testCancelResult.getResponse().getContentAsString();
         ArchiveServerResponseData testCancelResponse = new ObjectMapper().readValue(testCancelString, ArchiveServerResponseData.class);
         Assertions.assertEquals(
-                testMessageManager.getResponseBadSessionId(), testCancelResponse.getResponseMessage(),
+                testMessageService.getResponseBadSessionId(), testCancelResponse.getResponseMessage(),
                 "Mock server did not return the proper response for notifying of a badly formatted session id for cancel request."
         );
+    }
+    
+    @Test
+    public void testWebsocketFeed (@Autowired MockMvc mvc) throws UnsupportedEncodingException, ExecutionException,
+            InterruptedException, TimeoutException {
+        // Send initial parse request
+        String chapterTestLink = testLinks.getString("Chapter");
+        ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
+                chapterTestLink, ingestorCommentThreadDepth, ingestorCommentPageLimit, ingestorKudosPageLimit,
+                ingestorBookmarkPageLimit
+        );
+        String newRequestJSON = new ObjectMapper().writeValueAsString(newRequest);
+
+        MvcResult testInitResult = null;
+        try {
+            testInitResult = mvc.perform(
+                    post("/api/v1/parse/chapter").contentType(MediaType.APPLICATION_JSON).content(newRequestJSON).characterEncoding("utf-8")
+            ).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to get request for /api/v1/parse/chapter.");
+        }
+
+        // Connect to STOMP websocket
+        testStompClient.setMessageConverter(new JacksonJsonMessageConverter());
+        StompSession testStompSession = testStompClient.connectAsync(
+                "ws://localhost:8080/api/v1/websocket/", new StompSessionHandlerAdapter() {}
+                ).get(3, SECONDS);
+
+        // Subscribe to live feed
+        testStompSession.subscribe("/api/v1/websocket/topic/get-socket-live", new StompFrameHandler() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                return ArchiveServerResponseData.class;
+            }
+
+            @Override
+            public void handleFrame(StompHeaders headers, @Nullable Object payload) {
+                ArchiveServerResponseData responseData = (ArchiveServerResponseData) payload;
+                assert responseData != null;
+                System.out.println(responseData);
+            }
+        });
+
+        // Send live feed request
+        String testInitString = testInitResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testInitResponse = new ObjectMapper().readValue(testInitString, ArchiveServerResponseData.class);
+        String sessionLiveAPI = "/api/v1/parse/session/" + testInitResponse.getSessionId() + "/live";
+
+        MvcResult testLiveResult = null;
+        try {
+            testLiveResult = mvc.perform(get(sessionLiveAPI)).andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        } catch (Exception e) {
+            Assertions.fail("Mock Server was unable to return response to bad session ID for get request.");
+        }
+
+        String testLiveString = testLiveResult.getResponse().getContentAsString();
+        ArchiveServerResponseData testLiveResponse = new ObjectMapper().readValue(testLiveString, ArchiveServerResponseData.class);
+        Assertions.assertEquals(testMessageService.getResponseNewSessionFeed(), testLiveResponse.getResponseMessage());
+
+        // Let it run for a bit
+        Thread.sleep(30000);
     }
 
     @AfterAll

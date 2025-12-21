@@ -16,17 +16,31 @@ import java.util.regex.Pattern;
 public class ArchiveServerRequestData {
     private String pageLink;
     private String sessionNickname;
+    @Setter private int maxCommentThreadDepth;
+    @Setter private int maxCommentPageLimit;
+    @Setter private int maxKudosPageLimit;
+    @Setter private int maxBookmarkPageLimit;
     @Setter private boolean nicknameSent;
 
-    public ArchiveServerRequestData(String pageLink) {
+    public ArchiveServerRequestData(String pageLink, int maxCommentThreadDepth, int maxCommentPageLimit,
+                                    int maxKudosPageLimit, int maxBookmarkPageLimit) {
         createURLTest(pageLink);
         this.sessionNickname = "";
+        this.maxCommentThreadDepth = maxCommentThreadDepth;
+        this.maxCommentPageLimit = maxCommentPageLimit;
+        this.maxKudosPageLimit = maxKudosPageLimit;
+        this.maxBookmarkPageLimit = maxBookmarkPageLimit;
         this.nicknameSent = false;
     }
 
-    public ArchiveServerRequestData(String pageLink, String sessionNickname) {
+    public ArchiveServerRequestData(String pageLink, String sessionNickname, int maxCommentThreadDepth,
+                                    int maxCommentPageLimit, int maxKudosPageLimit, int maxBookmarkPageLimit) {
         createURLTest(pageLink);
         createNicknameTest(sessionNickname);
+        this.maxCommentThreadDepth = maxCommentThreadDepth;
+        this.maxCommentPageLimit = maxCommentPageLimit;
+        this.maxKudosPageLimit = maxKudosPageLimit;
+        this.maxBookmarkPageLimit = maxBookmarkPageLimit;
 
         if (!sessionNickname.isBlank()) { // If whitespace was sent, we can ignore and just reset it later
             this.nicknameSent = true;

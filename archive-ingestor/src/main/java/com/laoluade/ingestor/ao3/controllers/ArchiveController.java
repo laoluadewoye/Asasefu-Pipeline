@@ -5,6 +5,7 @@ import com.laoluade.ingestor.ao3.models.ArchiveServerSpecData;
 import com.laoluade.ingestor.ao3.models.ArchiveServerRequestData;
 import com.laoluade.ingestor.ao3.models.ArchiveServerResponseData;
 import com.laoluade.ingestor.ao3.models.ArchiveServerTestData;
+import com.laoluade.ingestor.ao3.repositories.ArchiveParseType;
 import com.laoluade.ingestor.ao3.services.ArchiveService;
 
 // Spring Boot classes
@@ -32,12 +33,12 @@ public class ArchiveController {
 
     @PostMapping("/api/v1/parse/chapter")
     public ArchiveServerResponseData parseChapter(@RequestBody ArchiveServerRequestData request) {
-        return archiveService.startParseChapter(request);
+        return archiveService.startParse(request, ArchiveParseType.CHAPTER);
     }
 
     @PostMapping("/api/v1/parse/story")
     public ArchiveServerResponseData parseStory(@RequestBody ArchiveServerRequestData request) {
-        return archiveService.startParseStory(request);
+        return archiveService.startParse(request, ArchiveParseType.STORY);
     }
 
     @GetMapping("/api/v1/parse/session/{sessionId}")
@@ -46,7 +47,6 @@ public class ArchiveController {
     }
 
     // TODO: Create a test for this
-    // TODO: Add functionality to search the database for session information
     @GetMapping("/api/v1/parse/session/{sessionId}/live")
     public ArchiveServerResponseData getSessionInformationLive(@PathVariable String sessionId) throws InterruptedException {
         return archiveService.getSessionInformationLive(sessionId);

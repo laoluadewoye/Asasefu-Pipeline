@@ -27,7 +27,7 @@ public class ArchiveWebsocketService {
 
     public ArchiveWebsocketService(ArchiveLogService logService, ArchiveMessageService messageService,
                                    ArchiveSessionService sessionService, SimpMessagingTemplate websocketTemplate,
-                                   @Value("${archiveServer.websocket.sendIntervalMilli:1000}") Integer sendIntervalMilli) {
+                                   @Value("${archiveServer.websocket.sendIntervalMilli}") Integer sendIntervalMilli) {
         this.logService = logService;
         this.messageService = messageService;
         this.sessionService = sessionService;

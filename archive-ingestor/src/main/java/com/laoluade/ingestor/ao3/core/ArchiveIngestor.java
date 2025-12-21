@@ -57,10 +57,12 @@ public class ArchiveIngestor {
     // Private Class Configurables
     private final Integer tosSleepDurationSecs;
     private final Integer waitDurationSecs;
-    private final Integer maxCommentThreadDepth;
-    private final Integer maxCommentPageLimit;
-    private final Integer maxKudosPageLimit;
-    private final Integer maxBookmarkPageLimit;
+
+    // Private Class Configurables (Can be changed from web app)
+    private Integer maxCommentThreadDepth;
+    private Integer maxCommentPageLimit;
+    private Integer maxKudosPageLimit;
+    private Integer maxBookmarkPageLimit;
 
     // Instance Constants
     public JSONObject storyLinks;
@@ -81,12 +83,12 @@ public class ArchiveIngestor {
 
     public ArchiveIngestor(ArchiveLogService logService, ArchiveMessageService messageService,
                            ArchiveSessionService sessionService, ArchiveDriverService driverService,
-                           @Value("${archiveServer.ingestor.tosSleepDurationSecs:3}") Integer tosSleepDurationSecs,
-                           @Value("${archiveServer.ingestor.waitDurationSecs:5}") Integer waitDurationSecs,
-                           @Value("${archiveServer.ingestor.maxCommentThreadDepth:10}") Integer maxCommentThreadDepth,
-                           @Value("${archiveServer.ingestor.maxCommentPageLimit:3}") Integer maxCommentPageLimit,
-                           @Value("${archiveServer.ingestor.maxKudosPageLimit:3}") Integer maxKudosPageLimit,
-                           @Value("${archiveServer.ingestor.maxBookmarkPageLimit:3}") Integer maxBookmarkPageLimit)
+                           @Value("${archiveServer.ingestor.tosSleepDurationSecs}") Integer tosSleepDurationSecs,
+                           @Value("${archiveServer.ingestor.waitDurationSecs}") Integer waitDurationSecs,
+                           @Value("${archiveServer.ingestor.maxCommentThreadDepth}") Integer maxCommentThreadDepth,
+                           @Value("${archiveServer.ingestor.maxCommentPageLimit}") Integer maxCommentPageLimit,
+                           @Value("${archiveServer.ingestor.maxKudosPageLimit}") Integer maxKudosPageLimit,
+                           @Value("${archiveServer.ingestor.maxBookmarkPageLimit}") Integer maxBookmarkPageLimit)
             throws IOException {
         System.out.println("Creating new Archive Ingestor...");
 
@@ -1167,10 +1169,24 @@ public class ArchiveIngestor {
         return CompletableFuture.completedFuture(new ArchiveServerFutureData(resultMessage, true));
     }
 
-    // TODO: Add ability to pass in configuration options
     @Async("archiveServerAsyncExecutor")
     public CompletableFuture<ArchiveServerFutureData> startCreateTask(String link, String sessionId,
-                                                                      ArchiveParseType parseType) {
+                                                                      ArchiveParseType parseType,
+                                                                      int newMaxCommentThreadDepth,
+                                                                      int newMaxCommentPageLimit,
+                                                                      int newMaxKudosPageLimit,
+                                                                      int newMaxBookmarkPageLimit) {
+        // Set configurable options
+        int tempMaxCommentThreadDepth = this.maxCommentThreadDepth;
+        int tempMaxCommentPageLimit = this.maxCommentPageLimit;
+        int tempMaxKudosPageLimit = this.maxKudosPageLimit;
+        int tempMaxBookmarkPageLimit = this.maxBookmarkPageLimit;
+
+        this.maxCommentThreadDepth = newMaxCommentThreadDepth;
+        this.maxCommentPageLimit = newMaxCommentPageLimit;
+        this.maxKudosPageLimit = newMaxKudosPageLimit;
+        this.maxBookmarkPageLimit = newMaxBookmarkPageLimit;
+
         // Attempt to obtain a new driver
         RemoteWebDriver driver = this.driverService.obtainDriverOrNull();
         if (driver == null) {
@@ -1179,7 +1195,7 @@ public class ArchiveIngestor {
 
         // Create a chapter or story
         String newJSONString = null;
-        String resultMessage = null;
+        String resultMessage;
         try {
             if (parseType.equals(ArchiveParseType.CHAPTER)) {
                 driver.get(link);
@@ -1187,7 +1203,8 @@ public class ArchiveIngestor {
                 this.logService.createInfoLog(this.messageService.getLoggingInfoChapterParseSucceeded());
                 newJSONString = newArchiveChapter.getJSONRepWithParent().toString();
                 resultMessage = this.messageService.getLoggingInfoChapterRetrievedJSON();
-            } else if (parseType.equals(ArchiveParseType.STORY)) {
+            }
+            else {
                 // Create story
                 driver.get(link);
                 ArchiveStory newArchiveStory = this.createStory(driver, sessionId);
@@ -1200,7 +1217,7 @@ public class ArchiveIngestor {
             if (parseType.equals(ArchiveParseType.CHAPTER)) {
                 resultMessage = this.messageService.getLoggingErrorChapterFailedInterrupt();
             }
-            else if (parseType.equals(ArchiveParseType.STORY)) {
+            else {
                 resultMessage = this.messageService.getLoggingErrorStoryFailedInterrupt();
             }
         }
@@ -1208,7 +1225,7 @@ public class ArchiveIngestor {
             if (parseType.equals(ArchiveParseType.CHAPTER)) {
                 resultMessage = this.messageService.getLoggingErrorChapterFailedContent();
             }
-            else if (parseType.equals(ArchiveParseType.STORY)) {
+            else {
                 resultMessage = this.messageService.getLoggingErrorStoryFailedContent();
             }
         }
@@ -1226,11 +1243,14 @@ public class ArchiveIngestor {
             this.logService.createInfoLog(this.messageService.getLoggingInfoQuitDriver());
         }
 
+        // Reset configurable options
+        this.maxCommentThreadDepth = tempMaxCommentThreadDepth;
+        this.maxCommentPageLimit = tempMaxCommentPageLimit;
+        this.maxKudosPageLimit = tempMaxKudosPageLimit;
+        this.maxBookmarkPageLimit = tempMaxBookmarkPageLimit;
+
         // Return the result
-        if (!parseType.equals(ArchiveParseType.STORY) && !parseType.equals(ArchiveParseType.CHAPTER)) {
-            return returnFailedFuture(this.messageService.getLoggingErrorBadParseType(), sessionId);
-        }
-        else if (newJSONString != null) {
+        if (newJSONString != null) {
             return returnCompletedFuture(newJSONString, resultMessage, sessionId);
         }
         else {
