@@ -89,7 +89,12 @@
             }
         </form>
     </div>
+    @if (!(callParseError() === "")) {
+        <div class="error fade-in" animate.leave="fade-out">
+            <p>Error: {{ callParseError() }}</p>
+        </div>
+    }
     @if (isDisabled()) {
-        <app-progress [currentResponse]="latestResponse()" />
+        <app-progress [parentDefaultTimeoutMilli]="defaultTimeoutMilli()" [currentResponse]="latestResponse()" animate.enter="drop-down-fade-in-animation" animate.leave="fade-out"/>
     }
 </div>

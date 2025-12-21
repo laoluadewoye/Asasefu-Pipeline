@@ -9,8 +9,13 @@ import { Settings } from "./settings/settings";
   styleUrl: './body.css',
 })
 export class Body implements OnInit {
+    // Default value
     parentDefaultValue: InputSignal<string> = input.required<string>();
     defaultValue: WritableSignal<string> = signal<string>("");
+
+    // Default timer
+    defaultTimeoutMilli: WritableSignal<number> = signal<number>(5000);
+
     completedSessionIds: WritableSignal<string[]> = signal<string[]>([]);
 
     ngOnInit() {

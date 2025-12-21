@@ -1,11 +1,11 @@
-import { Component, inject, output, OutputEmitterRef, signal, WritableSignal } from '@angular/core';
+import { Component, inject, input, InputSignal, OnInit, output, OutputEmitterRef, signal, WritableSignal } from '@angular/core';
 import { FormControl, Validators, ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { linkPatternValidator } from './settings-link-validator';
 import { ArchiveSessionGetService } from '../../../services/archive-session-get';
 import { ArchiveParseChapterService } from '../../../services/archive-parse-chapter';
 import { ArchiveParseStoryService } from '../../../services/archive-parse-story';
 import { ArchiveServerRequestData } from '../../../models/archive-server-request-data';
-import { catchError, Subscription } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 import { ArchiveServerResponseData } from '../../../models/archive-server-response-data';
 import { Progress } from "./progress/progress";
 
@@ -15,9 +15,12 @@ import { Progress } from "./progress/progress";
   templateUrl: './settings.html',
   styleUrl: './settings.css',
 })
-export class Settings {
-    // Form and Form control
+export class Settings implements OnInit {
+    // Controlling visuals
     isDisabled: WritableSignal<boolean> = signal(false);
+    callParseError: WritableSignal<string> = signal("");
+
+    // Form and Form control
     settingsFormGroup: FormGroup = new FormGroup({
         parseType: new FormControl<string>('', Validators.required),
         parseLink: new FormControl<string>('', [Validators.required, linkPatternValidator]),
@@ -48,7 +51,16 @@ export class Settings {
         responseMessage: ""
     });
     curSessionId: WritableSignal<string> = signal("");
-    sessionFinished: OutputEmitterRef<string> = output<string>();
+    sessionComplete: OutputEmitterRef<string> = output<string>();
+
+    // Timeouts
+    parentDefaultTimeoutMilli: InputSignal<number> = input.required<number>();
+    defaultTimeoutMilli: WritableSignal<number> = signal<number>(0);
+    callParseWaitMilli: number = 1000;
+
+    ngOnInit() {
+        this.defaultTimeoutMilli.set(this.parentDefaultTimeoutMilli());
+    }
 
     resetAdvancedIfNeeded() {
         const formValues: string[] = [
@@ -61,6 +73,21 @@ export class Settings {
             let curFormSetting = this.settingsFormGroup.get(formValues[i]);
             if (curFormSetting?.value === null) curFormSetting?.reset();
         }
+    }
+
+    disableSettingsForm() {
+        this.isDisabled.set(true);
+        this.settingsFormGroup.disable();
+    }
+
+    enableSettingsForm() {
+        setTimeout(() => {
+                this.isDisabled.set(false); 
+                this.settingsFormGroup.enable(); 
+                this.callParseError.set("")
+            }, 
+            this.parentDefaultTimeoutMilli()
+        );
     }
 
     async callParse() {
@@ -80,7 +107,8 @@ export class Settings {
         if (this.settingsFormGroup.get('parseType')?.value === "chapter") {
             this.archiveParseChapterService.postParseChapterRequest(newArchiveServerRequest).pipe(
                 catchError((err) => {
-                    console.log(err);
+                    this.callParseError.set("Archive Parse Chapter Service encountered an error.");
+                    this.enableSettingsForm();
                     throw err;
                 })
             ).subscribe((result) => this.latestResponse.set(result));
@@ -88,7 +116,8 @@ export class Settings {
         else if (this.settingsFormGroup.get('parseType')?.value === "story") {
             this.archiveParseStoryService.postParseStoryRequest(newArchiveServerRequest).pipe(
                 catchError((err) => {
-                    console.log(err);
+                    this.callParseError.set("Archive Parse Story Service encountered an error.");
+                    this.enableSettingsForm();
                     throw err;
                 })
             ).subscribe((result) => this.latestResponse.set(result));
@@ -100,7 +129,7 @@ export class Settings {
         // Wait for confirmation response
         let waitingForResponse: boolean = true;
         while (waitingForResponse) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, this.callParseWaitMilli));
             waitingForResponse = lastSessionId === this.latestResponse().sessionId;
         }
 
@@ -119,19 +148,17 @@ export class Settings {
 
             // Manually end the session if any flag set
             if (sF || sC || sE) {
-                this.isDisabled.set(false);
-                this.settingsFormGroup.enable();
                 this.getLatestSubscription.unsubscribe();
                 this.archiveSessionGetService.unsubscribeFromStomp();
-                this.sessionFinished.emit(this.curSessionId());
+                this.sessionComplete.emit(this.curSessionId());
+                this.enableSettingsForm();
             }
         });
     }
 
     submitSettingsFormGroup() {
         // Disable settings
-        this.isDisabled.set(true);
-        this.settingsFormGroup.disable();
+        this.disableSettingsForm();
 
         // Call the parse job
         try {
@@ -139,6 +166,8 @@ export class Settings {
         }
         catch (err) {
             console.log(err);
+            this.callParseError.set("General parser logic encountered an error.");
+            this.enableSettingsForm();
         }
     }
 }

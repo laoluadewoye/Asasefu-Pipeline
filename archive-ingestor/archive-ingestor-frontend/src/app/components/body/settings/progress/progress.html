@@ -1,11 +1,33 @@
-<div>
-    <p>Session ID: {{ currentResponse()?.sessionId }}</p>
-    <p>Session Nickname: {{ currentResponse()?.sessionNickname }}</p>
-    <p>Session Finished: {{ currentResponse()?.sessionFinished }}</p>
-    <p>Session Canceled: {{ currentResponse()?.sessionCanceled }}</p>
-    <p>Session Exception: {{ currentResponse()?.sessionException }}</p>
-    <p>Session Chapters Completed: {{ currentResponse()?.parseChaptersCompleted }}</p>
-    <p>Session Chapters Total: {{ currentResponse()?.parseChaptersTotal }}</p>
-    <p>Session Parse Result: {{ currentResponse()?.parseResult }}</p>
-    <p>Session Response Message: {{ currentResponse()?.responseMessage }}</p>
+<div class="purple-background progress-div">
+    <h2>Parsing Progress</h2>
+    @if (currentResponse().sessionFinished) {
+        <div class="success fade-in" animate.leave="fade-out">
+            <p>Session was able to complete successfully.</p>
+        </div>
+    }
+    @if (currentResponse().sessionCanceled) {
+        <div class="success fade-in" animate.leave="fade-out">
+            <p>Session was able to cancel successfully.</p>
+        </div>
+    }
+    @if (currentResponse().sessionException) {
+        <div class="error fade-in" animate.leave="fade-out">
+            <p>Session had an exception.</p>
+        </div>
+    }
+    <p>Session ID: {{ currentResponse().sessionId }}</p>
+    <p>Session Nickname: {{ currentResponse().sessionNickname }}</p>
+    <p>Session Finished: {{ currentResponse().sessionFinished }}</p>
+    <p>Session Canceled: {{ currentResponse().sessionCanceled }}</p>
+    <p>Session Exception: {{ currentResponse().sessionException }}</p>
+    <p>Session Chapters Completed: {{ currentResponse().parseChaptersCompleted }}</p>
+    <p>Session Chapters Total: {{ currentResponse().parseChaptersTotal }}</p>
+    <p>Session Parse Result: {{ currentParseResult() }}</p>
+    <p>Session Response Message: {{ currentResponseMessage() }}</p>
+    <button class="button-padding" (click)="onProgressButtonClick()">Cancel Parse Session</button>
+    @if (!sessionNotActive() && !(cancelResponseMessage() === "")) {
+        <div class="success fade-in" animate.leave="fade-out">
+            <p>Session cancel response sent with following message: {{ cancelResponseMessage() }}</p>
+        </div>
+    }
 </div>

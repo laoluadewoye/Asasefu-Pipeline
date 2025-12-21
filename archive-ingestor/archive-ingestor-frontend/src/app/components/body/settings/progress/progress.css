@@ -1,0 +1,17 @@
+h2 {
+    color: var(--theme-white-color);
+}
+
+p {
+    padding: var(--half-default-distance);
+}
+
+.progress-div {
+    color: var(--theme-white-color);
+    padding: var(--default-distance);
+    margin: var(--default-distance);
+    outline-width: calc(var(--half-default-distance) / 2);
+    outline-style: solid;
+    outline-color: var(--theme-white-color);
+    border-radius: var(--default-border-radius);
+}

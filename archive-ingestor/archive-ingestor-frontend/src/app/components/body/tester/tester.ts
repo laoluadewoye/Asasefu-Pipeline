@@ -11,6 +11,7 @@ import { catchError } from 'rxjs';
 })
 export class Tester implements OnInit {
     parentDefaultValue: InputSignal<string> = input.required<string>();
+    parentDefaultTimeoutMilli: InputSignal<number> = input.required<number>();
 
     archiveServerTestService: ArchiveServerTestService = inject(ArchiveServerTestService);
     archiveServerTestData: WritableSignal<ArchiveServerTestData> = signal<ArchiveServerTestData>({testData: ""});
@@ -36,6 +37,6 @@ export class Tester implements OnInit {
         setTimeout(() => {
             this.buttonPressed.set(false);
             this.archiveServerTestData.set({testData: this.parentDefaultValue()});
-        }, 5000);
+        }, this.parentDefaultTimeoutMilli());
     }
 }

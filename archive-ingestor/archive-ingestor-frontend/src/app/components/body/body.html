@@ -113,5 +113,9 @@
     You will be able to navigate through all the data and
     choose which data you want to save to JSON (maybe XML and YAML as well).
 </p>
-<app-tester [parentDefaultValue]="defaultValue()" />
-<app-settings (sessionFinished)="addCompletedSession($event)" />
+<app-tester [parentDefaultValue]="defaultValue()" [parentDefaultTimeoutMilli]="defaultTimeoutMilli()"/>
+<app-settings [parentDefaultTimeoutMilli]="defaultTimeoutMilli()" (sessionComplete)="addCompletedSession($event)"/>
+
+@for(sessionId of completedSessionIds(); track sessionId) {
+    <p>{{ sessionId }}</p>
+}

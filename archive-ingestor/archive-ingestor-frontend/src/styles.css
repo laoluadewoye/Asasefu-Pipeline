@@ -10,6 +10,8 @@
     --theme-black-color: #0A0A0A;
     --theme-red-color: #990000;
     --theme-yellow-color: #FFEA31;
+    --theme-purple-color: #7A0099;
+    --theme-green-color: #79ff48;
 }
 
 body {
@@ -82,6 +84,11 @@ button {
     color: var(--theme-white-color);
 }
 
+.purple-background {
+    background-color: var(--theme-purple-color);
+    color: var(--theme-white-color);
+}
+
 .dimming-layer {
     width: 100%;
     height: 100%;
@@ -100,15 +107,23 @@ button {
     padding: var(--half-default-distance);
 }
 
-.error {
-    background-color: var(--theme-yellow-color);
-    color: var(--theme-black-color);
+.error, .success {
     font-weight: bold;
     justify-self: center;
     border-radius: var(--default-border-radius);
     transition: var(--transition-seconds);
 }
 
-.error p {
+.error {
+    background-color: var(--theme-yellow-color);
+    color: var(--theme-black-color);
+}
+
+.success {
+    background-color: var(--theme-green-color);
+    color: var(--theme-black-color);
+}
+
+.error p, .success p {
     padding: var(--half-default-distance);
 }
