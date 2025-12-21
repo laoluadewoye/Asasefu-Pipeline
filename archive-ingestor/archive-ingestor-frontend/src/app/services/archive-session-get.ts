@@ -56,15 +56,6 @@ export class ArchiveSessionGetService {
             })
         ).subscribe((result) => this.stompSubject.next(result));
 
-        // Attempt reconnection with manual loop if needed
-        // if (!this.stompClient.active) {
-        //     while (!this.stompClient.active) {
-        //         console.log("Attempting connection in 5 seconds...");
-        //         new Promise(resolve => setTimeout(resolve, 5000));
-        //         this.stompClient.activate();
-        //     }
-        // }
-
         // Create a subscription to this feed
         this.stompSubscription = this.stompClient.watch(
             {destination: "/api/v1/websocket/topic/get-session-live"}

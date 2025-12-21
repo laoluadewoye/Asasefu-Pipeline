@@ -31,8 +31,8 @@
 <h2>Instructions</h2>
 <p>
     After this introduction section is the <strong><u>Set Parsing Details</u></strong> section.
-    This section will have three different buttons to select
-    and a submission button to send the results of to the backend service.
+    This section will have various configuration options
+    and a submission button to send the results to the backend service.
 </p>
 <p>
     The <strong><u>first option</u></strong> is a Parsing Method,
@@ -47,8 +47,8 @@
 </p>
 <ul>
     <li>
-        Links that don't start like "https://archiveofourown.org/works"
-        or "https://archiveofourown.org/works/XXXXXXXX/chapters"
+        Links that don't start like "https://archiveofourown.org/works/"
+        or "https://archiveofourown.org/works/XXXXXXXX/chapters/"
         where "XXXXXXXX" represents a story id are automatically rejected.
         This is ONLY a story parser.
     </li>
@@ -59,8 +59,9 @@
     <li>
         "https://archiveofourown.org/works/XXXXXXXX/chapters/YYYYYYYYY where
         "XXXXXXXX" represents a story id and "YYYYYYYYY" represents a chapter id
-        is only a valid link for parsing a chapter. If you choose story and then pass this link,
-        you WILL get an error notification.
+        is <strong>ONLY</strong> a valid link for parsing a chapter. 
+        If you choose story and then pass this link,
+        you <strong>WILL</strong> get an error notification.
     </li>
 </ul>
 <p>
@@ -69,6 +70,36 @@
     (basically a to z, A to Z, and 0 to 9), underscores (_) and dashes (-). 
     If there is not supplied nickname, the backend will use the session ID as the nickname.
 </p>
+<p>
+    The rest of the options are advanced settings that control how detailed you want the results to be.
+    <strong><u>To make any of these options unlimited, set the corresponding value to -1.</u></strong>
+</p>
+<ul>
+    <li>
+        <strong>Max Comment Thread Depth</strong> controls how deep you want to search into comment threads. 
+        By default, this option is set to 10 replies. As an example, if a comment has 15 reply threads,
+        but one of the reply threads has a back-and-forth that goes on for 20 replies, then that 20-reply
+        conversation is cut off for brevity.
+    </li>
+    <li>
+        <strong>Max Comment Page Limit</strong> controls 
+        the maximum amount of pages of comments you want to search per chapter. 
+        If a chapter has less pages than is specified here, then all the chapter's comments will be parsed.
+        By default, this option is set to 3 pages.
+    </li>
+    <li>
+        <strong>Max Kudos Page Limit</strong> controls 
+        the maximum amount of pages of kudos you want to search per story. 
+        If a story has less pages than is specified here, then all the story's kudos will be parsed.
+        By default, this option is set to 3 pages.
+    </li>
+    <li>
+        <strong>Max Bookmarks Page Limit</strong> controls 
+        the maximum amount of pages of bookmarks you want to search per story. 
+        If a story has less pages than is specified here, then all the story's bookmarks will be parsed.
+        By default, this option is set to 3 pages.
+    </li>
+</ul>
 <p>
     The backend service will then start the parsing process,
     and a real time chapter-by-chapter progress text will display until either the parsing is complete,
@@ -82,5 +113,5 @@
     You will be able to navigate through all the data and
     choose which data you want to save to JSON (maybe XML and YAML as well).
 </p>
-<app-tester [recievedDefaultValue]="recievedDefaultValue" />
-<app-settings />
+<app-tester [parentDefaultValue]="defaultValue()" />
+<app-settings (sessionFinished)="addCompletedSession($event)" />

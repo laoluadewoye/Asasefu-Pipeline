@@ -1,0 +1,11 @@
+<div>
+    <p>Session ID: {{ currentResponse()?.sessionId }}</p>
+    <p>Session Nickname: {{ currentResponse()?.sessionNickname }}</p>
+    <p>Session Finished: {{ currentResponse()?.sessionFinished }}</p>
+    <p>Session Canceled: {{ currentResponse()?.sessionCanceled }}</p>
+    <p>Session Exception: {{ currentResponse()?.sessionException }}</p>
+    <p>Session Chapters Completed: {{ currentResponse()?.parseChaptersCompleted }}</p>
+    <p>Session Chapters Total: {{ currentResponse()?.parseChaptersTotal }}</p>
+    <p>Session Parse Result: {{ currentResponse()?.parseResult }}</p>
+    <p>Session Response Message: {{ currentResponse()?.responseMessage }}</p>
+</div>

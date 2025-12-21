@@ -1,4 +1,4 @@
-import { Component, inject, signal, Input, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, input, InputSignal, WritableSignal } from '@angular/core';
 import { ArchiveServerTestService } from '../../../services/archive-server-test';
 import { ArchiveServerTestData } from '../../../models/archive-server-test-data';
 import { catchError } from 'rxjs';
@@ -10,15 +10,15 @@ import { catchError } from 'rxjs';
   styleUrl: './tester.css',
 })
 export class Tester implements OnInit {
-    @Input() recievedDefaultValue!: string;
+    parentDefaultValue: InputSignal<string> = input.required<string>();
 
     archiveServerTestService: ArchiveServerTestService = inject(ArchiveServerTestService);
-    archiveServerTestData = signal<ArchiveServerTestData>({testData: ""});
+    archiveServerTestData: WritableSignal<ArchiveServerTestData> = signal<ArchiveServerTestData>({testData: ""});
     buttonText: string = "Test API";
-    buttonPressed = signal(false);
+    buttonPressed: WritableSignal<boolean> = signal(false);
 
     ngOnInit(): void {
-        this.archiveServerTestData.set({testData: this.recievedDefaultValue});
+        this.archiveServerTestData.set({testData: this.parentDefaultValue()});
     }
 
     onTesterButtonClick() {
@@ -35,7 +35,7 @@ export class Tester implements OnInit {
 
         setTimeout(() => {
             this.buttonPressed.set(false);
-            this.archiveServerTestData.set({testData: this.recievedDefaultValue});
+            this.archiveServerTestData.set({testData: this.parentDefaultValue()});
         }, 5000);
     }
 }

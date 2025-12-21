@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, WritableSignal } from '@angular/core';
 import { Header } from './components/header/header';
 import { Footer } from "./components/footer/footer";
 import { Body } from './components/body/body';
@@ -10,6 +10,6 @@ import { Body } from './components/body/body';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('Archive Ingestor');
+  protected readonly title: WritableSignal<string> = signal('Archive Ingestor');
   readonly defaultValue: string = "[Not Available]";
 }

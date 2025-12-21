@@ -2,6 +2,7 @@
     <div [class.dimming-layer]="isDisabled()" [class.undimming-layer]="!isDisabled()">
         <h2>Set Parsing Details</h2>
         <form [formGroup]="settingsFormGroup" (submit)="submitSettingsFormGroup()">
+            <!--Parsing Method-->
             @if (settingsFormGroup.get('parseType')?.invalid) {
                 <div class="error fade-in" animate.leave="fade-out">
                     <p>Error: Please pick a parsing method. You cannot proceed until you do.</p>
@@ -16,6 +17,8 @@
                     <label for="parseType-story">Story</label>
                 </div>
             </span>
+
+            <!--Parsing Link-->
             @if (settingsFormGroup.get('parseLink')?.dirty && settingsFormGroup.get('parseLink')?.invalid) {
                 <div class="error fade-in" animate.leave="fade-out">
                     <p>
@@ -28,6 +31,8 @@
                 <label for="parseLink"><h3>Chapter or Story Link (Required):</h3></label>
                 <input type="text" id="parseLink" name="parseLink" formControlName="parseLink">
             </span>
+
+            <!--Parsing Nickname-->
             @if (settingsFormGroup.get('parseNickname')?.dirty && settingsFormGroup.get('parseNickname')?.invalid) {
                 <div class="error fade-in" animate.leave="fade-out">
                     <p>Error: The typed nickname cannot be used. Only use alphanumeric characters, underscores, or dashes.</p>
@@ -37,6 +42,46 @@
                 <label for="parseNickname"><h3>Nickname (Optional):</h3></label>
                 <input type="text" id="parseNickname" name="parseNickname" formControlName="parseNickname">
             </span>
+
+            <!--Advanced section-->
+            <span>
+                <h3>Configure Advanced Settings (Toggle):</h3>
+                <div id="advanced-radio">
+                    <input type="radio" id="advanced-yes" name="parseAdvancedToggled" value="yes" formControlName="parseAdvancedToggled">
+                    <label for="advanced-yes">Yes</label>
+                    <input type="radio" id="advanced-no" name="parseAdvancedToggled" value="no" formControlName="parseAdvancedToggled" checked="checked">
+                    <label for="advanced-no">No</label>
+                </div>
+            </span>
+            @if (settingsFormGroup.get('parseAdvancedToggled')?.value === 'yes') {
+                <div id="settings-div-advanced" animate.enter="drop-down-fade-in-animation">
+                    <!--Max Comment Thread Depth-->
+                    <span>
+                        <label for="parseMaxCommentThreadDepth"><h3>Max Comment Thread Depth:</h3></label>
+                        <input type="number" id="parseMaxCommentThreadDepth" name="parseMaxCommentThreadDepth" formControlName="parseMaxCommentThreadDepth" (change)="resetAdvancedIfNeeded()">
+                    </span>
+
+                    <!--Max Comment Page Limit-->
+                    <span>
+                        <label for="parseMaxCommentPageLimit"><h3>Max Comment Page Limit:</h3></label>
+                        <input type="number" id="parseMaxCommentPageLimit" name="parseMaxCommentPageLimit" formControlName="parseMaxCommentPageLimit" (change)="resetAdvancedIfNeeded()">
+                    </span>
+
+                    <!--Max Kudos Page Limit-->
+                    <span>
+                        <label for="parseMaxKudosPageLimit"><h3>Max Kudos Page Limit:</h3></label>
+                        <input type="number" id="parseMaxKudosPageLimit" name="parseMaxKudosPageLimit" formControlName="parseMaxKudosPageLimit" (change)="resetAdvancedIfNeeded()">
+                    </span>
+
+                    <!--Max Bookmark Page Limit-->
+                    <span>
+                        <label for="parseMaxBookmarkPageLimit"><h3>Max Bookmark Page Limit:</h3></label>
+                        <input type="number" id="parseMaxBookmarkPageLimit" name="parseMaxBookmarkPageLimit" formControlName="parseMaxBookmarkPageLimit" (change)="resetAdvancedIfNeeded()">
+                    </span>
+                </div>
+            }
+
+            <!--Submit-->
             @if (!isDisabled()) {
                 <div class="center-content">
                     <input [class.dimming-layer]="settingsFormGroup.invalid" [disabled]="settingsFormGroup.invalid" type="submit" value="Start Parsing">
@@ -44,13 +89,7 @@
             }
         </form>
     </div>
-    <p>Session ID: {{ latestResponse().sessionId }}</p>
-    <p>Session Nickname: {{ latestResponse().sessionNickname }}</p>
-    <p>Session Finished: {{ latestResponse().sessionFinished }}</p>
-    <p>Session Canceled: {{ latestResponse().sessionCanceled }}</p>
-    <p>Session Exception: {{ latestResponse().sessionException }}</p>
-    <p>Session Chapters Completed: {{ latestResponse().parseChaptersCompleted }}</p>
-    <p>Session Chapters Total: {{ latestResponse().parseChaptersTotal }}</p>
-    <p>Session Parse Result: {{ latestResponse().parseResult }}</p>
-    <p>Session Response Message: {{ latestResponse().responseMessage }}</p>
+    @if (isDisabled()) {
+        <app-progress [currentResponse]="latestResponse()" />
+    }
 </div>

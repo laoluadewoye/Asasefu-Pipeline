@@ -1,4 +1,4 @@
-import { Component, Inject, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, inject, input, InputSignal, OnInit, signal, WritableSignal } from '@angular/core';
 import { ArchiveServerSpecService } from '../../services/archive-server-spec';
 import { ArchiveServerSpecData } from '../../models/archive-server-spec-data';
 import { catchError } from 'rxjs';
@@ -10,17 +10,17 @@ import { catchError } from 'rxjs';
   styleUrl: './footer.css',
 })
 export class Footer implements OnInit {
-    @Input() recievedDefaultValue!: string;
+    parentDefaultValue: InputSignal<string> = input.required<string>();
     
     archiveServerSpecService: ArchiveServerSpecService = inject(ArchiveServerSpecService);
-    archiveServerSpecData = signal<ArchiveServerSpecData>({
+    archiveServerSpecData: WritableSignal<ArchiveServerSpecData> = signal<ArchiveServerSpecData>({
         archiveIngestorVersion: "", latestOTWArchiveVersion: ""
     });
 
     ngOnInit(): void {
         this.archiveServerSpecData.set({
-            archiveIngestorVersion: this.recievedDefaultValue, 
-            latestOTWArchiveVersion: this.recievedDefaultValue
+            archiveIngestorVersion: this.parentDefaultValue(), 
+            latestOTWArchiveVersion: this.parentDefaultValue()
         });
         this.archiveServerSpecService.getArchiveServerSpecData().pipe(
             catchError((err) => {

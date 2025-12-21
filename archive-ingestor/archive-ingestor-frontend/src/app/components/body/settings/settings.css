@@ -30,6 +30,18 @@ input[type=text] {
     padding-inline: var(--half-default-distance);
 }
 
+input[type=number] {
+    height: var(--default-distance);
+    border-radius: var(--default-border-radius);
+    padding-inline: var(--half-default-distance);
+}
+
+input[type=checkbox] {
+    width: var(--button-distance);
+    height: var(--button-distance);
+    accent-color: var(--theme-yellow-color);
+}
+
 input[type=submit] {
     margin-block: var(--half-default-distance);
     outline-style: solid;
@@ -58,4 +70,23 @@ label {
 #settings-div {
     margin-block: var(--default-distance);
     padding: var(--half-default-distance);
+}
+
+#settings-div-advanced {
+    margin-left: calc(var(--default-distance) * 2);
+}
+
+.drop-down-fade-in-animation {
+  animation: drop-down-fade-in 1s;
+}
+
+@keyframes drop-down-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
