@@ -84,7 +84,7 @@ public class ArchiveIngestorTest {
         testLinks = ArchiveIngestor.getJSONFromFilepath(testLinksPathDecoded);
 
         System.out.println("Creating archive ingestor instance...");
-        testIngestor = new ArchiveIngestor(null, null, null, null);
+        testIngestor = new ArchiveIngestor(null, null, null, null, 3, 5, 10, 3, 3, 3);
 
         System.out.println("Creating Selenium container...");
         try {
@@ -283,8 +283,7 @@ public class ArchiveIngestorTest {
 
         // Assert that the kudos math checks out
         Integer totalKudos = testArchiveStory.archiveStoryInfo.registeredKudos.size() +
-                testArchiveStory.archiveStoryInfo.unnamedRegisteredKudos +
-                testArchiveStory.archiveStoryInfo.guestKudos;
+                testArchiveStory.archiveStoryInfo.unregisteredKudos;
         Assertions.assertEquals(
                 testArchiveStory.archiveStoryInfo.kudos, totalKudos,
                 "Story " + testArchiveStory.archiveStoryInfo.title + " kudos calculations are off."

@@ -48,9 +48,9 @@ public class ArchiveStoryInfo {
 
     // Other information
     public ArrayList<String> registeredKudos;
-    public Integer unnamedRegisteredKudos;
-    public Integer guestKudos;
+    public Integer unregisteredKudos;
     public ArrayList<String> publicBookmarks;
+    public Integer unregisteredBookmarks;
 
 
     // Empty constructor for manual construction
@@ -142,22 +142,13 @@ public class ArchiveStoryInfo {
     }
 
     public void setKudosList(ArrayList<String> kudosList) {
-        // Check last value in case its saying there are more unspecified registered users
-        try {
-            this.unnamedRegisteredKudos = Integer.parseInt(kudosList.getLast().split(" ")[0]);
-            kudosList.removeLast();
-        }
-        catch (NumberFormatException e) {
-            this.unnamedRegisteredKudos = 0;
-        }
-
-        // Set values
         this.registeredKudos = kudosList;
-        this.guestKudos = this.kudos - this.registeredKudos.size() - this.unnamedRegisteredKudos;
+        this.unregisteredKudos = this.kudos - this.registeredKudos.size();
     }
 
     public void setPublicBookmarkList(ArrayList<String> bookmarkList) {
         this.publicBookmarks = bookmarkList;
+        this.unregisteredBookmarks = this.bookmarks - this.publicBookmarks.size();
     }
 
     public JSONObject getJSONRep() {
@@ -191,9 +182,9 @@ public class ArchiveStoryInfo {
         rep.put("startNotes", new JSONArray(this.startNotes));
         rep.put("endNotes", new JSONArray(this.endNotes));
         rep.put("registeredKudos", new JSONArray(this.registeredKudos));
-        rep.put("unnamedRegisteredKudos", this.unnamedRegisteredKudos);
-        rep.put("guestKudos", this.guestKudos);
+        rep.put("unregisteredKudos", this.unregisteredKudos);
         rep.put("publicBookmarks", new JSONArray(this.publicBookmarks));
+        rep.put("unregisteredBookmarks", this.unregisteredBookmarks);
         return rep;
     }
 
@@ -239,9 +230,9 @@ public class ArchiveStoryInfo {
         newArchiveStoryInfo.startNotes = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("startNotes"));
         newArchiveStoryInfo.endNotes = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("endNotes"));
         newArchiveStoryInfo.registeredKudos = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("registeredKudos"));
-        newArchiveStoryInfo.unnamedRegisteredKudos = newStoryInfoJSON.getInt("unnamedRegisteredKudos");
-        newArchiveStoryInfo.guestKudos = newStoryInfoJSON.getInt("guestKudos");
+        newArchiveStoryInfo.unregisteredKudos = newStoryInfoJSON.getInt("unregisteredKudos");
         newArchiveStoryInfo.publicBookmarks = convertJSONArrayToArrayList(newStoryInfoJSON.getJSONArray("publicBookmarks"));
+        newArchiveStoryInfo.unregisteredBookmarks = newStoryInfoJSON.getInt("unregisteredBookmarks");
 
         return newArchiveStoryInfo;
     }

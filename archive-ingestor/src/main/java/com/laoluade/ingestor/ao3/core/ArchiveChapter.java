@@ -23,7 +23,7 @@ public class ArchiveChapter {
     public ArrayList<String> startNotes;
     public ArrayList<String> endNotes;
     public ArrayList<String> paragraphs;
-    public JSONObject comments;
+    public JSONObject foundComments;
 
     public ArchiveChapter(ArchiveStoryInfo parentArchiveStoryInfo, String pageTitle, String chapterTitle, ArrayList<String> summary,
                           ArrayList<String> startNotes, ArrayList<String> endNotes, ArrayList<String> paragraphs) {
@@ -52,8 +52,8 @@ public class ArchiveChapter {
         this.pageLink = pageLink;
     }
 
-    public void setComments(JSONObject comments) {
-        this.comments = comments;
+    public void setFoundComments(JSONObject foundComments) {
+        this.foundComments = foundComments;
     }
 
     public JSONObject getJSONRepWithParent() {
@@ -68,7 +68,7 @@ public class ArchiveChapter {
         rep.put("startNotes", new JSONArray(this.startNotes));
         rep.put("endNotes", new JSONArray(this.endNotes));
         rep.put("paragraphs", new JSONArray(this.paragraphs));
-        rep.put("comments", this.comments);
+        rep.put("foundComments", this.foundComments);
         return rep;
     }
 
@@ -83,7 +83,7 @@ public class ArchiveChapter {
         rep.put("startNotes", new JSONArray(this.startNotes));
         rep.put("endNotes", new JSONArray(this.endNotes));
         rep.put("paragraphs", new JSONArray(this.paragraphs));
-        rep.put("comments", this.comments);
+        rep.put("foundComments", this.foundComments);
         return rep;
     }
 }

@@ -43,7 +43,7 @@ public class ArchiveSessionService {
     private final Integer sessionPersistSecs;
     private final Integer checkIntervalMilli;
 
-    public ArchiveSessionService(@Value("${archiveServer.session.persistSecs:3}") Integer sessionPersistSecs,
+    public ArchiveSessionService(@Value("${archiveServer.session.persistSecs:10}") Integer sessionPersistSecs,
                                  @Value("${archiveServer.session.checkIntervalMilli:2000}") Integer checkIntervalMilli,
                                  ArchiveLogService logService,
                                  ArchiveMessageService messageService) {
