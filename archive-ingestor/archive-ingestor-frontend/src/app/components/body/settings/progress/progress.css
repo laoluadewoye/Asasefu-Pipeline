@@ -3,7 +3,17 @@ h2 {
 }
 
 p {
-    padding: var(--half-default-distance);
+    padding-inline: var(--half-default-distance);
+}
+
+button {
+    background-color: var(--theme-white-color);
+    color: var(--theme-black-color);
+}
+
+button:hover {
+    background-color: var(--theme-black-color);
+    color: var(--theme-white-color);
 }
 
 .progress-div {

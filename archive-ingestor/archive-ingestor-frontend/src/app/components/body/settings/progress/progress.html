@@ -24,7 +24,9 @@
     <p>Session Chapters Total: {{ currentResponse().parseChaptersTotal }}</p>
     <p>Session Parse Result: {{ currentParseResult() }}</p>
     <p>Session Response Message: {{ currentResponseMessage() }}</p>
-    <button class="button-padding" (click)="onProgressButtonClick()">Cancel Parse Session</button>
+    <div class="center-content">
+        <button class="button-padding" (click)="onProgressButtonClick()">Cancel Parse Session</button>
+    </div>
     @if (!sessionNotActive() && !(cancelResponseMessage() === "")) {
         <div class="success fade-in" animate.leave="fade-out">
             <p>Session cancel response sent with following message: {{ cancelResponseMessage() }}</p>
