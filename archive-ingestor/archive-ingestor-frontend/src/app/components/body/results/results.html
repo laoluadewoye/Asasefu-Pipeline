@@ -1,0 +1,34 @@
+@for(sessionId of parentCompletedSessionIds(); track sessionId) {
+    <p>{{ sessionId }}</p>
+}
+<div class="results-div">
+    <h2>Completed Parses</h2>
+    <div id="result-div-menu">
+        <div class="results-unit-div" [class.red-background]="activeTab() === 'stories-and-chapters'" (click)="selectTab('stories-and-chapters')">
+            <h3>Stories and Chapters</h3>
+        </div>
+        <div class="results-unit-div" [class.red-background]="activeTab() === 'story-metadata-only'" (click)="selectTab('story-metadata-only')">
+            <h3>Story Metadata Only</h3>
+        </div>
+        <div class="results-unit-div" [class.red-background]="activeTab() === 'chapters-only'" (click)="selectTab('chapters-only')">
+            <h3>Individual Chapters Only</h3>
+        </div>
+    </div>
+    <div id="result-div-content">
+        @if (activeTab() === "stories-and-chapters") {
+            <div id="result-div-stories-and-chapters" class="results-unit-div">
+                stories-and-chapters
+            </div>
+        }
+        @if (activeTab() === "story-metadata-only") {
+            <div id="result-div-story-metadata-only" class="results-unit-div">
+                story-metadata-only
+            </div>
+        }
+        @if (activeTab() === "chapters-only") {
+            <div id="result-div-chapters-only" class="results-unit-div">
+                chapters-only
+            </div>
+        }
+    </div>
+</div>

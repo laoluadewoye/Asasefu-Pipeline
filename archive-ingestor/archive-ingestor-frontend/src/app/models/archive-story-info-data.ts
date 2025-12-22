@@ -1,0 +1,34 @@
+export class ArchiveStoryInfoData {
+    creationTimestamp!: string;
+    creationHash!: string;
+    ratings!: string[];
+    warnings!: string[];
+    categories!: string[];
+    fandoms!: string[];
+    relationships!: string[];
+    characters!: string[];
+    additionalTags!: string[];
+    language!: string;
+    series!: string[];
+    collections!: string[];
+    published!: string;
+    status!: string;
+    statusWhen!: string;
+    words!: number;
+    currentChapters!: number;
+    totalChapters!: number;
+    comments!: number;
+    kudos!: number;
+    bookmarks!: number;
+    hits!: number;
+    title!: string;
+    authors!: string[];
+    summary!: string[];
+    associations!: string[];
+    startNotes!: string[];
+    endNotes!: string[];
+    registeredKudos!: string[];
+    unregisteredKudos!: number;
+    publicBookmarks!: string[];
+    unregisteredBookmarks!: number;
+}

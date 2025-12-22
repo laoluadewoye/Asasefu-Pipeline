@@ -115,7 +115,4 @@
 </p>
 <app-tester [parentDefaultValue]="defaultValue()" [parentDefaultTimeoutMilli]="defaultTimeoutMilli()"/>
 <app-settings [parentDefaultTimeoutMilli]="defaultTimeoutMilli()" (sessionComplete)="addCompletedSession($event)"/>
-
-@for(sessionId of completedSessionIds(); track sessionId) {
-    <p>{{ sessionId }}</p>
-}
+<app-results [parentCompletedSessionIds]="completedSessionIds()"/>

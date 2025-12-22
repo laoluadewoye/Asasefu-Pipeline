@@ -1,10 +1,11 @@
 import { Component, input, InputSignal, OnInit, signal, WritableSignal } from '@angular/core';
 import { Tester } from "./tester/tester";
 import { Settings } from "./settings/settings";
+import { Results } from './results/results';
 
 @Component({
   selector: 'app-body',
-  imports: [Tester, Settings],
+  imports: [Tester, Settings, Results],
   templateUrl: './body.html',
   styleUrl: './body.css',
 })

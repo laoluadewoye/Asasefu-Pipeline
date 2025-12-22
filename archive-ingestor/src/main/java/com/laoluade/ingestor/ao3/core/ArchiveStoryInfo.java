@@ -52,7 +52,6 @@ public class ArchiveStoryInfo {
     public ArrayList<String> publicBookmarks;
     public Integer unregisteredBookmarks;
 
-
     // Empty constructor for manual construction
     public ArchiveStoryInfo() {}
 
