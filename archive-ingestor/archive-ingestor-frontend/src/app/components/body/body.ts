@@ -19,6 +19,7 @@ export class Body implements OnInit {
     defaultServiceWaitMilli: number = 1000;
 
     completedSessionIds: WritableSignal<string[]> = signal<string[]>([]);
+    latestCompletedSessionId: WritableSignal<string> = signal<string>("");
 
     ngOnInit() {
         this.defaultValue.set(this.parentDefaultValue());
@@ -28,5 +29,6 @@ export class Body implements OnInit {
         let curSessionIdList: string[] = this.completedSessionIds();
         curSessionIdList.push(curSessionId);
         this.completedSessionIds.set(curSessionIdList);
+        this.latestCompletedSessionId.set(curSessionId);
     }
 }

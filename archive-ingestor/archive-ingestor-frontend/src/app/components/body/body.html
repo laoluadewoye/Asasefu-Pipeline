@@ -115,4 +115,4 @@
 </p>
 <app-tester [parentDefaultValue]="defaultValue()" [parentDefaultTimeoutMilli]="defaultTimeoutMilli"/>
 <app-settings [parentDefaultTimeoutMilli]="defaultTimeoutMilli" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli" (sessionComplete)="addCompletedSession($event)"/>
-<app-results [parentCompletedSessionIds]="completedSessionIds()" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli"/>
+<app-results [parentCompletedSessionIds]="completedSessionIds()" [parentLatestCompletedSessionId]="latestCompletedSessionId()" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli"/>

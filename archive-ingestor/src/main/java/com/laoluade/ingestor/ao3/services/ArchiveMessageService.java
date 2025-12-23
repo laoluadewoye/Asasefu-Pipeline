@@ -67,7 +67,7 @@ public class ArchiveMessageService {
     // LOGGING ERROR MESSAGES - STORY
     // LOGGING ERROR MESSAGES - STORY
     public String getLoggingErrorStoryFailedInterrupt() {
-        return "Execution was unexpectedly interrupted during Thread.sleep() during story parsing.";
+        return "The execution was unexpectedly interrupted during Thread.sleep() during story parsing.";
     }
     public String getLoggingErrorStoryFailedContent() { return "One of the chapter's paragraphs could not be found."; }
 

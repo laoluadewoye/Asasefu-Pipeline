@@ -22,12 +22,31 @@ export class Results implements OnInit, OnChanges {
 
     // Session management properties
     parentCompletedSessionIds: InputSignal<string[]> = input.required<string[]>();
+    parentLatestCompletedSessionId: InputSignal<string> = input.required<string>();
     completedSessionMap: WritableSignal<Map<string, ArchiveCompletedSession>> = signal<Map<string, ArchiveCompletedSession>>(new Map());
     sessionIdToHashMap: Map<string, string> = new Map();
 
-    // Display mangement signals
+    // Response cache properties
+    responseCache: Map<string, ArchiveServerResponseData> = new Map();
+    endResponseMessagePhrases: string[] = [
+        "Sent link was not a proper URL format.",
+        "Sent nickname was not a proper URL format.",
+        "Sent link was a chapter-specific link.",
+        "The driver service could not create a driver for parsing.",
+        "The execution was unexpectedly interrupted during Thread.sleep()",
+        "chapter's paragraphs could not be found.",
+        "The archive ingestor could not find a required element during parsing.",
+        "The archive ingestor's task was canceled from parent service.",
+        "The archive ingestor came across the archive's 404 page and stopped parsing.",
+        "Successfully retrieved JSON representation"
+    ];
+
+    // Display mangement properties
+    isRefreshing: WritableSignal<boolean> = signal<boolean>(false);
     unaddressedUpdatedSessions: string[] = [];
     parentDefaultServiceWaitMilli: InputSignal<number> = input.required<number>();
+
+    // Display mangement signals
     storyMetadataMap: WritableSignal<Map<string, ArchiveResultUnit>> = signal<Map<string, ArchiveResultUnit>>(new Map());
     chapterMap: WritableSignal<Map<string, ArchiveResultUnit>> = signal<Map<string, ArchiveResultUnit>>(new Map());
 
@@ -346,7 +365,8 @@ export class Results implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log("Changes were made to result component: " + changes);
+        console.log("Changes were made to result component");
+        console.log(changes);
         this.refreshView();
     }
 
@@ -395,7 +415,13 @@ export class Results implements OnInit, OnChanges {
         newSessionData.id = response.sessionId;
         newSessionData.nickname = response.sessionNickname;
         newSessionData.outcome = newOutcome;
-        newSessionData.data = this.formatParseResult(response.parseResult);
+
+        if (response.parseResult !== "") {
+            newSessionData.data = this.formatParseResult(response.parseResult);
+        }   
+        else {
+            newSessionData.data = undefined;
+        }
 
         if (newSessionData.data === undefined) {
             newSessionData.outcome = newSessionData.outcome + " Unexpected Error: Parse result failed.";
@@ -438,22 +464,44 @@ export class Results implements OnInit, OnChanges {
         }
     }
 
+    endResponseMessageFound(responseMessage: string | undefined) {
+        if (responseMessage) {
+            return this.endResponseMessagePhrases.filter(
+                (phrase) => responseMessage.includes(phrase)
+            ).length > 0;
+        }
+        else {
+            return false;
+        }
+    }
+
     async refreshView() {
+        this.isRefreshing.set(true);
+
         // Empty the array
         this.unaddressedUpdatedSessions = [];
 
         // Refresh completed session data
         let gsiFinished: boolean[] = Array(this.parentCompletedSessionIds().length).fill(false);
         this.parentCompletedSessionIds().forEach((sessionId: string, index: number) => {
-            this.archiveSessionGetService.getSessionInformation(sessionId).pipe(
-                catchError((err) => {
-                    console.log(err);
-                    throw err;
-                })
-            ).subscribe((result) => {
-                this.addNewCompletedSession(result);
+            // Check result cache first
+            let responseData: ArchiveServerResponseData | undefined = this.responseCache.get(sessionId);
+            if (responseData && this.endResponseMessageFound(responseData?.responseMessage)) {
                 gsiFinished[index] = true;
-            });
+            }
+            else {
+                // Call the service if needed
+                this.archiveSessionGetService.getSessionInformation(sessionId).pipe(
+                    catchError((err) => {
+                        console.log(err);
+                        throw err;
+                    })
+                ).subscribe((result) => {
+                    this.responseCache.set(sessionId, result);
+                    this.addNewCompletedSession(result);
+                    gsiFinished[index] = true;
+                });
+            }
         });
 
         // Wait for confirmation response
@@ -486,8 +534,8 @@ export class Results implements OnInit, OnChanges {
                 });
                 storyOrChapter.archiveChapters.forEach((chapter, index) => {
                     chapters.push(new ArchiveResultUnit({
-                        id: `${completedSession?.data.id}_${index}`,
-                        nickname: `${completedSession?.data.nickname}-${index}`,
+                        id: `${completedSession?.data.id}_${index+1}`,
+                        nickname: `(Chapter ${index+1}) ${completedSession?.data.nickname}`,
                         data: chapter
                     }));
                 });
@@ -500,7 +548,7 @@ export class Results implements OnInit, OnChanges {
                 });
                 chapters.push(new ArchiveResultUnit({
                     id: `${completedSession?.data.id}_single`,
-                    nickname: `${completedSession?.data.nickname}-single`,
+                    nickname: `(Single Chapter) ${completedSession?.data.nickname}`,
                     data: storyOrChapter
                 }));
             }
@@ -519,5 +567,11 @@ export class Results implements OnInit, OnChanges {
                 this.chapterMap.set(cm);
             }
         });
+
+        this.isRefreshing.set(false);
+    }
+
+    getLatestStoryMetadataResultUnit() {
+        return this.storyMetadataMap().get(this.parentLatestCompletedSessionId());
     }
 }
