@@ -20,8 +20,8 @@ button:hover {
     color: var(--theme-white-color);
     padding: var(--default-distance);
     margin: var(--default-distance);
-    outline-width: calc(var(--half-default-distance) / 2);
-    outline-style: solid;
-    outline-color: var(--theme-white-color);
+    border-width: calc(var(--half-default-distance) / 2);
+    border-style: solid;
+    border-color: var(--theme-white-color);
     border-radius: var(--default-border-radius);
 }

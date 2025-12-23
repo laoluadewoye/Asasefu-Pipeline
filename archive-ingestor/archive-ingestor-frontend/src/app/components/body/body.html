@@ -113,6 +113,6 @@
     You will be able to navigate through all the data and
     choose which data you want to save to JSON (maybe XML and YAML as well).
 </p>
-<app-tester [parentDefaultValue]="defaultValue()" [parentDefaultTimeoutMilli]="defaultTimeoutMilli()"/>
-<app-settings [parentDefaultTimeoutMilli]="defaultTimeoutMilli()" (sessionComplete)="addCompletedSession($event)"/>
-<app-results [parentCompletedSessionIds]="completedSessionIds()"/>
+<app-tester [parentDefaultValue]="defaultValue()" [parentDefaultTimeoutMilli]="defaultTimeoutMilli"/>
+<app-settings [parentDefaultTimeoutMilli]="defaultTimeoutMilli" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli" (sessionComplete)="addCompletedSession($event)"/>
+<app-results [parentCompletedSessionIds]="completedSessionIds()" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli"/>

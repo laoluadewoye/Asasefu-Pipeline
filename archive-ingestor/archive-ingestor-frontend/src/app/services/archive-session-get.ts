@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ArchiveServerResponseData } from '../models/archive-server-response-data';
 import { Subject, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { IMessage, ReconnectionTimeMode, RxStomp } from '@stomp/rx-stomp';
+import { IMessage, RxStomp } from '@stomp/rx-stomp';
 
 @Injectable({
   providedIn: 'root',

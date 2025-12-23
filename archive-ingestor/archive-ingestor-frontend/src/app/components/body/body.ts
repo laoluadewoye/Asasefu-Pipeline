@@ -14,8 +14,9 @@ export class Body implements OnInit {
     parentDefaultValue: InputSignal<string> = input.required<string>();
     defaultValue: WritableSignal<string> = signal<string>("");
 
-    // Default timer
-    defaultTimeoutMilli: WritableSignal<number> = signal<number>(5000);
+    // Default timers
+    defaultTimeoutMilli: number = 5000;
+    defaultServiceWaitMilli: number = 1000;
 
     completedSessionIds: WritableSignal<string[]> = signal<string[]>([]);
 

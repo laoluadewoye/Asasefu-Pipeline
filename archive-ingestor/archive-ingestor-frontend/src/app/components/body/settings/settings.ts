@@ -56,7 +56,7 @@ export class Settings implements OnInit {
     // Timeouts
     parentDefaultTimeoutMilli: InputSignal<number> = input.required<number>();
     defaultTimeoutMilli: WritableSignal<number> = signal<number>(0);
-    callParseWaitMilli: number = 1000;
+    parentDefaultServiceWaitMilli: InputSignal<number> = input.required<number>();
 
     ngOnInit() {
         this.defaultTimeoutMilli.set(this.parentDefaultTimeoutMilli());
@@ -129,7 +129,7 @@ export class Settings implements OnInit {
         // Wait for confirmation response
         let waitingForResponse: boolean = true;
         while (waitingForResponse) {
-            await new Promise(resolve => setTimeout(resolve, this.callParseWaitMilli));
+            await new Promise(resolve => setTimeout(resolve, this.parentDefaultServiceWaitMilli()));
             waitingForResponse = lastSessionId === this.latestResponse().sessionId;
         }
 

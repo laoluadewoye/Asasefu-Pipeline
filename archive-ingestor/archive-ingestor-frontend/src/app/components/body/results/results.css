@@ -2,6 +2,17 @@ h3, h4 {
     color: var(--theme-red-color);
 }
 
+button {
+    background-color: var(--theme-white-color);
+    color: var(--theme-red-color);
+}
+
+button:hover {
+    background-color: var(--theme-black-color);
+    color: var(--theme-white-color);
+}
+
+
 .red-background {
     h3, h4 {
         color: var(--theme-white-color);
@@ -13,6 +24,21 @@ h3, h4 {
     border-style: solid;
     border-width: calc(var(--half-default-distance) / 2);
     padding-bottom: var(--half-default-distance);
+}
+
+#result-div-menu {
+    margin-top: var(--default-distance);
+}
+
+#result-div-menu div {
+    transition: var(--transition-seconds);
+}
+
+#result-div-menu div:hover {
+    background-color: var(--theme-red-color);
+    h3, h4 {
+        color: var(--theme-white-color);
+    }
 }
 
 #result-div-menu, #result-div-content {
@@ -30,12 +56,4 @@ h3, h4 {
     border-color: var(--theme-black-color);
     border-style: solid;
     border-width: calc(var(--half-default-distance) / 4);
-    transition: var(--transition-seconds);
-}
-
-.results-unit-div:hover {
-    background-color: var(--theme-red-color);
-    h3, h4 {
-        color: var(--theme-white-color);
-    }
 }

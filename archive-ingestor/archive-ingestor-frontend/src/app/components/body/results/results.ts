@@ -1,23 +1,39 @@
-import { Component, input, InputSignal, signal, WritableSignal } from '@angular/core';
+import { Component, inject, input, InputSignal, OnChanges, OnInit, signal, SimpleChanges, WritableSignal } from '@angular/core';
 import { ArchiveServerResponseData } from '../../../models/archive-server-response-data';
 import { ArchiveStoryData } from '../../../models/archive-story-data';
 import { ArchiveChapterData } from '../../../models/archive-chapter-data';
+import { ArchiveSessionData } from '../../../models/archive-session-data';
+import { ArchiveCompletedSession } from '../../../models/archive-completed-session';
+import { ArchiveSessionGetService } from '../../../services/archive-session-get';
+import { catchError } from 'rxjs';
+import { ArchiveResultUnit } from '../../../models/archive-result-unit';
+import { StoryMetadata } from './story-metadata/story-metadata';
 
 @Component({
   selector: 'app-results',
-  imports: [],
+  imports: [StoryMetadata],
   templateUrl: './results.html',
   styleUrl: './results.css',
 })
-export class Results {
-    // Prod attributes
-    parentCompletedSessionIds: InputSignal<string[]> = input.required<string[]>();
+export class Results implements OnInit, OnChanges {
+    // General properties
     activeTab: WritableSignal<string> = signal<string>("");
+    archiveSessionGetService: ArchiveSessionGetService = inject(ArchiveSessionGetService);
 
-    // Test attributes
-    testSessionResponse: ArchiveServerResponseData = new ArchiveServerResponseData();
-    testDataFinal!: any;
-    testData = `{
+    // Session management properties
+    parentCompletedSessionIds: InputSignal<string[]> = input.required<string[]>();
+    completedSessionMap: WritableSignal<Map<string, ArchiveCompletedSession>> = signal<Map<string, ArchiveCompletedSession>>(new Map());
+    sessionIdToHashMap: Map<string, string> = new Map();
+
+    // Display mangement signals
+    unaddressedUpdatedSessions: string[] = [];
+    parentDefaultServiceWaitMilli: InputSignal<number> = input.required<number>();
+    storyMetadataMap: WritableSignal<Map<string, ArchiveResultUnit>> = signal<Map<string, ArchiveResultUnit>>(new Map());
+    chapterMap: WritableSignal<Map<string, ArchiveResultUnit>> = signal<Map<string, ArchiveResultUnit>>(new Map());
+
+    // Test properties
+    testResponse: ArchiveServerResponseData = new ArchiveServerResponseData();
+    testData: string = `{
         "creationTimestamp":"2025-12-20T16:29:51.572145900Z[UTC]",
         "archiveStoryInfo":{
             "associations":[
@@ -310,18 +326,28 @@ export class Results {
         "creationHash":"ae25a2cf46e9500c280b8ca074cb7c5a98afdb41d059826602cd9de0bafdfe20"
     }`;
 
-    constructor () {
-        this.testSessionResponse.sessionId = "13347b041eabd945f77682f71d3a23af167843b58130bb5fa3db2aab3118d195";
-        this.testSessionResponse.sessionNickname = "test-nickname";
-        this.testSessionResponse.sessionFinished = true;
-        this.testSessionResponse.sessionCanceled = false;
-        this.testSessionResponse.sessionException = false;
-        this.testSessionResponse.parseChaptersCompleted = 1;
-        this.testSessionResponse.parseChaptersTotal = 1;
-        this.testSessionResponse.responseMessage = "Test response message.";
-        this.testSessionResponse.parseResult = this.testData;
+    async ngOnInit () {
+        // Create test response
+        this.testResponse.sessionId = "13347b041eabd945f77682f71d3a23af167843b58130bb5fa3db2aab3118d195";
+        this.testResponse.sessionNickname = "sample-session";
+        this.testResponse.sessionFinished = true;
+        this.testResponse.sessionCanceled = false;
+        this.testResponse.sessionException = false;
+        this.testResponse.parseChaptersCompleted = 1;
+        this.testResponse.parseChaptersTotal = 1;
+        this.testResponse.responseMessage = "This is an example of what a finished section would look like.";
+        this.testResponse.parseResult = this.testData;
 
-        console.log(this.formatParseResult(this.testSessionResponse.parseResult));
+        // Add a new test session
+        await this.addNewCompletedSession(this.testResponse);
+
+        // Log test session
+        console.log(this.completedSessionMap());
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        console.log("Changes were made to result component: " + changes);
+        this.refreshView();
     }
 
     selectTab(tabOption: string) {
@@ -339,5 +365,159 @@ export class Results {
         }
 
         return parseResultFinal;
+    }
+
+    getCrypto() {
+        try {
+            return window.crypto;
+        } catch {
+            return crypto;
+        }
+    }
+
+    async createNewCompletedSession(response: ArchiveServerResponseData) {
+        // Create a new completed session
+        let newOutcome: string;
+        if (response.sessionFinished) {
+            newOutcome = "Finished";
+        }
+        else if (response.sessionCanceled) {
+            newOutcome = "Canceled";
+        }
+        else if (response.sessionException) {
+            newOutcome = "Exception";
+        }
+        else {
+            newOutcome = "Unexpected Error: No completion flag set.";
+        }
+
+        let newSessionData: ArchiveSessionData = new ArchiveSessionData();
+        newSessionData.id = response.sessionId;
+        newSessionData.nickname = response.sessionNickname;
+        newSessionData.outcome = newOutcome;
+        newSessionData.data = this.formatParseResult(response.parseResult);
+
+        if (newSessionData.data === undefined) {
+            newSessionData.outcome = newSessionData.outcome + " Unexpected Error: Parse result failed.";
+        }
+
+        // Do this funky hashing because node:crypto isn't allowed
+        let hashInput = new TextEncoder().encode(
+            response.sessionId + 
+            response.sessionNickname + 
+            newSessionData.outcome + 
+            response.parseResult
+        );
+        let hashBuffer = await this.getCrypto().subtle.digest("SHA-256", hashInput);
+
+        let hashArray = Array.from(new Uint8Array(hashBuffer));
+        let hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+        return new ArchiveCompletedSession({hash: btoa(hashHex), data: newSessionData})
+    }
+
+    async addNewCompletedSession(response: ArchiveServerResponseData) {
+        // Create new completed session
+        let newCompletedSession: ArchiveCompletedSession = await this.createNewCompletedSession(response);
+
+        // Check id to hash map. Matching hash means the same data was sent in and no change is needed.
+        let newHashMatch: boolean = newCompletedSession.hash === this.sessionIdToHashMap.get(newCompletedSession.data.id);
+
+        // Do more things if the checks pass
+        if (!newHashMatch) {
+            // Add the session id to the id-hash map
+            this.sessionIdToHashMap.set(newCompletedSession.data.id, newCompletedSession.hash);
+
+            // Add the new completed session
+            let csm = this.completedSessionMap();
+            csm.set(newCompletedSession.hash, newCompletedSession);
+            this.completedSessionMap.set(csm);
+
+            // Add session id to sessions to address later
+            this.unaddressedUpdatedSessions.push(newCompletedSession.data.id);
+        }
+    }
+
+    async refreshView() {
+        // Empty the array
+        this.unaddressedUpdatedSessions = [];
+
+        // Refresh completed session data
+        let gsiFinished: boolean[] = Array(this.parentCompletedSessionIds().length).fill(false);
+        this.parentCompletedSessionIds().forEach((sessionId: string, index: number) => {
+            this.archiveSessionGetService.getSessionInformation(sessionId).pipe(
+                catchError((err) => {
+                    console.log(err);
+                    throw err;
+                })
+            ).subscribe((result) => {
+                this.addNewCompletedSession(result);
+                gsiFinished[index] = true;
+            });
+        });
+
+        // Wait for confirmation response
+        let waitingForResponse: boolean = true;
+        while (waitingForResponse) {
+            await new Promise(resolve => setTimeout(resolve, this.parentDefaultServiceWaitMilli()));
+            waitingForResponse = !gsiFinished.every((b) => b === true);
+        }
+
+        // Refresh other management signals
+        this.unaddressedUpdatedSessions.forEach((sessionId) => {
+            // Get hash
+            let correlatedHash = this.sessionIdToHashMap.get(sessionId);
+
+            // Get session if possible
+            let completedSession: ArchiveCompletedSession | undefined;
+            if (correlatedHash !== undefined) {
+                completedSession = this.completedSessionMap().get(correlatedHash);
+            }
+            
+            // Isolate story metadata and chapters from information
+            let storyOrChapter = completedSession?.data.data;
+            let metadata: ArchiveResultUnit;
+            let chapters: Array<ArchiveResultUnit> = [];
+            if (storyOrChapter instanceof ArchiveStoryData) {
+                metadata = new ArchiveResultUnit({
+                    id: completedSession?.data.id,
+                    nickname: completedSession?.data.nickname,
+                    data: storyOrChapter.archiveStoryInfo
+                });
+                storyOrChapter.archiveChapters.forEach((chapter, index) => {
+                    chapters.push(new ArchiveResultUnit({
+                        id: `${completedSession?.data.id}_${index}`,
+                        nickname: `${completedSession?.data.nickname}-${index}`,
+                        data: chapter
+                    }));
+                });
+            }
+            else if (storyOrChapter instanceof ArchiveChapterData) {
+                metadata = new ArchiveResultUnit({
+                    id: completedSession?.data.id,
+                    nickname: completedSession?.data.nickname,
+                    data: storyOrChapter.parentArchiveStoryInfo
+                });
+                chapters.push(new ArchiveResultUnit({
+                    id: `${completedSession?.data.id}_single`,
+                    nickname: `${completedSession?.data.nickname}-single`,
+                    data: storyOrChapter
+                }));
+            }
+            else {
+                metadata = new ArchiveResultUnit({});
+            }
+
+            // Update management maps
+            if (storyOrChapter instanceof ArchiveStoryData || storyOrChapter instanceof ArchiveChapterData) {
+                let smm = this.storyMetadataMap();
+                smm.set(metadata.id, metadata);
+                this.storyMetadataMap.set(smm);
+
+                let cm = this.chapterMap();
+                chapters.forEach((chapter: ArchiveResultUnit) => cm.set(chapter.id, chapter));
+                this.chapterMap.set(cm);
+            }
+        });
     }
 }

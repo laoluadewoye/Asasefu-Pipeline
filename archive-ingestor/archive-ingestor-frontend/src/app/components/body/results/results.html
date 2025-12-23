@@ -3,6 +3,9 @@
 }
 <div class="results-div">
     <h2>Completed Parses</h2>
+    <div class="center-content">
+        <button class="button-padding" (click)="refreshView()">Refresh View</button>
+    </div>
     <div id="result-div-menu">
         <div class="results-unit-div" [class.red-background]="activeTab() === 'stories-and-chapters'" (click)="selectTab('stories-and-chapters')">
             <h3>Stories and Chapters</h3>
@@ -14,20 +17,31 @@
             <h3>Individual Chapters Only</h3>
         </div>
     </div>
+
+    <!--https://www.w3schools.com/howto/howto_js_collapsible.asp-->
     <div id="result-div-content">
         @if (activeTab() === "stories-and-chapters") {
             <div id="result-div-stories-and-chapters" class="results-unit-div">
-                stories-and-chapters
+                <p>stories-and-chapters</p>
+                @for(value of completedSessionMap().values(); track value) {
+                    <p>{{ value.hash }}</p>
+                }
             </div>
         }
         @if (activeTab() === "story-metadata-only") {
             <div id="result-div-story-metadata-only" class="results-unit-div">
-                story-metadata-only
+                <p>story-metadata-only</p>
+                @for(value of storyMetadataMap().values(); track value) {
+                    <app-story-metadata [storyMetadataResultUnit]="value"/>
+                }
             </div>
         }
         @if (activeTab() === "chapters-only") {
             <div id="result-div-chapters-only" class="results-unit-div">
-                chapters-only
+                <p>chapters-only</p>
+                @for(value of chapterMap().values(); track value) {
+                    <p>{{ value.nickname }}</p>
+                }
             </div>
         }
     </div>

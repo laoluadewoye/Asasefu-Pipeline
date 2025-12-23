@@ -53,14 +53,14 @@ public class ArchiveServerTest {
     private static JSONObject testLinks;
     private static ArchiveMessageService testMessageService;
 
+    // TODO: Check if including dynamic components would affect test success
     // Test values to check and use
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
             "app-root", "app-header", "app-body", "app-tester", "app-settings", "app-progress", "app-results",
-            "app-footer"
+            "app-session", "app-story", "app-story-metadata", "app-chapter", "app-footer"
     ));
     private static final String sessionNickname = "testParseSession";
     private static final Integer sessionUpdateIntervalMilli = 2000;
-    private static final Integer websocketUpdateIntervalMilli = 500;
     private static final Integer ingestorCommentThreadDepth = 10;
     private static final Integer ingestorCommentPageLimit = 3;
     private static final Integer ingestorKudosPageLimit = 3;
