@@ -29,6 +29,9 @@ button:hover {
 
 #result-div-menu {
     margin-top: var(--default-distance);
+    margin-inline: var(--default-distance);
+    display: flex;
+    justify-items: center;
 }
 
 #result-div-menu div {
@@ -42,19 +45,6 @@ button:hover {
     }
 }
 
-#result-div-menu, #result-div-content {
+#result-div-content {
     margin-inline: var(--default-distance);
-    display: flex;
-    justify-items: center;
-}
-
-#result-div-menu div, #result-div-content div {
-    width: 100%;
-    justify-items: center;
-}
-
-.results-unit-div {
-    border-color: var(--theme-black-color);
-    border-style: solid;
-    border-width: calc(var(--half-default-distance) / 4);
 }

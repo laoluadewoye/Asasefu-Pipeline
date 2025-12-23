@@ -8,10 +8,12 @@ import { ArchiveSessionGetService } from '../../../services/archive-session-get'
 import { catchError } from 'rxjs';
 import { ArchiveResultUnit } from '../../../models/archive-result-unit';
 import { StoryMetadata } from './story-metadata/story-metadata';
+import { Chapter } from './chapter/chapter';
+import { Session } from "./session/session";
 
 @Component({
   selector: 'app-results',
-  imports: [StoryMetadata],
+  imports: [StoryMetadata, Chapter, Session],
   templateUrl: './results.html',
   styleUrl: './results.css',
 })
@@ -571,7 +573,21 @@ export class Results implements OnInit, OnChanges {
         this.isRefreshing.set(false);
     }
 
+    getLatestCompletedSession() {
+        let csmHash = this.sessionIdToHashMap.get(this.parentLatestCompletedSessionId());
+        if (csmHash) {
+            return this.completedSessionMap().get(csmHash);
+        }
+        else {
+            return undefined;
+        }
+    }
+
     getLatestStoryMetadataResultUnit() {
         return this.storyMetadataMap().get(this.parentLatestCompletedSessionId());
+    }
+
+    getLatestChapterResultUnit() {
+        return this.chapterMap().get(this.parentLatestCompletedSessionId());
     }
 }

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, input, InputSignal } from '@angular/core';
+import { ArchiveCompletedSession } from '../../../../models/archive-completed-session';
 
 @Component({
   selector: 'app-session',
@@ -7,5 +8,7 @@ import { Component } from '@angular/core';
   styleUrl: './session.css',
 })
 export class Session {
-
+    completedSession: InputSignal<ArchiveCompletedSession | undefined> = input.required<ArchiveCompletedSession | undefined>();
+    latestUnit: InputSignal<boolean> = input.required<boolean>();
+    topLevelUnit: InputSignal<boolean> = input.required<boolean>();
 }

@@ -10,4 +10,5 @@ import { ArchiveResultUnit } from '../../../../models/archive-result-unit';
 export class StoryMetadata {
     storyMetadataResultUnit: InputSignal<ArchiveResultUnit | undefined> = input.required<ArchiveResultUnit | undefined>();
     latestUnit: InputSignal<boolean> = input.required<boolean>();
+    topLevelUnit: InputSignal<boolean> = input.required<boolean>();
 }
