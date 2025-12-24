@@ -129,6 +129,25 @@ button {
     padding: var(--half-default-distance);
 }
 
+.result-unit-div, .result-unit-subdiv {
+    border-color: var(--theme-black-color);
+    border-style: solid;
+    border-width: calc(var(--half-default-distance) / 4);
+    padding-left: var(--default-distance);
+    position: relative;
+    overflow-wrap: break-word;
+
+    h3 {
+        color: var(--theme-red-color);
+        padding-top: var(--default-distance);
+    }
+}
+
+.result-unit-subdiv {
+    margin-left: calc(var(--default-distance) * 2);
+}
+
+
 .outputs {
     position: absolute;
     right: var(--half-default-distance);

@@ -1,23 +1,24 @@
 @if (storyMetadataResultUnit()) {
     <div animate.enter="fade-in" animate.leave="fade-out">
-        <div class="story-metadata-div">
-            <h3>{{ storyMetadataResultUnit()?.nickname }}</h3>
+        <div class="result-unit-div">
+            <h3>{{ storyMetadataResultUnit()?.nickname }} Story Metadata</h3>
+            @if (latestUnit()) { <h4>Latest Session</h4> }
             <p>ID: {{ storyMetadataResultUnit()?.id }}</p>
-            <app-output-icons 
+            <app-output-icons
                 [inputObject]="storyMetadataResultUnit()" 
                 [objectName]="storyMetadataResultUnit()?.nickname"
                 [showDropdown]="true"
-                (dropdownEvent)="flipTopLevelSelected()"
+                (dropdownEvent)="flipMetadataSelected()"
                 class="outputs" 
             />
         </div>
-        @if (topLevelSelected()) {
+        @if (metadataSelected()) {
             <div animate.enter="fade-in" animate.leave="fade-out">
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Title of Story</h3>
                     <p>{{ storyMetadataResultUnit()?.data?.title }}</p>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.authors" 
                         [displayAsList]="false"
@@ -27,37 +28,37 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.summary" 
-                        [displayAsList]="false"
-                        [displayAsText]="true"
+                        [displayAsList]="true"
+                        [displayAsText]="false"
                         [defaultHeader]="'Story Summary'"
                         [displayLimit]="defaultDisplayLimit"
                         [displaySeperator]="'\n'"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.startNotes" 
-                        [displayAsList]="false"
-                        [displayAsText]="true"
+                        [displayAsList]="true"
+                        [displayAsText]="false"
                         [defaultHeader]="'Story Starting Notes'"
                         [displayLimit]="defaultDisplayLimit"
                         [displaySeperator]="'\n'"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.endNotes" 
-                        [displayAsList]="false"
-                        [displayAsText]="true"
+                        [displayAsList]="true"
+                        [displayAsText]="false"
                         [defaultHeader]="'Story Ending Notes'"
                         [displayLimit]="defaultDisplayLimit"
                         [displaySeperator]="'\n'"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.associations" 
                         [displayAsList]="false"
@@ -67,7 +68,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.ratings" 
                         [displayAsList]="false"
@@ -77,7 +78,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.warnings" 
                         [displayAsList]="false"
@@ -87,7 +88,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.categories" 
                         [displayAsList]="false"
@@ -97,7 +98,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.fandoms" 
                         [displayAsList]="false"
@@ -107,7 +108,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.relationships" 
                         [displayAsList]="false"
@@ -117,7 +118,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.characters" 
                         [displayAsList]="false"
@@ -127,7 +128,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.additionalTags" 
                         [displayAsList]="false"
@@ -137,11 +138,11 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Written Language</h3>
                     <p>{{ storyMetadataResultUnit()?.data?.language }}</p>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.series" 
                         [displayAsList]="false"
@@ -151,7 +152,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <app-output-list 
                         [inputList]="storyMetadataResultUnit()?.data?.collections" 
                         [displayAsList]="false"
@@ -161,28 +162,28 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Publication Date</h3>
                     <p>{{ storyMetadataResultUnit()?.data?.published }}</p>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Story Last {{ storyMetadataResultUnit()?.data?.status }}</h3>
                     <p>{{ storyMetadataResultUnit()?.data?.statusWhen }}</p>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Words: {{ storyMetadataResultUnit()?.data?.words }}</h3>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Chapters (Current): {{ storyMetadataResultUnit()?.data?.currentChapters }}</h3>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Chapters (Total): {{ storyMetadataResultUnit()?.data?.totalChapters }}</h3>
                     <h4>Note: A total of negative one means that the total chapter count is to be determined.</h4>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Comments: {{ storyMetadataResultUnit()?.data?.comments }}</h3>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Kudos: {{ storyMetadataResultUnit()?.data?.kudos }}</h3>
                     <h4>Number of Unregistered Kudos: {{ storyMetadataResultUnit()?.data?.unregisteredKudos }}</h4>
                     <app-output-list 
@@ -194,7 +195,7 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Bookmarks: {{ storyMetadataResultUnit()?.data?.bookmarks }}</h3>
                     <h4>Number of Unregistered Bookmarks: {{ storyMetadataResultUnit()?.data?.unregisteredBookmarks }}</h4>
                     <app-output-list 
@@ -206,14 +207,14 @@
                         [displaySeperator]="', '"
                     />
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Number of Hits: {{ storyMetadataResultUnit()?.data?.hits }}</h3>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Object Creation Timestamp</h3>
                     <p>{{ storyMetadataResultUnit()?.data?.creationTimestamp }}</p>
                 </div>
-                <div class="story-metadata-subdiv">
+                <div class="result-unit-subdiv">
                     <h3>Object Creation Hash</h3>
                     <p>{{ storyMetadataResultUnit()?.data?.creationHash }}</p>
                 </div>

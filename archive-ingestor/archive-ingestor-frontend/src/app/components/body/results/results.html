@@ -1,4 +1,11 @@
 <div class="results-div">
+    <!--Search bar-->
+    <span id="result-search">
+        <label for="resultSearch">Search for results by session ID or Nickname:</label>
+        <input type="text" id="resultSearch" name="resultSearch" [formControl]="resultSearch">
+    </span>
+
+    <!--Section header-->
     <h2>Completed Parses</h2>
     <div class="center-content">
         <button class="button-padding" (click)="refreshView()">Refresh View</button>
@@ -8,28 +15,30 @@
             </div>
         }
     </div>
+
+    <!--Section tabs-->
     <div id="result-div-menu">
-        <div class="results-unit-div" [class.red-background]="activeTab() === 'stories-and-chapters'" (click)="selectTab('stories-and-chapters')">
-            <h3>Stories and Chapters</h3>
+        <div class="results-menu-tab" [class.red-background]="activeTab() === 'full-sessions'" (click)="selectTab('full-sessions')">
+            <h3>Sessions (Stories and Chapters)</h3>
         </div>
-        <div class="results-unit-div" [class.red-background]="activeTab() === 'story-metadata-only'" (click)="selectTab('story-metadata-only')">
+        <div class="results-menu-tab" [class.red-background]="activeTab() === 'story-metadata-only'" (click)="selectTab('story-metadata-only')">
             <h3>Story Metadata Only</h3>
         </div>
-        <div class="results-unit-div" [class.red-background]="activeTab() === 'chapters-only'" (click)="selectTab('chapters-only')">
+        <div class="results-menu-tab" [class.red-background]="activeTab() === 'chapters-only'" (click)="selectTab('chapters-only')">
             <h3>Individual Chapters Only</h3>
         </div>
     </div>
 
-    <!--https://www.w3schools.com/howto/howto_js_collapsible.asp-->
+    <!--Section content-->
     <div id="result-div-content">
-        @if (activeTab() === "stories-and-chapters") {
-            <div id="result-div-stories-and-chapters" class="fade-in">
+        @if (activeTab() === "full-sessions") {
+            <div id="result-div-full-sessions" class="fade-in">
                 @if (parentLatestCompletedSessionId() !== "") {
-                    <app-session [completedSession]="getLatestCompletedSession()" [latestUnit]="true" [topLevelUnit]="true" />
+                    <app-session [completedSession]="filterCompletedSession(getLatestCompletedSession())" [latestUnit]="true" />
                 }
-                @for (value of completedSessionMap().values(); track value) {
+                @for (value of filterCompletedSessions(completedSessionMap().values()); track value) {
                     @if (value.data.id !== parentLatestCompletedSessionId()) {
-                        <app-session [completedSession]="value" [latestUnit]="false" [topLevelUnit]="true" />
+                        <app-session [completedSession]="value" [latestUnit]="false" />
                     }
                 }
             </div>
@@ -37,11 +46,11 @@
         @if (activeTab() === "story-metadata-only") {
             <div id="result-div-story-metadata-only" class="fade-in">
                 @if (parentLatestCompletedSessionId() !== "") {
-                    <app-story-metadata [storyMetadataResultUnit]="getLatestStoryMetadataResultUnit()" [latestUnit]="true" [topLevelUnit]="true" />
+                    <app-story-metadata [storyMetadataResultUnit]="filterStoryMetadataUnit(latestStoryMetadataUnit())" [latestUnit]="true" />
                 }
-                @for (value of storyMetadataMap().values(); track value) {
+                @for (value of filterStoryMetadataUnits(storyMetadataMap().values()); track value) {
                     @if (value.id !== parentLatestCompletedSessionId()) {
-                        <app-story-metadata [storyMetadataResultUnit]="value" [latestUnit]="false" [topLevelUnit]="true" />
+                        <app-story-metadata [storyMetadataResultUnit]="value" [latestUnit]="false" />
                     }
                 }
             </div>
@@ -49,11 +58,11 @@
         @if (activeTab() === "chapters-only") {
             <div id="result-div-chapters-only" class="fade-in">
                 @if (parentLatestCompletedSessionId() !=="") {
-                    <app-chapter [chapterResultUnit]="getLatestChapterResultUnit()" [latestUnit]="true" [topLevelUnit]="true" />
+                    <app-chapter [chapterResultUnit]="filterChapterUnit(latestChapterUnit())" [latestUnit]="true" [partOfSession]="false" />
                 }
-                @for (value of chapterMap().values(); track value) {
+                @for (value of filterChapterUnits(chapterMap().values()); track value) {
                     @if (value.id !== parentLatestCompletedSessionId()) {
-                        <app-chapter [chapterResultUnit]="value" [latestUnit]="false" [topLevelUnit]="true" />
+                        <app-chapter [chapterResultUnit]="value" [latestUnit]="false" [partOfSession]="false" />
                     }
                 }
             </div>

@@ -16,12 +16,11 @@ export class StoryMetadata {
     // Inputs
     storyMetadataResultUnit: InputSignal<ArchiveMetadataResultUnit | undefined> = input.required<ArchiveMetadataResultUnit | undefined>();
     latestUnit: InputSignal<boolean> = input.required<boolean>();
-    topLevelUnit: InputSignal<boolean> = input.required<boolean>();
 
     // Selection booleans
-    topLevelSelected: WritableSignal<boolean> = signal<boolean>(false);
+    metadataSelected: WritableSignal<boolean> = signal<boolean>(false);
 
-    flipTopLevelSelected() {
-        this.topLevelSelected.set(!this.topLevelSelected());
+    flipMetadataSelected() {
+        this.metadataSelected.set(!this.metadataSelected());
     }
 }

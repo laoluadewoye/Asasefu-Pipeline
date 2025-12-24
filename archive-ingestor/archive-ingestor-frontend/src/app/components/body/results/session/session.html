@@ -1,5 +1,32 @@
-<div class="results-unit-div">
-    <p>{{ completedSession()?.hash }} </p>
-    <p>Latest Status: {{ latestUnit() }} </p>
-    <p>Top-level Status: {{ topLevelUnit() }}</p>
-</div>
+@if (completedSession()) {
+    <div animate.enter="fade-in" animate.leave="fade-out">
+        <div class="result-unit-div">
+            <h3>{{ completedSession()?.data?.nickname }}</h3>
+            <p>ID: {{ completedSession()?.data?.id }}</p>
+            <p>Outcome: {{ completedSession()?.data?.outcome }}</p>
+            @if (latestUnit()) { <h4>Latest Session</h4> }
+            <app-output-icons
+                [inputObject]="completedSession()" 
+                [objectName]="completedSession()?.data?.nickname"
+                [showDropdown]="true"
+                (dropdownEvent)="flipSessionSelected()"
+                class="outputs" 
+            />
+        </div>
+        @if (sessionSelected()) {
+            <div animate.enter="fade-in" animate.leave="fade-out">
+                @if (completedUnitType() === "story") {
+                    <div class="result-unit-subdiv">
+                        <app-story [storyResultUnit]="completedStoryUnit()" [latestUnit]="latestUnit()" />
+                    </div>
+                }
+                @else if (completedUnitType() === "chapter") {
+                    <div class="result-unit-subdiv">
+                        <h3>Chapter Information</h3>
+                        <app-chapter [chapterResultUnit]="completedChapterUnit()" [latestUnit]="latestUnit()" [partOfSession]="true" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}

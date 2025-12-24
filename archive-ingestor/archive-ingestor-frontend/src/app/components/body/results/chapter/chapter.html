@@ -1,5 +1,93 @@
-<div class="results-unit-div">
-    <p>{{ chapterResultUnit()?.nickname }} </p>
-    <p>Latest Status: {{ latestUnit() }} </p>
-    <p>Top-level Status: {{ topLevelUnit() }}</p>
-</div>
+@if (chapterResultUnit()) {
+    <div animate.enter="fade-in" animate.leave="fade-out">
+        <div class="result-unit-div">
+            <h3>{{ chapterResultUnit()?.nickname }} Chapter Information</h3>
+            @if (latestUnit()) { <h4>Latest Session</h4> }
+            <p>ID: {{ chapterResultUnit()?.id }}</p>
+            <app-output-icons
+                [inputObject]="chapterDownloadable()" 
+                [objectName]="chapterResultUnit()?.nickname"
+                [showDropdown]="true"
+                (dropdownEvent)="flipChapterSelected()"
+                class="outputs" 
+            />
+        </div>
+        @if (chapterSelected()) {
+            <div animate.enter="fade-in" animate.leave="fade-out">
+                @if (partOfSession()) {
+                    <div class="result-unit-subdiv">
+                        <h3>Story Metadata</h3>
+                        <app-story-metadata [storyMetadataResultUnit]="chapterResultUnit()?.storyMetadata" [latestUnit]="false" />
+                    </div>
+                }
+                <div class="result-unit-subdiv">
+                    <h3>Webpage Name</h3>
+                    <p>{{ chapterResultUnit()?.data?.pageTitle }}</p>
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Webpage Link</h3>
+                    <p>{{ chapterResultUnit()?.data?.pageLink }}</p>
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Title of Chapter</h3>
+                    <p>{{ chapterResultUnit()?.data?.chapterTitle }}</p>
+                </div>
+                <div class="result-unit-subdiv">
+                    <app-output-list 
+                        [inputList]="chapterResultUnit()?.data?.summary" 
+                        [displayAsList]="true"
+                        [displayAsText]="false"
+                        [defaultHeader]="'Chapter Summary'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="result-unit-subdiv">
+                    <app-output-list 
+                        [inputList]="chapterResultUnit()?.data?.startNotes" 
+                        [displayAsList]="true"
+                        [displayAsText]="false"
+                        [defaultHeader]="'Chapter Starting Notes'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="result-unit-subdiv">
+                    <app-output-list 
+                        [inputList]="chapterResultUnit()?.data?.endNotes" 
+                        [displayAsList]="true"
+                        [displayAsText]="false"
+                        [defaultHeader]="'Chapter Ending Notes'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="result-unit-subdiv">
+                    <app-output-list 
+                        [inputList]="chapterResultUnit()?.data?.paragraphs" 
+                        [displayAsList]="true"
+                        [displayAsText]="false"
+                        [defaultHeader]="'Chapter Paragraphs'"
+                        [displayLimit]="defaultParagraphDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="result-unit-subdiv">
+                    <app-comments 
+                        [inputComments]="chapterResultUnit()?.data?.foundComments" 
+                        [chapterName]="chapterResultUnit()?.nickname"
+                        (formattingFinished)="updateDownloadable($event)"
+                    />
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Object Creation Timestamp</h3>
+                    <p>{{ chapterResultUnit()?.data?.creationTimestamp }}</p>
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Object Creation Hash</h3>
+                    <p>{{ chapterResultUnit()?.data?.creationHash }}</p>
+                </div>
+            </div>
+        }
+    </div>
+}

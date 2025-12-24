@@ -11,10 +11,12 @@ import { Chapter } from './chapter/chapter';
 import { Session } from "./session/session";
 import { ArchiveMetadataResultUnit } from '../../../models/archive-metadata-result-unit';
 import { ArchiveChapterResultUnit } from '../../../models/archive-chapter-result-unit';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { assert } from 'console';
 
 @Component({
   selector: 'app-results',
-  imports: [StoryMetadata, Chapter, Session],
+  imports: [StoryMetadata, Chapter, Session, ReactiveFormsModule],
   templateUrl: './results.html',
   styleUrl: './results.css',
 })
@@ -52,6 +54,12 @@ export class Results implements OnInit, OnChanges {
     // Display mangement signals
     storyMetadataMap: WritableSignal<Map<string, ArchiveMetadataResultUnit>> = signal<Map<string, ArchiveMetadataResultUnit>>(new Map());
     chapterMap: WritableSignal<Map<string, ArchiveChapterResultUnit>> = signal<Map<string, ArchiveChapterResultUnit>>(new Map());
+
+    latestStoryMetadataUnit: WritableSignal<ArchiveMetadataResultUnit | undefined> = signal<ArchiveMetadataResultUnit | undefined>(undefined);
+    latestChapterUnit: WritableSignal<ArchiveChapterResultUnit | undefined> = signal<ArchiveChapterResultUnit | undefined>(undefined);
+
+    // Search properties
+    resultSearch: FormControl =  new FormControl<string>("");
 
     // Test properties
     testResponse: ArchiveServerResponseData = new ArchiveServerResponseData();
@@ -161,7 +169,7 @@ export class Results implements OnInit, OnChanges {
                 "summary":[
                     
                 ],
-                "comments":{
+                "foundComments":{
                     "pages":{
                         "1":{
                             "Lady_Astarte_Sat_25_Oct_2025_12_59AM_UTC":{
@@ -539,7 +547,8 @@ export class Results implements OnInit, OnChanges {
                     chapters.push(new ArchiveChapterResultUnit({
                         id: `${completedSession?.data.id}_${index+1}`,
                         nickname: `(Chapter ${index+1}) ${completedSession?.data.nickname}`,
-                        data: chapter
+                        data: chapter,
+                        storyMetadata: metadata
                     }));
                 });
             }
@@ -552,7 +561,8 @@ export class Results implements OnInit, OnChanges {
                 chapters.push(new ArchiveChapterResultUnit({
                     id: `${completedSession?.data.id}_single`,
                     nickname: `(Single Chapter) ${completedSession?.data.nickname}`,
-                    data: storyOrChapter
+                    data: storyOrChapter,
+                    storyMetadata: metadata
                 }));
             }
             else {
@@ -561,12 +571,17 @@ export class Results implements OnInit, OnChanges {
 
             // Update management maps
             if (storyOrChapter instanceof ArchiveStoryData || storyOrChapter instanceof ArchiveChapterData) {
+                // Update maps and latest values
                 let smm = this.storyMetadataMap();
                 smm.set(metadata.id, metadata);
                 this.storyMetadataMap.set(smm);
+                this.latestStoryMetadataUnit.set(metadata);
 
                 let cm = this.chapterMap();
-                chapters.forEach((chapter: ArchiveChapterResultUnit) => cm.set(chapter.id, chapter));
+                chapters.forEach((chapter: ArchiveChapterResultUnit) => {
+                    cm.set(chapter.id, chapter);
+                    this.latestChapterUnit.set(chapter);
+                });
                 this.chapterMap.set(cm);
             }
         });
@@ -584,11 +599,51 @@ export class Results implements OnInit, OnChanges {
         }
     }
 
-    getLatestStoryMetadataResultUnit() {
-        return this.storyMetadataMap().get(this.parentLatestCompletedSessionId());
+    filterCompletedSession(session: ArchiveCompletedSession | undefined) {
+        if (this.resultSearch.value === "" || session === undefined) {
+            return session;
+        }
+        else {
+            if (session.data.id.includes(this.resultSearch.value) || session.data.nickname.includes(this.resultSearch.value)) {
+                return session;
+            }
+            else {
+                return undefined;
+            }
+        }
     }
 
-    getLatestChapterResultUnit() {
-        return this.chapterMap().get(this.parentLatestCompletedSessionId());
+    filterCompletedSessions(sessions: MapIterator<ArchiveCompletedSession>) {
+        return Array.from(sessions).filter((sessions) => this.filterCompletedSession(sessions));
+    }
+
+    filterUnit(unit: ArchiveMetadataResultUnit | ArchiveChapterResultUnit | undefined) {
+        if (this.resultSearch.value === "" || unit === undefined) {
+            return unit;
+        }
+        else {
+            if (unit.id.includes(this.resultSearch.value) || unit.nickname.includes(this.resultSearch.value)) {
+                return unit;
+            }
+            else {
+                return undefined;
+            }
+        }
+    }
+
+    filterStoryMetadataUnit(unit: ArchiveMetadataResultUnit | undefined) {
+        return this.filterUnit(unit) as ArchiveMetadataResultUnit | undefined;
+    }
+
+    filterStoryMetadataUnits(units: MapIterator<ArchiveMetadataResultUnit>) {
+        return Array.from(units).filter((unit) => this.filterUnit(unit));
+    }
+
+    filterChapterUnit(unit: ArchiveChapterResultUnit | undefined) {
+        return this.filterUnit(unit) as ArchiveChapterResultUnit | undefined;
+    }
+
+    filterChapterUnits(units: MapIterator<ArchiveChapterResultUnit>) {
+        return Array.from(units).filter((unit) => this.filterUnit(unit));
     }
 }

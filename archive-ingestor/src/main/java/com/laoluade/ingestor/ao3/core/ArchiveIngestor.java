@@ -854,7 +854,9 @@ public class ArchiveIngestor {
         boolean commentsOpened = false;
         if (!openCommentsButton.isEmpty()) {
             openCommentsButton.getFirst().click();
-            commentNavWait.until(d -> openCommentsButton.getFirst().getText().contains("Hide"));
+            commentNavWait.until(
+                    d -> !d.findElement(By.id("comments_placeholder")).getCssValue("display").equals("none")
+            );
             commentsOpened = true;
         }
 
@@ -1242,6 +1244,9 @@ public class ArchiveIngestor {
         }
         catch (ArchivePageNotFoundException e) {
             resultMessage = this.messageService.getLoggingErrorParseFailedNotFound();
+        }
+        catch (Exception e) {
+            resultMessage = this.messageService.getLoggingErrorParseFailedUnknown();
         }
         finally {
             driver.quit();

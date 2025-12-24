@@ -53,6 +53,10 @@ public class ArchiveMessageService {
     public String getLoggingErrorParseFailedNotFound() {
         return "The archive ingestor came across the archive's 404 page and stopped parsing.";
     }
+    public String getLoggingErrorParseFailedUnknown() {
+        return "The archive ingestor failed due to an unknown reason. Please let the creator know and " +
+                "add the settings you used for the parse.";
+    }
     public String getLoggingErrorBadParseType() {
         return "A bad parse type was fed into the archive ingestion service.";
     }

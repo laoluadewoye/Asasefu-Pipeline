@@ -1,5 +1,37 @@
-<div class="results-unit-div">
-    <p>{{ storyResultUnit()?.nickname }} </p>
-    <p>Latest Status: {{ latestUnit() }} </p>
-    <p>Top-level Status: {{ topLevelUnit() }}</p>
-</div>
+@if (storyResultUnit()) {
+    <div animate.enter="fade-in" animate.leave="fade-out">
+        <div class="result-unit-div">
+            <h3>{{ storyResultUnit()?.nickname }} Story Information</h3>
+            @if (latestUnit()) { <h4>Latest Session</h4> }
+            <p>ID: {{ storyResultUnit()?.id }}</p>
+            <app-output-icons
+                [inputObject]="storyResultUnit()" 
+                [objectName]="storyResultUnit()?.nickname"
+                [showDropdown]="true"
+                (dropdownEvent)="flipStorySelected()"
+                class="outputs" 
+            />
+        </div>
+        @if (storySelected()) {
+            <div animate.enter="fade-in" animate.leave="fade-out">
+                <div class="result-unit-subdiv">
+                    <app-story-metadata [storyMetadataResultUnit]="storyMetadataUnit()" [latestUnit]="latestUnit()" />
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Chapter List</h3>
+                    @for (chapter of storyChapterUnits(); track chapter) {
+                        <app-chapter [chapterResultUnit]="chapter" [latestUnit]="latestUnit()" [partOfSession]="false" />
+                    }
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Object Creation Timestamp</h3>
+                    <p>{{ storyResultUnit()?.data?.creationTimestamp }}</p>
+                </div>
+                <div class="result-unit-subdiv">
+                    <h3>Object Creation Hash</h3>
+                    <p>{{ storyResultUnit()?.data?.creationHash }}</p>
+                </div>
+            </div>
+        }
+    </div>
+}
