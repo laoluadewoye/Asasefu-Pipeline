@@ -706,8 +706,10 @@ public class ArchiveIngestor {
             updateLastRecordedMessage("Checking for chapter start notes...", sessionId);
             List<WebElement> chapterStartNotes = chapterStuff.findElements(By.className("notes"));
             if (!chapterStartNotes.isEmpty()) {
-                WebElement chapterStartNote = chapterStartNotes.getFirst().findElement(By.className("userstuff"));
-                chapterStartNoteText = filterText(chapterStartNote.findElements(By.xpath(ALL_CHILDREN_XPATH)), sessionId);
+                if (!chapterStartNotes.getFirst().findElements(By.className("userstuff")).isEmpty()) {
+                    WebElement chapterStartNote = chapterStartNotes.getFirst().findElement(By.className("userstuff"));
+                    chapterStartNoteText = filterText(chapterStartNote.findElements(By.xpath(ALL_CHILDREN_XPATH)), sessionId);
+                }
             }
 
             // Get paragraphs from chapter user stuff

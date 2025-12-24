@@ -1,221 +1,223 @@
-<div animate.enter="fade-in" animate.leave="fade-out">
-    <div class="story-metadata-div">
-        <h3>{{ storyMetadataResultUnit()?.nickname }}</h3>
-        <p>ID: {{ storyMetadataResultUnit()?.id }}</p>
-        <app-output-icons 
-            [inputObject]="storyMetadataResultUnit()" 
-            [objectName]="storyMetadataResultUnit()?.nickname"
-            [showDropdown]="true"
-            (dropdownEvent)="flipTopLevelSelected()"
-            class="outputs" 
-        />
-    </div>
-    @if (topLevelSelected()) {
-        <div animate.enter="fade-in" animate.leave="fade-out">
-            <div class="story-metadata-subdiv">
-                <h3>Title of Story</h3>
-                <p>{{ storyMetadataResultUnit()?.data?.title }}</p>
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.authors" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Author(s)'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.summary" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Summary'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="'\n'"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.startNotes" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Starting Notes'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="'\n'"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.endNotes" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Ending Notes'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="'\n'"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.associations" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Associations'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.ratings" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Ratings'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.warnings" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Warnings'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.categories" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Categories'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.fandoms" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Fandoms'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.relationships" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Relationships'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.characters" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Story Characters'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.additionalTags" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Additional Story Tags'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Written Language</h3>
-                <p>{{ storyMetadataResultUnit()?.data?.language }}</p>
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.series" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Series the Story Is In'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.collections" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Collections the Story Is In'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Publication Date</h3>
-                <p>{{ storyMetadataResultUnit()?.data?.published }}</p>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Story Last {{ storyMetadataResultUnit()?.data?.status }}</h3>
-                <p>{{ storyMetadataResultUnit()?.data?.statusWhen }}</p>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Words: {{ storyMetadataResultUnit()?.data?.words }}</h3>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Chapters (Current): {{ storyMetadataResultUnit()?.data?.currentChapters }}</h3>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Chapters (Total): {{ storyMetadataResultUnit()?.data?.totalChapters }}</h3>
-                <h4>Note: A total of negative one means that the total chapter count is to be determined.</h4>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Comments: {{ storyMetadataResultUnit()?.data?.comments }}</h3>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Kudos: {{ storyMetadataResultUnit()?.data?.kudos }}</h3>
-                <h4>Number of Unregistered Kudos: {{ storyMetadataResultUnit()?.data?.unregisteredKudos }}</h4>
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.registeredKudos" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Registered Users That Left Kudos'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Bookmarks: {{ storyMetadataResultUnit()?.data?.bookmarks }}</h3>
-                <h4>Number of Unregistered Bookmarks: {{ storyMetadataResultUnit()?.data?.unregisteredBookmarks }}</h4>
-                <app-output-list 
-                    [inputList]="storyMetadataResultUnit()?.data?.publicBookmarks" 
-                    [displayAsList]="false"
-                    [displayAsText]="true"
-                    [defaultHeader]="'Registered Users That Left Public Bookmarks'"
-                    [displayLimit]="defaultDisplayLimit"
-                    [displaySeperator]="', '"
-                />
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Number of Hits: {{ storyMetadataResultUnit()?.data?.hits }}</h3>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Object Creation Timestamp</h3>
-                <p>{{ storyMetadataResultUnit()?.data?.creationTimestamp }}</p>
-            </div>
-            <div class="story-metadata-subdiv">
-                <h3>Object Creation Hash</h3>
-                <p>{{ storyMetadataResultUnit()?.data?.creationHash }}</p>
-            </div>
+@if (storyMetadataResultUnit()) {
+    <div animate.enter="fade-in" animate.leave="fade-out">
+        <div class="story-metadata-div">
+            <h3>{{ storyMetadataResultUnit()?.nickname }}</h3>
+            <p>ID: {{ storyMetadataResultUnit()?.id }}</p>
+            <app-output-icons 
+                [inputObject]="storyMetadataResultUnit()" 
+                [objectName]="storyMetadataResultUnit()?.nickname"
+                [showDropdown]="true"
+                (dropdownEvent)="flipTopLevelSelected()"
+                class="outputs" 
+            />
         </div>
-    }
-</div>
+        @if (topLevelSelected()) {
+            <div animate.enter="fade-in" animate.leave="fade-out">
+                <div class="story-metadata-subdiv">
+                    <h3>Title of Story</h3>
+                    <p>{{ storyMetadataResultUnit()?.data?.title }}</p>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.authors" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Author(s)'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.summary" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Summary'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.startNotes" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Starting Notes'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.endNotes" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Ending Notes'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="'\n'"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.associations" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Associations'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.ratings" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Ratings'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.warnings" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Warnings'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.categories" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Categories'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.fandoms" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Fandoms'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.relationships" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Relationships'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.characters" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Story Characters'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.additionalTags" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Additional Story Tags'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Written Language</h3>
+                    <p>{{ storyMetadataResultUnit()?.data?.language }}</p>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.series" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Series the Story Is In'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.collections" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Collections the Story Is In'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Publication Date</h3>
+                    <p>{{ storyMetadataResultUnit()?.data?.published }}</p>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Story Last {{ storyMetadataResultUnit()?.data?.status }}</h3>
+                    <p>{{ storyMetadataResultUnit()?.data?.statusWhen }}</p>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Words: {{ storyMetadataResultUnit()?.data?.words }}</h3>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Chapters (Current): {{ storyMetadataResultUnit()?.data?.currentChapters }}</h3>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Chapters (Total): {{ storyMetadataResultUnit()?.data?.totalChapters }}</h3>
+                    <h4>Note: A total of negative one means that the total chapter count is to be determined.</h4>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Comments: {{ storyMetadataResultUnit()?.data?.comments }}</h3>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Kudos: {{ storyMetadataResultUnit()?.data?.kudos }}</h3>
+                    <h4>Number of Unregistered Kudos: {{ storyMetadataResultUnit()?.data?.unregisteredKudos }}</h4>
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.registeredKudos" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Registered Users That Left Kudos'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Bookmarks: {{ storyMetadataResultUnit()?.data?.bookmarks }}</h3>
+                    <h4>Number of Unregistered Bookmarks: {{ storyMetadataResultUnit()?.data?.unregisteredBookmarks }}</h4>
+                    <app-output-list 
+                        [inputList]="storyMetadataResultUnit()?.data?.publicBookmarks" 
+                        [displayAsList]="false"
+                        [displayAsText]="true"
+                        [defaultHeader]="'Registered Users That Left Public Bookmarks'"
+                        [displayLimit]="defaultDisplayLimit"
+                        [displaySeperator]="', '"
+                    />
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Number of Hits: {{ storyMetadataResultUnit()?.data?.hits }}</h3>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Object Creation Timestamp</h3>
+                    <p>{{ storyMetadataResultUnit()?.data?.creationTimestamp }}</p>
+                </div>
+                <div class="story-metadata-subdiv">
+                    <h3>Object Creation Hash</h3>
+                    <p>{{ storyMetadataResultUnit()?.data?.creationHash }}</p>
+                </div>
+            </div>
+        }
+    </div>
+}
