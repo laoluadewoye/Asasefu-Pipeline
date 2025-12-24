@@ -27,6 +27,14 @@ button:hover {
     padding-bottom: var(--half-default-distance);
 }
 
+.results-unit-div {
+    border-color: var(--theme-black-color);
+    border-style: solid;
+    border-width: calc(var(--half-default-distance) / 4);
+    justify-items: center;
+    width: 100%;
+}
+
 #result-div-menu {
     margin-top: var(--default-distance);
     margin-inline: var(--default-distance);

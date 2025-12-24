@@ -1,0 +1,25 @@
+<!--Header logic-->
+@if (fullList().length === 0) {
+    <h3>{{ defaultHeader() }} (None found)</h3>
+}
+@else if (listTruncated()) {
+    <h3>{{ defaultHeader() }}</h3>
+    <h4>{{ defaultHeader() }} list was cut off for being longer than {{ displayLimit() }}. Please download using buttons to see the rest...</h4>
+}
+@else { <h3>{{ defaultHeader() }}</h3> }
+
+<!--Content logic-->
+@if (displayAsText()) {
+    <p>{{ subjectText() }}</p>
+}
+@else if (displayAsList()) {
+    <ul>
+        @for (subject of subjectList(); track subject) {
+            <li>{{ subject }}</li>
+        }
+    </ul>
+}
+<!--Download icons to get the list-->
+@if (fullList().length !== 0) {
+    <app-output-icons [inputObject]="fullList()" [objectName]="defaultHeader()" [showDropdown]="false" class="outputs" />
+}

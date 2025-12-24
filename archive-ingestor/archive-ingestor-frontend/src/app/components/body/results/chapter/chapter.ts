@@ -1,5 +1,5 @@
 import { Component, input, InputSignal } from '@angular/core';
-import { ArchiveResultUnit } from '../../../../models/archive-result-unit';
+import { ArchiveChapterResultUnit } from '../../../../models/archive-chapter-result-unit';
 
 @Component({
   selector: 'app-chapter',
@@ -8,7 +8,7 @@ import { ArchiveResultUnit } from '../../../../models/archive-result-unit';
   styleUrl: './chapter.css',
 })
 export class Chapter {
-    chapterResultUnit: InputSignal<ArchiveResultUnit | undefined> = input.required<ArchiveResultUnit | undefined>();
+    chapterResultUnit: InputSignal<ArchiveChapterResultUnit | undefined> = input.required<ArchiveChapterResultUnit | undefined>();
     latestUnit: InputSignal<boolean> = input.required<boolean>();
     topLevelUnit: InputSignal<boolean> = input.required<boolean>();
 }

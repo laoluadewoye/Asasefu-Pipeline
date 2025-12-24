@@ -57,7 +57,8 @@ public class ArchiveServerTest {
     // Test values to check and use
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
             "app-root", "app-header", "app-body", "app-tester", "app-settings", "app-progress", "app-results",
-            "app-session", "app-story", "app-story-metadata", "app-chapter", "app-footer"
+            "app-session", "app-story", "app-story-metadata", "app-chapter", "app-output-icons", "app-output-list",
+            "app-footer"
     ));
     private static final String sessionNickname = "testParseSession";
     private static final Integer sessionUpdateIntervalMilli = 2000;

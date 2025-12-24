@@ -1,0 +1,8 @@
+<div>
+    @if (showDropdown()) {
+        <img src="./dropdown-icon.png" height="30" title="Click to expand {{ objectName() }}" (click)="dropdownClicked()" />
+    }
+    <img src="./json-icon.png" height="30" title="Click to download {{ objectName() }} as JSON" (click)="downloadJSON()" />
+    <img src="./yaml-icon.png" height="30" title="Click to download {{ objectName() }} as YAML" (click)="downloadYAML()" />
+    <img src="./xml-icon.png" height="30" title="Click to download {{ objectName() }} as XML" (click)="downloadXML()" />
+</div>

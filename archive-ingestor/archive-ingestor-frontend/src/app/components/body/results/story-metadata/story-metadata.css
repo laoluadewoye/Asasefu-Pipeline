@@ -1,0 +1,17 @@
+.story-metadata-div, .story-metadata-subdiv {
+    border-color: var(--theme-black-color);
+    border-style: solid;
+    border-width: calc(var(--half-default-distance) / 4);
+    padding-left: var(--default-distance);
+    position: relative;
+    overflow-wrap: break-word;
+
+    h3 {
+        color: var(--theme-red-color);
+        padding-top: var(--default-distance);
+    }
+}
+
+.story-metadata-subdiv {
+    margin-left: calc(var(--default-distance) * 2);
+}

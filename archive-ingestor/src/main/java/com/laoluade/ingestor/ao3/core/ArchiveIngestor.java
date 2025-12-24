@@ -333,9 +333,12 @@ public class ArchiveIngestor {
         WebElement storyStats = metaSection.findElements(By.className("stats")).getLast();
 
         String storyPublished = parseMetaStats(storyStats, "published", sessionId).getLast();
+
+        // TODO: Fix bug with getting the story status
         ArrayList<String> storyStatusBundle = parseMetaStats(storyStats, "status", sessionId);
         String storyStatus = storyStatusBundle.getFirst();
         String storyStatusWhen = storyStatusBundle.getLast();
+
         String storyWords = parseMetaStats(storyStats, "words", sessionId).getLast();
         String storyChapters = parseMetaStats(storyStats, "chapters", sessionId).getLast();
         String storyComments = parseMetaStats(storyStats, "comments", sessionId).getLast();

@@ -6,10 +6,11 @@ import { ArchiveSessionData } from '../../../models/archive-session-data';
 import { ArchiveCompletedSession } from '../../../models/archive-completed-session';
 import { ArchiveSessionGetService } from '../../../services/archive-session-get';
 import { catchError } from 'rxjs';
-import { ArchiveResultUnit } from '../../../models/archive-result-unit';
 import { StoryMetadata } from './story-metadata/story-metadata';
 import { Chapter } from './chapter/chapter';
 import { Session } from "./session/session";
+import { ArchiveMetadataResultUnit } from '../../../models/archive-metadata-result-unit';
+import { ArchiveChapterResultUnit } from '../../../models/archive-chapter-result-unit';
 
 @Component({
   selector: 'app-results',
@@ -49,8 +50,8 @@ export class Results implements OnInit, OnChanges {
     parentDefaultServiceWaitMilli: InputSignal<number> = input.required<number>();
 
     // Display mangement signals
-    storyMetadataMap: WritableSignal<Map<string, ArchiveResultUnit>> = signal<Map<string, ArchiveResultUnit>>(new Map());
-    chapterMap: WritableSignal<Map<string, ArchiveResultUnit>> = signal<Map<string, ArchiveResultUnit>>(new Map());
+    storyMetadataMap: WritableSignal<Map<string, ArchiveMetadataResultUnit>> = signal<Map<string, ArchiveMetadataResultUnit>>(new Map());
+    chapterMap: WritableSignal<Map<string, ArchiveChapterResultUnit>> = signal<Map<string, ArchiveChapterResultUnit>>(new Map());
 
     // Test properties
     testResponse: ArchiveServerResponseData = new ArchiveServerResponseData();
@@ -526,16 +527,16 @@ export class Results implements OnInit, OnChanges {
             
             // Isolate story metadata and chapters from information
             let storyOrChapter = completedSession?.data.data;
-            let metadata: ArchiveResultUnit;
-            let chapters: Array<ArchiveResultUnit> = [];
+            let metadata: ArchiveMetadataResultUnit;
+            let chapters: Array<ArchiveChapterResultUnit> = [];
             if (storyOrChapter instanceof ArchiveStoryData) {
-                metadata = new ArchiveResultUnit({
+                metadata = new ArchiveMetadataResultUnit({
                     id: completedSession?.data.id,
                     nickname: completedSession?.data.nickname,
                     data: storyOrChapter.archiveStoryInfo
                 });
                 storyOrChapter.archiveChapters.forEach((chapter, index) => {
-                    chapters.push(new ArchiveResultUnit({
+                    chapters.push(new ArchiveChapterResultUnit({
                         id: `${completedSession?.data.id}_${index+1}`,
                         nickname: `(Chapter ${index+1}) ${completedSession?.data.nickname}`,
                         data: chapter
@@ -543,19 +544,19 @@ export class Results implements OnInit, OnChanges {
                 });
             }
             else if (storyOrChapter instanceof ArchiveChapterData) {
-                metadata = new ArchiveResultUnit({
+                metadata = new ArchiveMetadataResultUnit({
                     id: completedSession?.data.id,
                     nickname: completedSession?.data.nickname,
                     data: storyOrChapter.parentArchiveStoryInfo
                 });
-                chapters.push(new ArchiveResultUnit({
+                chapters.push(new ArchiveChapterResultUnit({
                     id: `${completedSession?.data.id}_single`,
                     nickname: `(Single Chapter) ${completedSession?.data.nickname}`,
                     data: storyOrChapter
                 }));
             }
             else {
-                metadata = new ArchiveResultUnit({});
+                metadata = new ArchiveMetadataResultUnit({});
             }
 
             // Update management maps
@@ -565,7 +566,7 @@ export class Results implements OnInit, OnChanges {
                 this.storyMetadataMap.set(smm);
 
                 let cm = this.chapterMap();
-                chapters.forEach((chapter: ArchiveResultUnit) => cm.set(chapter.id, chapter));
+                chapters.forEach((chapter: ArchiveChapterResultUnit) => cm.set(chapter.id, chapter));
                 this.chapterMap.set(cm);
             }
         });
