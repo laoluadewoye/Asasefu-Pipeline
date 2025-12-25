@@ -1,7 +1,7 @@
 <div id="settings-div" class="red-background">
     <div [class.dimming-layer]="isDisabled()" [class.undimming-layer]="!isDisabled()">
         <h2>Set Parsing Details</h2>
-        <form [formGroup]="settingsFormGroup" (submit)="submitSettingsFormGroup()">
+        <form [formGroup]="settingsFormGroup" (submit)="submitSettingsFormGroup(); settingsFormGroup.reset()">
             <!--Parsing Method-->
             @if (settingsFormGroup.get('parseType')?.invalid) {
                 <div class="error fade-in" animate.leave="fade-out">
@@ -19,7 +19,7 @@
             </span>
 
             <!--Parsing Link-->
-            @if (settingsFormGroup.get('parseLink')?.invalid) {
+            @if (settingsFormGroup.get('parseLink')?.dirty && settingsFormGroup.get('parseLink')?.invalid) {
                 <div class="error fade-in" animate.leave="fade-out">
                     <p>
                         Error: The typed/copied link cannot be used. Please look at the instructions above and try again.

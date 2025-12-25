@@ -29,10 +29,10 @@ export class Story implements OnInit {
         }));
 
         // Create chapter units
-        this.storyResultUnit()?.data.archiveChapters.forEach((archiveChapter) => {
+        this.storyResultUnit()?.data.archiveChapters.forEach((archiveChapter, index) => {
             this.storyChapterUnits().push(new ArchiveChapterResultUnit({
                 id: this.storyResultUnit()?.id,
-                nickname: this.storyResultUnit()?.nickname,
+                nickname: `(Chapter ${index+1}) ${this.storyResultUnit()?.nickname}`,
                 data: archiveChapter,
             }));
         });

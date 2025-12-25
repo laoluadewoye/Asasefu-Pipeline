@@ -1,118 +1,238 @@
-<h2>Preface</h2>
+<!--TOC-->
+<h2>Table of Contents</h2>
+<nav>
+    <button><a href="#preface">Preface</a></button>
+    <button><a href="#eula">EULA</a></button>
+    <button><a href="#instructions">Instructions</a></button>
+    <button><a href="#testing">Testing the Service</a></button>
+    <button><a href="#settings-div">Set Parsing Details</a></button>
+    <button><a href="#results-div">Completed Parses</a></button>
+</nav>
+
+<!--Preface-->
+<h2 id="preface">Preface</h2>
 <p>
     Welcome to my passion project for parsing stories on Archive of our Own!
-    I've always been wanting to do something with my own stories for a while,
-    but I had no creativity or motivation to do so. But now I do!
+    I've always been wanting to do a coding project with my own stories, 
+    and I also wanted to learn Angular and front end development in general,
+    but for the longest time I didn't have the motivation to do either.
+    Then one day, like all fanfiction writers of any kind, I had a dangerous
+    concoction of inspiration that either ends up with someone changing their
+    lives or someone ending up in jail. Or just being really cringe, 
+    but it's that pure kind of cringe. Firstly, lets get the legal stuff out of the way.
+</p>
+
+<!--EULA-->
+<h2 id="eula">End User License Agreement</h2>
+<h3>Last updated: December 24th, 2025</h3>
+<p>
+    The Asasefu project, and by extension this Archive Ingestor frontend,
+    is licensed to You (End-User) by Laolu Ade under the 
+    <strong>GNU General Public License Version 3</strong>.
+    By using this open-source software, you are beholden to the 
+    <strong>rights</strong> AND <strong>responsibilities</strong> of said license.
 </p>
 <p>
-    Firstly, please don't use this thing for Silicon Valley tech bro crap.
-    If you do you are liable for whatever hell gets rained down upon you.
-    This is first and foremost a way for me to look at my own writings
-    without having to manually go through and copy things.
-    That's why it's also admittedly limited in what it can do,
-    as I've thought of coding ways to look at entire series and collections
-    and realized that if I make it too easy,
-    there are going to be annoying people out there that will just abuse it.
+    In addition, by using this open-source software, you agree to not utilize this service for
+    commercial purposes or activities that directly benefit commerical activities, including but
+    not limited to: 
+    training AI models to generate monetized fanfiction recommendations for subscription services, 
+    selling anonymized fanfiction datasets to third-party analytics firms for market research, 
+    developing proprietary machine learning or statistical analysis tools 
+    that extract revenue from fanfiction themes for advertising partnerships, 
+    or using fanfiction corpora to build predictive analytics for entertainment industry decision-making.
 </p>
 <p>
-    As someone who has done research in machine learning,
-    there is a reason corporations are desperate to sell you on
-    what is essentially just advance Amazon Alexas and Siris and Cortanas.
-    Convenience is a heck of a drug and
-    it's easier to make money off of you eating off their pig trough
-    than it is for them to sell you tools that can be used to advance
-    YOUR own imagination.
+    Lastly, if you are found by an author - 
+    whether they publish through traditional channels or 
+    online platforms including but not limited to 
+    Archive of our Own, Wattpad, Quotev, or Fanfiction.net -
+    to have utilized their work for your own gain or someone else's downfall,
+    and you have used this tool to do so, you are beholden to revealing that 
+    you have used this tool, and by breaking the agreement set in using this tool, 
+    you are liable to being sued by said author. As a special note, this includes if 
+    you, for some reason, decide to train an storywriting AI using this service to 
+    facilitate your data pipeline.
 </p>
 <p>
-    This is a tool I made to celebrate the years worth of writings I have amassed online,
-    and I hope that if you find this, you would be excited to see what it looks like for you too.
-    That excitement is what will carry you through having to set this project up to run in the first place.
+    At the end of the day, this is a tool I made to 
+    celebrate the years worth of writings I have amassed online in the best way I know how, by
+    writing a bunch of code to make the pixels on my screen to my work as a bunch of data science junk.
+    I can say that the purpose of this tool is <strong>to make it more convenient to download your story 
+    in a format that is easily transferrable and great to work with in the absense of an official API by
+    OTW</strong>, but really I just did it because it makes me happy. And I hope you are able to enter
+    your stories into here and get that same level of joy.
 </p>
-<h2>Instructions</h2>
+<p>Well, assuming anyone actually finds this thing on Github, or I make it available on the public internet.</p>
+
+<!--Instructions-->
+<h2 id="instructions">Instructions</h2>
+<h3>Website Layout</h3>
 <p>
-    After this introduction section is the <strong><u>Set Parsing Details</u></strong> section.
+    This section is the <strong>Instructions</strong> section. 
+    This section will tell you how to use the website to download things and navigate the page.
+</p>
+<p>
+    After this section, you will see the <strong>Set Parsing Details</strong> section.
     This section will have various configuration options
     and a submission button to send the results to the backend service.
 </p>
 <p>
-    The <strong><u>first option</u></strong> is a Parsing Method,
-    where you can choose between parsing a single chapter or a whole story.
-    It can only be one or the other, and it is set to "Chapter" by default.
+    When you start a parse, a <strong>Parsing Progress</strong> 
+    will temporary appear inside the <strong>Set Parsing Details</strong> section
+    below the configurable settings. This will show real-time parsing information
+    so you don't get bored if you are waiting on a particularly long or popular story.
 </p>
 <p>
-    The <strong><u>second option</u></strong> is the link you need to provide.
-    Only AO3 links are valid for this application,
-    and depending on what parsing option you choose before some AO3 links are not valid.
-    As of (enter in OTW Archive version), the following decisions are applied:
+    Finally, after the <strong>Set Parsing Details</strong> section 
+    is the <strong>Completed Parses</strong> section.
+    This section will be where you can view your parsed information and 
+    filter the results based on the ID or the nickname you give the parsing session.
 </p>
-<ul>
-    <li>
-        Links that don't start like "https://archiveofourown.org/works/"
-        or "https://archiveofourown.org/works/XXXXXXXX/chapters/"
-        where "XXXXXXXX" represents a story id are automatically rejected.
-        This is ONLY a story parser.
-    </li>
-    <li>
-        "https://archiveofourown.org/works/XXXXXXXX" where "XXXXXXXX" represents a story id
-        is a valid link if you want to parse either a chapter or story.
-    </li>
-    <li>
-        "https://archiveofourown.org/works/XXXXXXXX/chapters/YYYYYYYYY where
-        "XXXXXXXX" represents a story id and "YYYYYYYYY" represents a chapter id
-        is <strong>ONLY</strong> a valid link for parsing a chapter. 
-        If you choose story and then pass this link,
-        you <strong>WILL</strong> get an error notification.
-    </li>
-</ul>
+
+<h3>Buttons at the Top</h3>
 <p>
-    The <strong><u>third option</u></strong> is a nickname you want to give the session.
-    You do not have to fill this in, but if you do, you can only use alphanumeric characters
-    (basically a to z, A to Z, and 0 to 9), underscores (_) and dashes (-). 
-    If there is not supplied nickname, the backend will use the session ID as the nickname.
+    Firstly, there are three buttons at the top of the page. These just lead my
+    GitHub account and the pages where the overall project and this specific part of it is kept.
+</p>
+
+<h3>Working with the Parsing Settings</h3>
+<p>
+    There are several settings that can be modified to 
+    customize the look and scope of your parsing. 
+    However, only two of them are required to actually parse a chapter or story.
+</p>
+<ol>
+    <li>
+        The first required setting is the <strong>Parsing Method</strong>. 
+        They will be the first two buttons in the <strong>Set Parsing Details</strong> section
+        and be labeled <strong>Chapter</strong> and <strong>Story</strong>. 
+        You can only choose one, but you MUST choose one.
+    </li>
+    <li>
+        The second required setting is the <strong>Chapter or Story Link</strong>.
+        This will be the first text box in the section and 
+        it is here you would enter in your story and chapter link, but it must follow certain rules.
+    </li>
+    <ol>
+        <li>
+            Links that don't start like <strong>"https://archiveofourown.org/works/"</strong>
+            or <strong>"https://archiveofourown.org/works/XXXXXXXX/chapters/"</strong>
+            where "XXXXXXXX" represents a story id are automatically rejected.
+            This is ONLY a story parser to stop people from just running wild on the site.
+        </li>
+        <li>
+            <strong>"https://archiveofourown.org/works/XXXXXXXX"</strong> where "XXXXXXXX" represents a story id
+            is a valid link if you want to parse either a chapter or story.
+        </li>
+        <li>
+            <strong>"https://archiveofourown.org/works/XXXXXXXX/chapters/YYYYYYYYY</strong> where
+            "XXXXXXXX" represents a story id and "YYYYYYYYY" represents a chapter id
+            is <strong>ONLY</strong> a valid link for parsing a chapter. 
+            If you choose story and then pass this link,
+            you will get an error notification.
+        </li>
+        <li>
+            <strong>You can pass any chapter from a story</strong> into the chapter parser. 
+            You are not limited just getting chapter one from your 100-chapter story.
+        </li>
+    </ol>
+    <li>
+        The rest of the settings are optional. 
+        The third setting is the <strong>Nickname</strong> setting.
+        You can give your parsing session a nickname so 
+        it's easier to find in the <strong>Completed Parses</strong> section.
+    </li>
+    <li>
+        The last group of settings is kept under 
+        the <strong>Configure Advanced Settings</strong> section. 
+        These settings control the level of detail you want your parse to have.
+        By default, the level of detail is capped so that 
+        you don't die before your parse is finished. 
+        That being said, if you really want to get everything,
+        set the corresponding value for each advanced setting to -1.
+    </li>
+    <ol>
+        <li>
+            <strong>Max Comment Thread Depth</strong> controls how deep you want to search into comment threads. 
+            By default, this option is set to 10 replies. As an example, if a comment has 15 reply threads,
+            but one of the reply threads has a back-and-forth that goes on for 20 replies, then that 20-reply
+            conversation is cut off for brevity.
+        </li>
+        <li>
+            <strong>Max Comment Page Limit</strong> controls 
+            the maximum amount of pages of comments you want to search per chapter. 
+            If a chapter has less pages than is specified here, then all the chapter's comments will be parsed.
+            By default, this option is set to 3 pages.
+        </li>
+        <li>
+            <strong>Max Kudos Page Limit</strong> controls 
+            the maximum amount of pages of kudos you want to search per story. 
+            If a story has less pages than is specified here, then all the story's kudos will be parsed.
+            By default, this option is set to 3 pages.
+        </li>
+        <li>
+            <strong>Max Bookmarks Page Limit</strong> controls 
+            the maximum amount of pages of bookmarks you want to search per story. 
+            If a story has less pages than is specified here, then all the story's bookmarks will be parsed.
+            By default, this option is set to 3 pages.
+        </li>
+    </ol>
+</ol>
+
+<h3>Submitting and Waiting for your Story/Chapter</h3>
+<p>
+    Once you hit the <strong>Start Parsing</strong> button, 
+    the web application will then start the parsing process.
+    A real time chapter-by-chapter progress text will display until 
+    <strong>1)</strong> either the parsing is complete, 
+    <strong>2)</strong> or the app experience an error and has to end early,
+    or <strong>3)</strong> you cancel the in-progress parsing early.
 </p>
 <p>
-    The rest of the options are advanced settings that control how detailed you want the results to be.
-    <strong><u>To make any of these options unlimited, set the corresponding value to -1.</u></strong>
-</p>
-<ul>
-    <li>
-        <strong>Max Comment Thread Depth</strong> controls how deep you want to search into comment threads. 
-        By default, this option is set to 10 replies. As an example, if a comment has 15 reply threads,
-        but one of the reply threads has a back-and-forth that goes on for 20 replies, then that 20-reply
-        conversation is cut off for brevity.
-    </li>
-    <li>
-        <strong>Max Comment Page Limit</strong> controls 
-        the maximum amount of pages of comments you want to search per chapter. 
-        If a chapter has less pages than is specified here, then all the chapter's comments will be parsed.
-        By default, this option is set to 3 pages.
-    </li>
-    <li>
-        <strong>Max Kudos Page Limit</strong> controls 
-        the maximum amount of pages of kudos you want to search per story. 
-        If a story has less pages than is specified here, then all the story's kudos will be parsed.
-        By default, this option is set to 3 pages.
-    </li>
-    <li>
-        <strong>Max Bookmarks Page Limit</strong> controls 
-        the maximum amount of pages of bookmarks you want to search per story. 
-        If a story has less pages than is specified here, then all the story's bookmarks will be parsed.
-        By default, this option is set to 3 pages.
-    </li>
-</ul>
-<p>
-    The backend service will then start the parsing process,
-    and a real time chapter-by-chapter progress text will display until either the parsing is complete,
-    or something errors out and it shows you the problem found,
-    or you cancel the parsing session.
-    The <strong><u>Set Parsing Details</u></strong> section will be unavailable to edit
-    while the parsing session is going on and will be available when the parsing session ends.
-</p>
-<p>
-    Once that's done, you should see the parsed content in the <strong><u>Completed Parsing Sessions</u></strong> section.
+    Once that's done, you should see the parsed content in the <strong>Completed Parses</strong> section.
     You will be able to navigate through all the data and
-    choose which data you want to save to JSON (maybe XML and YAML as well).
+    choose which data you want to save to JSON, XML, and YAML formats.
 </p>
+
+<h3>Navigating the Completed Parses Section</h3>
+<p>
+    Once a parse its completed, you should see a green or yellow notification letting you know that.
+    It is then you can go to the <strong>Completed Parses</strong> section to view the results.
+    This section is represented with a hollow red-outlined rectangle.
+</p>
+<p>
+    At very top of this box is a search bar where you can use the 
+    session ID or nickname of your parsing session to filter 
+    which stories or chapters you want to look at. 
+    Below that, you would see a <strong>Refresh View</strong> button
+    that you can use to refresh the result contents in case 
+    what you were expecting hadn't shown up yet.
+</p>
+<p>
+    In the sections themselves, you press one of the tabs 
+    to open the dropdown of a specific result type. 
+    To expand or close more drop downs, or to download things, you use the buttons
+    that will be located on drop downs with a complex array of content.
+</p>
+
+<div class="center-content">
+    <h4> This button is used to open or close a dropdown ▶</h4>
+    <img src="./dropdown-icon.png" height="50px" style="padding-left: 10px;">
+</div>
+<div class="center-content">
+    <h4>This button is used to download all or a specific part of your story or chapter as JSON ▶</h4>
+    <img src="./json-icon.png" height="50px" style="padding-left: 10px;">
+</div>
+<div class="center-content">
+    <h4>This button is used to download all or a specific part of your story or chapter as YAML ▶</h4>
+    <img src="./yaml-icon.png" height="50px" style="padding-left: 10px;">
+</div>
+<div class="center-content">
+    <h4>This button is used to download all or a specific part of your story or chapter as XML ▶</h4>
+    <img src="./xml-icon.png" height="50px" style="padding-left: 10px;">
+</div>
+
 <app-tester [parentDefaultValue]="defaultValue()" [parentDefaultTimeoutMilli]="defaultTimeoutMilli"/>
 <app-settings [parentDefaultTimeoutMilli]="defaultTimeoutMilli" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli" (sessionComplete)="addCompletedSession($event)"/>
 <app-results [parentCompletedSessionIds]="completedSessionIds()" [parentLatestCompletedSessionId]="latestCompletedSessionId()" [parentDefaultServiceWaitMilli]="defaultServiceWaitMilli"/>
