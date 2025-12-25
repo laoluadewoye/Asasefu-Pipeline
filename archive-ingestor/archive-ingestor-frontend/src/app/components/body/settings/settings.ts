@@ -5,7 +5,7 @@ import { ArchiveSessionGetService } from '../../../services/archive-session-get'
 import { ArchiveParseChapterService } from '../../../services/archive-parse-chapter';
 import { ArchiveParseStoryService } from '../../../services/archive-parse-story';
 import { ArchiveServerRequestData } from '../../../models/archive-server-request-data';
-import { catchError, of, Subscription } from 'rxjs';
+import { catchError, Subscription } from 'rxjs';
 import { ArchiveServerResponseData } from '../../../models/archive-server-response-data';
 import { Progress } from "./progress/progress";
 
@@ -52,6 +52,8 @@ export class Settings implements OnInit {
     });
     curSessionId: WritableSignal<string> = signal("");
     sessionComplete: OutputEmitterRef<string> = output<string>();
+    sameMessageCounter: WritableSignal<number> = signal(1);
+    sameMessageLimit: number = 15;
 
     // Timeouts
     parentDefaultTimeoutMilli: InputSignal<number> = input.required<number>();
@@ -138,6 +140,20 @@ export class Settings implements OnInit {
         this.getLatestSubscription = this.archiveSessionGetService.getSessionInformationLive(
             this.curSessionId()
         ).subscribe((result) => {
+            // Check if the same response had been sent too many times
+            let lastResponseMessage = this.latestResponse().responseMessage;
+            if (lastResponseMessage === result.responseMessage) {
+                this.sameMessageCounter.set(this.sameMessageCounter() + 1);
+            }
+            else {
+                this.sameMessageCounter.set(1);
+            }
+
+            if (this.sameMessageCounter() > this.sameMessageLimit) {
+                result.sessionException = true;
+                result.responseMessage = `Live Feed Exception: Archive Service sent the same message more than ${this.sameMessageLimit} times.`;
+            }
+
             // Set latest response
             this.latestResponse.set(result);
 

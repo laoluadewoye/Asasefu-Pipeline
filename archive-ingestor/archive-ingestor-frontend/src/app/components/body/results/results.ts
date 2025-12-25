@@ -42,7 +42,8 @@ export class Results implements OnChanges {
         "The archive ingestor could not find a required element during parsing.",
         "The archive ingestor's task was canceled from parent service.",
         "The archive ingestor came across the archive's 404 page and stopped parsing.",
-        "Successfully retrieved JSON representation"
+        "Successfully retrieved JSON representation",
+        "Archive Service sent the same message"
     ];
 
     // Display mangement properties
