@@ -22,7 +22,8 @@ public class ArchiveCLI {
         ArchiveIngestor ai = new ArchiveIngestor(null, null, null, null, 3, 5, 10, 3, 3, 3);
         URL cl = new URI("http://localhost:4444").toURL();
         RemoteWebDriver d = new RemoteWebDriver(cl, new ChromeOptions());
-        d.get("https://archiveofourown.org/works/57751447/chapters/172772080");
+        d.get("https://archiveofourown.org/works/45081343");
         ArchiveChapter c = ai.createChapter(d, "");
+        d.quit();
     }
 }

@@ -1,7 +1,7 @@
 <div id="settings-div" class="red-background">
     <div [class.dimming-layer]="isDisabled()" [class.undimming-layer]="!isDisabled()">
         <h2>Set Parsing Details</h2>
-        <form [formGroup]="settingsFormGroup" (submit)="submitSettingsFormGroup(); settingsFormGroup.reset()">
+        <form [formGroup]="settingsFormGroup" (submit)="submitSettingsFormGroup()">
             <!--Parsing Method-->
             @if (settingsFormGroup.get('parseType')?.invalid) {
                 <div class="error fade-in" animate.leave="fade-out">
