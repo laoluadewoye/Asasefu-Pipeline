@@ -41,45 +41,139 @@ import java.util.List;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * <p>This class is the primary parsing utility for ingesting AO3 stories and chapters.</p>
+ * <p>This class exposes it's version, placeholder value, and the tags it ignores as statically accessible objects.</p>
+ * <p>This class exposes high level APIs for creating chapters and creating stories.</p>
+ * <p>This class exposes a task creation method for Archive Server to access as a spring boot component.</p>
+ */
 @Service
 public class ArchiveIngestor {
     // Public Class Constants
+    /**
+     * <p>This attribute holds the current version of the ingestor.</p>
+     */
     public static final String VERSION = "0.1";
+
+    /**
+     * <p>This attribute defines the placeholder string value.</p>
+     */
     public static final String PLACEHOLDER = "Null";
+
+    /**
+     * <p>This attribute defines the HTML tags it will ignore when parsing sets of elements.</p>
+     */
     public static final ArrayList<String> PARAGRAPH_IGNORE_TAGS = new ArrayList<>(Arrays.asList(
             "strong", "em", "u", "span"
     ));
 
     // Private Class Constants
+    /**
+     * <p>This attribute defines the xpath string for viewing all child elements of an element.</p>
+     */
     private static final String ALL_CHILDREN_XPATH = ".//*";
+
+    /**
+     * <p>This attribute defines the xpath string for viewing direct child elements of an element.</p>
+     */
     private static final String DIRECT_CHILDREN_XPATH = "./*";
 
     // Private Class Configurables
+    /**
+     * <p>This attribute defines the duration to wait (in seconds) for AO3's Terms of Service screen.</p>
+     */
     private final Integer tosSleepDurationSecs;
+
+    /**
+     * <p>
+     *     This attribute defines the duration to wait (in seconds)
+     *     for general purposes with {@link WebDriverWait} objects
+     * </p>
+     */
     private final Integer waitDurationSecs;
 
     // Private Class Configurables (Can be changed from web app)
+    /**
+     * <p>This attribute defines the max comment thread depth to search for comments.</p>
+     */
     private Integer maxCommentThreadDepth;
+
+    /**
+     * <p>This attribute defines the max comment page limit to search for comments.</p>
+     */
     private Integer maxCommentPageLimit;
+
+    /**
+     * <p>This attribute defines the max kudos page limit to search for kudos.</p>
+     */
     private Integer maxKudosPageLimit;
+
+    /**
+     * <p>This attribute defines the max bookmark page limit to search for bookmarks.</p>
+     */
     private Integer maxBookmarkPageLimit;
 
     // Instance Constants
+    /**
+     * <p>
+     *     This attribute defines the version table used to check for what OTWArchive versions
+     *     the archive ingestor is good to parse.
+     * </p>
+     */
     public JSONObject versionTable;
 
     // Spring Boot attributes
+    /**
+     * <p>This attribute defines the {@link ArchiveLogService} the archive ingestor will use to log messages.</p>
+     */
     @Autowired
     private final ArchiveLogService logService;
 
+    /**
+     * <p>
+     *     This attribute defines the {@link ArchiveMessageService}
+     *     the archive ingestor will use to leverage standard messages.
+     * </p>
+     */
     @Autowired
     private final ArchiveMessageService messageService;
 
+    /**
+     * <p>
+     *     This attribute defines the {@link ArchiveSessionService}
+     *     the archive ingestor will use to update session data.
+     * </p>
+     */
     @Autowired
     private final ArchiveSessionService sessionService;
 
+    /**
+     * <p>
+     *     This attribute defines the {@link ArchiveDriverService}
+     *     the archive ingestor will use to create Selenium drivers.
+     * </p>
+     */
     @Autowired
     private final ArchiveDriverService driverService;
 
+    /**
+     * <p>
+     *     This constructor is used to start the archive ingestor. To use outside of Spring Boot, set the service
+     *     parameters to null.
+     * </p>
+     * @param logService The {@link ArchiveLogService} managed by Spring Boot. Set to null to use outside spring boot.
+     * @param messageService The {@link ArchiveMessageService} managed by Spring Boot. Set to null to use outside spring boot.
+     * @param sessionService The {@link ArchiveSessionService} managed by Spring Boot. Set to null to use outside spring boot.
+     * @param driverService The {@link ArchiveDriverService} managed by Spring Boot. Set to null to use outside spring boot.
+     * @param tosSleepDurationSecs The number of seconds to wait on TOS screen.
+     * @param waitDurationSecs The number of seconds to enter into {@link WebDriverWait} objects.
+     * @param maxCommentThreadDepth The number of comment thread replies to go down.
+     * @param maxCommentPageLimit The number of comment pages to parse.
+     * @param maxKudosPageLimit The number of kudos pages to parse.
+     * @param maxBookmarkPageLimit The number of bookmark pages to parse.
+     * @throws IOException If the <code>resourceReader.readAllAsString()</code> line in
+     *      <code>ArchiveIngestor.getJSONFromResource()</code> fails due to an I/O Error.
+     */
     public ArchiveIngestor(ArchiveLogService logService, ArchiveMessageService messageService,
                            ArchiveSessionService sessionService, ArchiveDriverService driverService,
                            @Value("${archiveServer.ingestor.tosSleepDurationSecs}") Integer tosSleepDurationSecs,
@@ -115,12 +209,24 @@ public class ArchiveIngestor {
         this.maxBookmarkPageLimit = maxBookmarkPageLimit;
     }
 
+    /**
+     * <p>This method retrieves a JSON object given a filepath.</p>
+     * @param filePath The location of the JSON file to read.
+     * @return The JSON object representation of that file.
+     * @throws IOException If the <code>reader.readAllAsString()</code> line fails due to an I/O Error.
+     */
     public static JSONObject getJSONFromFilepath(String filePath) throws IOException {
         FileReader reader = new FileReader(filePath);
         String jsonString = reader.readAllAsString();
         return new JSONObject(jsonString);
     }
 
+    /**
+     * <p>This method retrieves a JSON object given a local resource name.</p>
+     * @param resource The name of the resource to use.
+     * @return The JSON object representation of that resource.
+     * @throws IOException If the <code>resourceReader.readAllAsString()</code> line fails due to an I/O Error.
+     */
     private JSONObject getJSONFromResource(String resource) throws IOException {
         InputStream resourceStream = ArchiveIngestor.class.getResourceAsStream(resource);
         assert resourceStream != null;
@@ -129,15 +235,31 @@ public class ArchiveIngestor {
         return new JSONObject(resourceString);
     }
 
+    /**
+     * <p>This method returns the current Archive Ingestor version.</p>
+     * @return The version of the archive ingestor in string format.
+     */
     public String getArchiveIngestorVersion() {
         return ArchiveIngestor.VERSION;
     }
 
+    /**
+     * <p>This method returns the latest supported OTW Archive version.</p>
+     * @return The latest supported OTW Archive version in string format.
+     */
     public String getLatestOTWArchiveVersion() {
         JSONArray supportedOTWArchiveVersions = this.versionTable.getJSONArray(ArchiveIngestor.VERSION);
         return supportedOTWArchiveVersions.toList().getLast().toString();
     }
 
+    /**
+     * <p>
+     *     This method prints the latest message from the Archive Ingestor.
+     *     If a session service is present, it will also update a session's latest message through the service.
+     * </p>
+     * @param newMessage The new message to update the session and/or print to console.
+     * @param sessionId The session ID of the session to update.
+     */
     private void updateLastRecordedMessage(String newMessage, String sessionId) {
         if (this.sessionService != null) {  // Update last message and timestamp
             this.sessionService.updateLastRecordedMessage(sessionId, newMessage);
@@ -147,18 +269,37 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>This method updates a session's total chapter count if a session service is present.</p>
+     * @param chapterCount The new chapter count.
+     * @param sessionId The session ID of the session to update.
+     */
     private void updateTotalChapters(Integer chapterCount, String sessionId) {
         if (this.sessionService != null) {
             this.sessionService.updateChaptersTotal(sessionId, chapterCount);
         }
     }
 
+    /**
+     * <p>This method updates a session's completed chapter count if a session service is present.</p>
+     * @param chapterCount The new chapter count.
+     * @param sessionId The session ID of the session to update.
+     */
     private void updateCompletedChapters(Integer chapterCount, String sessionId) {
         if (this.sessionService != null) {
             this.sessionService.updateChaptersCompleted(sessionId, chapterCount);
         }
     }
 
+    /**
+     * <p>
+     *     This method checks if a session has been canceled if a session service is present.
+     *     If the session has been canceled, the Archive Ingestor throws a {@link ArchiveIngestorCanceledException}
+     *     to end the running parse task early.
+     * </p>
+     * @param sessionId The session ID of the session to check.
+     * @throws ArchiveIngestorCanceledException If the session has been canceled.
+     */
     private void checkForCancel(String sessionId) throws ArchiveIngestorCanceledException {
         if (this.sessionService != null) {
             if (this.sessionService.getCanceledStatus(sessionId)) {
@@ -167,6 +308,12 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>This method checks for an AO3 Terms of Service prompt and accepts conditions if the prompt is visible.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line is interrupted mid-execution.
+     */
     private void handleTOSPrompt(RemoteWebDriver driver, String sessionId) throws InterruptedException {
         // Sleep for three seconds
         updateLastRecordedMessage("Waiting " + this.tosSleepDurationSecs + " seconds for possible TOS prompt...", sessionId);
@@ -183,6 +330,12 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>This method checks for an AO3 Adult Content Agreement prompt and accepts conditions if the prompt is visible.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private void handleAdultContentAgreement(RemoteWebDriver driver, String sessionId) throws
             ArchiveIngestorCanceledException {
         updateLastRecordedMessage("Checking for adult content agreement...", sessionId);
@@ -197,6 +350,12 @@ public class ArchiveIngestor {
         checkForCancel(sessionId);
     }
 
+    /**
+     * <p>This method checks the OTW Archive version of the AO3 website to confirm support.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws ArchiveVersionIncompatibleException If the parsed OTW Archive version is not found in the version table.
+     */
     public void checkArchiveVersion(RemoteWebDriver driver, String sessionId) throws
             ArchiveVersionIncompatibleException {
         updateLastRecordedMessage("Checking AO3 version...", sessionId);
@@ -212,6 +371,12 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>This method is a utility for parsing text from a list of {@link WebElement} objects into an {@link ArrayList}.</p>
+     * @param chapterText The text from the list of {@link WebElement} objects.
+     * @param sessionId The session ID of the current parsing session.
+     * @return An {@link ArrayList} of text formatted as strings.
+     */
     private ArrayList<String> filterText(List<WebElement> chapterText, String sessionId) {
         // Create empty array list
         ArrayList<String> filteredText  = new ArrayList<>();
@@ -231,6 +396,16 @@ public class ArchiveIngestor {
         return filteredText;
     }
 
+    /**
+     * <p>
+     *     This method parses comma-separated items from {@link WebElement} objects
+     *     in a story metadata section into an {@link ArrayList}.
+     * </p>
+     * @param metaSection The {@link WebElement} object containing the story metadata.
+     * @param metaSectionClass The name of the class where specific story metadata is contained.
+     * @param sessionId The session ID of the current parsing session.
+     * @return An {@link ArrayList} of metadata values formatted as strings.
+     */
     private ArrayList<String> parseMetaItems(WebElement metaSection, String metaSectionClass, String sessionId) {
         updateLastRecordedMessage("Parsing " + metaSectionClass + " meta information...", sessionId);
 
@@ -255,6 +430,16 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>
+     *     This method parses specific story metadata statistical information. It takes the class name of the wanted
+     *     statistic and outputs a pair of strings specifying the statistic and the value.
+     * </p>
+     * @param storyStats The {@link WebElement} object containing the story statistics.
+     * @param storyStatsClass The name of the class where a specific story statistic is contained.
+     * @param sessionId The session ID of the current parsing session.
+     * @return An {@link ArrayList} of the statistic and the statistic's value.
+     */
     private ArrayList<String> parseMetaStats(WebElement storyStats, String storyStatsClass, String sessionId) {
         updateLastRecordedMessage("Parsing " + storyStatsClass + " meta statistic...", sessionId);
 
@@ -271,6 +456,13 @@ public class ArchiveIngestor {
         return new ArrayList<>(Arrays.asList(statTitle, statValue));
     }
 
+    /**
+     * <p>This method parses the AO3 story metadata table at the top of every story and chapter page.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A new {@link ArchiveStoryInfo} object.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private ArchiveStoryInfo parseStoryMetaTable(RemoteWebDriver driver, String sessionId) throws
             ArchiveIngestorCanceledException {
         // Get the meta section
@@ -355,6 +547,16 @@ public class ArchiveIngestor {
         );
     }
 
+    /**
+     * <p>
+     *     This method parses the story preface information. This includes the story's summary, authors,
+     *     staring and ending notes, and story associations.
+     * </p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param parentArchiveStoryInfo The corresponding story metadata object.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private void parseStoryPrefaceInfo(RemoteWebDriver driver, ArchiveStoryInfo parentArchiveStoryInfo, String sessionId)
             throws ArchiveIngestorCanceledException {
         // Get the preface part of the work skin
@@ -429,11 +631,22 @@ public class ArchiveIngestor {
         checkForCancel(sessionId);
     }
 
+    /**
+     * <p>This method creates a fresh next button reference.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @return The reference for the next button as a {@link WebElement}.
+     */
     private WebElement createNextButtonReference(RemoteWebDriver driver) {
         WebElement tempPagination = driver.findElement(By.className("pagination"));
         return tempPagination.findElement(By.className("next"));
     }
 
+    /**
+     * <p>This method parses the names of registered users who have given kudos on a kudos page.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param kudosList The current list of registered users who have given kudos.
+     * @param sessionId The session ID of the current parsing session.
+     */
     private void parseKudosPage(RemoteWebDriver driver, ArrayList<String> kudosList, String sessionId) {
         WebElement kudos = driver.findElement(By.id("kudos"));
         List<WebElement> kudosClass = kudos.findElements(By.className("kudos"));
@@ -448,6 +661,16 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>
+     *     This method parses all the names of registered users who have given kudos. If there was a limit put on the
+     *     number of pages of kudos to look at, then the method will only parse that many pages of kudos.
+     * </p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param parentArchiveStoryInfo The corresponding story metadata object.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private void parseStoryKudos(RemoteWebDriver driver, ArchiveStoryInfo parentArchiveStoryInfo, String sessionId)
             throws ArchiveIngestorCanceledException {
         WebDriverWait newSiteWait = new WebDriverWait(driver, Duration.ofSeconds(this.waitDurationSecs));
@@ -482,10 +705,10 @@ public class ArchiveIngestor {
             while (nextEnabled && (pageCount+1 <= totalPageCount)) {
                 pageCount++;
                 updateLastRecordedMessage("Parsing page number " + pageCount + " of kudos...", sessionId);
-                
+
                 // Check if there's limit to how many pages to check
                 if (pageCount > this.maxKudosPageLimit && this.maxKudosPageLimit > 0) {
-                    String pageLimitMsg = "Kudos parsing beyond max thread depth of " + this.maxKudosPageLimit + 
+                    String pageLimitMsg = "Kudos parsing beyond max thread depth of " + this.maxKudosPageLimit +
                             ". Ending early and moving on to next step...";
                     updateLastRecordedMessage(pageLimitMsg, sessionId);
                     driver.navigate().to(currentURL);
@@ -541,6 +764,13 @@ public class ArchiveIngestor {
         parentArchiveStoryInfo.setKudosList(kudosList);
     }
 
+    /**
+     * <p>This method parses registered users who have left a public bookmark on a specific page.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param bookmarkList The current list of registered users who have left a public bookmark.
+     * @param sessionId The session ID of the current parsing session.
+     * @param isPaginated Boolean flag for whether the bookmark page has page numbers.
+     */
     private void parseBookmarkPage(RemoteWebDriver driver, ArrayList<String> bookmarkList, String sessionId,
                                    boolean isPaginated) {
         // Get to the organized list and copy the users
@@ -559,6 +789,16 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>
+     *     This method parses all registered users who have left a public bookmark. If there is a bookmark page limit,
+     *     this method only parses that many bookmark pages worth of users.
+     * </p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param parentArchiveStoryInfo The corresponding story metadata object.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private void parseStoryBookmarks(RemoteWebDriver driver, ArchiveStoryInfo parentArchiveStoryInfo, String sessionId)
             throws ArchiveIngestorCanceledException {
         // Create wait object for later navigation
@@ -666,6 +906,16 @@ public class ArchiveIngestor {
         parentArchiveStoryInfo.setPublicBookmarkList(bookmarkList);
     }
 
+    /**
+     * <p>This method parses the chapter text of the web page and creates a {@link ArchiveChapter} object.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param parentArchiveStoryInfo The corresponding story metadata object.
+     * @param pageTitle The title of the page that the session is currently on.
+     * @param sessionId The session ID of the current parsing session.
+     * @return An initialized {@link ArchiveChapter} object.
+     * @throws ArchiveParagraphsNotFoundException If method does not detect a div element with story paragraphs.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private ArchiveChapter parseChapterText(RemoteWebDriver driver, ArchiveStoryInfo parentArchiveStoryInfo,
                                             String pageTitle, String sessionId)
             throws ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException {
@@ -745,10 +995,26 @@ public class ArchiveIngestor {
         );
     }
 
+    /**
+     * <p>This method creates a fresh comments placeholder reference.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @return A {@link WebElement} representing the comments placeholder element.
+     */
     private WebElement createCommentsPlaceholderReference(RemoteWebDriver driver) {
         return driver.findElement(By.id("comments_placeholder"));
     }
 
+    /**
+     * <p>
+     *     This method parses a single comment thread into a JSONObject. If this method detects a response to the
+     *     current comment that it's on, it utilizes recursion to go deeper into the thread.
+     * </p>
+     * @param commentBlockWait The {@link WebDriverWait} object use to wait for comments to load.
+     * @param commentThreadElement The web element containing the comment thread.
+     * @param threadDepth The current depth level for where we are in the thread.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A {@link JSONObject} representing the comment thread information.
+     */
     private JSONObject parseCommentThread(WebDriverWait commentBlockWait, WebElement commentThreadElement,
                                           Integer threadDepth, String sessionId) {
         JSONObject commentThread = new JSONObject();
@@ -827,6 +1093,16 @@ public class ArchiveIngestor {
         return commentThread;
     }
 
+    /**
+     * <p>
+     *     This method parses a single page worth of comments.
+     *     It manually sets the thread depth for <code>parseCommentThread()</code> to <code>1</code> to start with
+     *     top level comments.
+     * </p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A {@link JSONObject} representing the comment page.
+     */
     private JSONObject parseCommentPage(RemoteWebDriver driver, String sessionId) {
         // Create the starting point
         WebElement commentsPlaceholder = createCommentsPlaceholderReference(driver);
@@ -837,6 +1113,16 @@ public class ArchiveIngestor {
         return parseCommentThread(commentBlockWait, commentThreadElement, 1, sessionId);
     }
 
+    /**
+     * <p>
+     *     This method parses all comments in a chapter.
+     *     If there is a comment page limit, then this method parses only up to that many pages.
+     * </p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param newArchiveChapter The in-progress AO3 chapter.
+     * @param sessionId The session ID of the current parsing session.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     */
     private void parseChapterComments(RemoteWebDriver driver, ArchiveChapter newArchiveChapter, String sessionId)
             throws ArchiveIngestorCanceledException {
         // Create wait and URL checkpoint for comment navigation
@@ -950,6 +1236,16 @@ public class ArchiveIngestor {
         newArchiveChapter.setFoundComments(comments);
     }
 
+    /**
+     * <p>This method completely parses an AO3 chapter from a AO3 page.</p>
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param parentArchiveStoryInfo The corresponding story metadata object.
+     * @param pageTitle The title of the page that the session is currently on.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A completely parsed AO3 chapter.
+     * @throws ArchiveIngestorCanceledException If session cancellation is detected by the <code>checkForCancel()</code> method.
+     * @throws ArchiveParagraphsNotFoundException If method does not detect a div element with story paragraphs.
+     */
     private ArchiveChapter parseChapter(RemoteWebDriver driver, ArchiveStoryInfo parentArchiveStoryInfo,
                                         String pageTitle, String sessionId)
             throws ArchiveIngestorCanceledException, ArchiveParagraphsNotFoundException {
@@ -974,6 +1270,40 @@ public class ArchiveIngestor {
         return newArchiveChapter;
     }
 
+    /**
+     * <p>
+     *     This method is an API for creating a chapter from scratch.
+     *     This method assumes that you have already navigated to the AO3 chapter you want to parse.
+     * </p>
+     * <p>
+     *     When using the Spring Boot application, the server will assign a session ID so that clients can track the
+     *     parsing progress remotely. However, if you are just using the archive ingestor as a library POJO, then you
+     *     can pass in a blank string (i.e. <code>""</code>) as the session ID.
+     * </p>
+     * <p>Here is an example of using the method outside of Spring Boot:</p>
+     *
+     * <pre>
+     * {@code
+     *
+     * ArchiveIngestor ingestor = new ArchiveIngestor(null, null, null, null, 3, 5, 10, 3, 3, 3);
+     * RemoteWebDriver driver = new RemoteWebDriver(
+     *      new URI(urlToSeleniumContainer).toURL(), new ChromeOptions()
+     * );
+     * driver.get(urlToArchiveChapter);
+     * ingestor.createChapter(driver, "");
+     *
+     * }
+     * </pre>
+     *
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A completed archive chapter.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line in <code>handleTOSPrompt</code> is interrupted mid-execution.
+     * @throws ArchiveParagraphsNotFoundException If <code>parseChapter()</code> returns the exception.
+     * @throws ArchiveIngestorCanceledException If <code>parseChapter()</code> returns the exception.
+     * @throws ArchiveElementNotFoundException If a {@link NoSuchElementException} is experienced throughout the chapter parsing process.
+     * @throws ArchivePageNotFoundException If the current driver does not return a page title or if the page title is AO3's 404 page.
+     */
     public ArchiveChapter createChapter(RemoteWebDriver driver, String sessionId) throws InterruptedException,
             ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException,
             ArchivePageNotFoundException {
@@ -1025,6 +1355,46 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>
+     *     This method is an API for creating a chapter using an existing {@link ArchiveStoryInfo} object.
+     *     This method assumes that you have already navigated to the AO3 chapter you want to parse.
+     * </p>
+     * <p>
+     *     This method should only be used in cases where you already have parsed the AO3 story's or chapter's metadata,
+     *     such as if you have used <code>createChapter(driver, sessionId)</code> or
+     *     <code>createStory(driver, sessionId)</code>, and can retrieve the {@link ArchiveStoryInfo} object to use
+     *     for a new chapter parsing.
+     * </p>
+     * <p>
+     *     When using the Spring Boot application, the server will assign a session ID so that clients can track the
+     *     parsing progress remotely. However, if you are just using the archive ingestor as a library POJO, then you
+     *     can pass in a blank string (i.e. <code>""</code>) as the session ID.
+     * </p>
+     * <p>Here is an example of using the method outside of Spring Boot:</p>
+     *
+     * <pre>
+     * {@code
+     *
+     * ArchiveIngestor ingestor = new ArchiveIngestor(null, null, null, null, 3, 5, 10, 3, 3, 3);
+     * RemoteWebDriver driver = new RemoteWebDriver(
+     *      new URI(urlToSeleniumContainer).toURL(), new ChromeOptions()
+     * );
+     * driver.get(urlToArchiveChapter);
+     * ingestor.createChapter(driver, alreadyExistingArchiveStoryInfo, "");
+     *
+     * }
+     * </pre>
+     *
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param parentArchiveStoryInfo The existing {@link ArchiveStoryInfo} object.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A completed archive chapter.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line in <code>handleTOSPrompt</code> is interrupted mid-execution.
+     * @throws ArchiveParagraphsNotFoundException If <code>parseChapter()</code> returns the exception.
+     * @throws ArchiveIngestorCanceledException If <code>parseChapter()</code> returns the exception.
+     * @throws ArchiveElementNotFoundException If a {@link NoSuchElementException} is experienced throughout the chapter parsing process.
+     */
     public ArchiveChapter createChapter(RemoteWebDriver driver, ArchiveStoryInfo parentArchiveStoryInfo,
                                         String sessionId) throws InterruptedException,
             ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException {
@@ -1057,6 +1427,40 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>
+     *     This method is an API for creating a story from scratch.
+     *     This method assumes that you have already navigated to the AO3 story you want to parse.
+     * </p>
+     * <p>
+     *     When using the Spring Boot application, the server will assign a session ID so that clients can track the
+     *     parsing progress remotely. However, if you are just using the archive ingestor as a library POJO, then you
+     *     can pass in a blank string (i.e. <code>""</code>) as the session ID.
+     * </p>
+     * <p>Here is an example of using the method outside of Spring Boot:</p>
+     *
+     * <pre>
+     * {@code
+     *
+     * ArchiveIngestor ingestor = new ArchiveIngestor(null, null, null, null, 3, 5, 10, 3, 3, 3);
+     * RemoteWebDriver driver = new RemoteWebDriver(
+     *      new URI(urlToSeleniumContainer).toURL(), new ChromeOptions()
+     * );
+     * driver.get(urlToArchiveStory);
+     * ingestor.createStory(driver, "");
+     *
+     * }
+     * </pre>
+     *
+     * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
+     * @param sessionId The session ID of the current parsing session.
+     * @return A completed archive story.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line in <code>handleTOSPrompt</code> is interrupted mid-execution.
+     * @throws ArchiveParagraphsNotFoundException If <code>createChapter()</code> returns the exception.
+     * @throws ArchiveIngestorCanceledException If <code>createChapter()</code> returns the exception.
+     * @throws ArchiveElementNotFoundException If a {@link NoSuchElementException} is experienced throughout the story parsing process.
+     * @throws ArchivePageNotFoundException If the current driver does not return a page title or if the page title is AO3's 404 page.
+     */
     public ArchiveStory createStory(RemoteWebDriver driver, String sessionId) throws InterruptedException,
             ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException, ArchiveElementNotFoundException,
             ArchivePageNotFoundException {
@@ -1123,6 +1527,15 @@ public class ArchiveIngestor {
         }
     }
 
+    /**
+     * <p>
+     *     This method is a Spring Boot specific method for returning {@link CompletableFuture} objects for
+     *     failed parse sessions.
+     * </p>
+     * @param resultMessage The end message to save for the parse session.
+     * @param sessionId The session ID of the parse session.
+     * @return A {@link CompletableFuture} containing {@link ArchiveServerFutureData} denoting a failed parse.
+     */
     public CompletableFuture<ArchiveServerFutureData> returnFailedFuture(String resultMessage, String sessionId) {
         // Log error
         this.logService.createErrorLog(resultMessage);
@@ -1147,6 +1560,16 @@ public class ArchiveIngestor {
         return CompletableFuture.completedFuture(new ArchiveServerFutureData(resultMessage, false));
     }
 
+    /**
+     * <p>
+     *     This method is a Spring Boot specific method for returning {@link CompletableFuture} objects for
+     *     successful parse sessions.
+     * </p>
+     * @param newJSONString The JSON string to send back to the client requesting the parse.
+     * @param resultMessage The end message to save for the parse session.
+     * @param sessionId The session ID of the parse session.
+     * @return A {@link CompletableFuture} containing {@link ArchiveServerFutureData} denoting a successful parse.
+     */
     public CompletableFuture<ArchiveServerFutureData> returnCompletedFuture(String newJSONString, String resultMessage,
                                                                             String sessionId) {
         // Log info
@@ -1172,6 +1595,21 @@ public class ArchiveIngestor {
         return CompletableFuture.completedFuture(new ArchiveServerFutureData(resultMessage, true));
     }
 
+    /**
+     * <p>
+     *     This method is a Spring Boot specific method for starting a general parsing session.
+     *     It takes a pre-verified AO3 story link, a session ID, and the parse type along with custom parsing limits
+     *     from the requesting client.
+     * </p>
+     * @param link The pre-verified AO3 story link.
+     * @param sessionId The session ID of the parse session.
+     * @param parseType A {@link ArchiveParseType}.
+     * @param newMaxCommentThreadDepth A custom max comment thread depth value from requesting client.
+     * @param newMaxCommentPageLimit A custom max comment page limit value from requesting client.
+     * @param newMaxKudosPageLimit A custom max kudos page limit value from requesting client.
+     * @param newMaxBookmarkPageLimit A custom max bookmark page limit value from requesting client.
+     * @return A {@link CompletableFuture} containing {@link ArchiveServerFutureData}.
+     */
     @Async("archiveServerAsyncExecutor")
     public CompletableFuture<ArchiveServerFutureData> startCreateTask(String link, String sessionId,
                                                                       ArchiveParseType parseType,
