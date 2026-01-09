@@ -65,7 +65,6 @@ public class ArchiveIngestor {
     private Integer maxBookmarkPageLimit;
 
     // Instance Constants
-    public JSONObject storyLinks;
     public JSONObject versionTable;
 
     // Spring Boot attributes
@@ -91,9 +90,6 @@ public class ArchiveIngestor {
                            @Value("${archiveServer.ingestor.maxBookmarkPageLimit}") Integer maxBookmarkPageLimit)
             throws IOException {
         System.out.println("Creating new Archive Ingestor...");
-
-        System.out.println("Loading story links...");
-        this.storyLinks = getJSONFromResource("story_links.json");
 
         System.out.println("Loading version table...");
         this.versionTable = getJSONFromResource("version_table.json");
