@@ -17,23 +17,51 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
+/**
+ * <p>This class is the Spring Boot service responsible for top-level actions used by the archive server controller.</p>
+ */
 @Service
 public class ArchiveService {
+    /**
+     * <p>This attribute represents the injected {@link ArchiveIngestor}.</p>
+     */
     @Autowired
     private final ArchiveIngestor archiveIngestor;
-    
+
+    /**
+     * <p>This attribute represents the injected {@link ArchiveLogService}.</p>
+     */
     @Autowired
     private final ArchiveLogService logService;
 
+    /**
+     * <p>This attribute represents the injected {@link ArchiveMessageService}.</p>
+     */
     @Autowired
     private final ArchiveMessageService messageService;
 
+    /**
+     * <p>This attribute represents the injected {@link ArchiveSessionService}.</p>
+     */
     @Autowired
     private final ArchiveSessionService sessionService;
 
+    /**
+     * <p>This attribute represents the injected {@link ArchiveWebsocketService}.</p>
+     */
     @Autowired
     private final ArchiveWebsocketService websocketService;
 
+    /**
+     * <p>This constructor injects services and values into the archive service.</p>
+     * @param archiveIngestor The injected archive ingestor
+     * @param logService The injected logging service.
+     * @param messageService The injected message service.
+     * @param sessionService The injected session service.
+     * @param websocketService The injected websocket service.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line in
+     *      <code>sessionService.sessionTaskMonitor()</code> is interrupted mid-execution.
+     */
     public ArchiveService(ArchiveIngestor archiveIngestor, ArchiveLogService logService,
                           ArchiveMessageService messageService, ArchiveSessionService sessionService,
                           ArchiveWebsocketService websocketService)
@@ -49,11 +77,19 @@ public class ArchiveService {
         this.sessionService.sessionTaskMonitor();
     }
 
+    /**
+     * <p>This method returns archive server test data to the archive controller.</p>
+     * @return An {@link ArchiveServerTestData} object.
+     */
     public ArchiveServerTestData getArchiveIngestorTestData() {
         this.logService.createInfoLog(this.messageService.getLoggingInfoTestAPISend());
         return new ArchiveServerTestData(this.messageService.getTestDataValue());
     }
 
+    /**
+     * <p>This method returns archive server specification data to the archive controller.</p>
+     * @return An {@link ArchiveServerSpecData} object.
+     */
     public ArchiveServerSpecData getArchiveServerSpecData() {
         try {
             this.logService.createInfoLog(this.messageService.createSpecDataMessage(
@@ -69,6 +105,15 @@ public class ArchiveService {
         }
     }
 
+    /**
+     * <p>
+     *     This method starts a new parsing session and returns an archive server response confirming if starting the
+     *     AO3 parsing was successful.
+     * </p>
+     * @param request The parse request formatted as a {@link ArchiveServerRequestData} object.
+     * @param parseType A specific enum from {@link ArchiveParseType}.
+     * @return An {@link ArchiveServerResponseData} object containing whether the parse request was successful.
+     */
     public ArchiveServerResponseData startParse(ArchiveServerRequestData request, ArchiveParseType parseType) {
         // Extract request items
         String pageLink = request.getPageLink();
@@ -131,11 +176,21 @@ public class ArchiveService {
         }
     }
 
+    /**
+     * <p>This method validates if a session ID received from a client is formatted properly.</p>
+     * @param sessionId The session ID received from the client.
+     * @return A boolean value for whether the session ID is valid.
+     */
     public boolean validateSessionId(String sessionId) {
         Pattern sessionIdPattern = Pattern.compile("^[a-fA-F0-9]*$", Pattern.CASE_INSENSITIVE);
         return sessionIdPattern.matcher(sessionId).matches();
     }
 
+    /**
+     * <p>This method returns a specific session's information to the archive controller.</p>
+     * @param sessionId The session ID received from the client.
+     * @return An {@link ArchiveServerResponseData} object containing the requested session information.
+     */
     public ArchiveServerResponseData getSessionInformation(String sessionId) {
         // Validate the session ID
         boolean sessionIdValid = this.validateSessionId(sessionId);
@@ -159,6 +214,14 @@ public class ArchiveService {
         }
     }
 
+    /**
+     * <p>
+     *     This method starts a live websocket feed for regular session updates and returns a feed start
+     *     confirmation to the archive controller.
+     * </p>
+     * @param sessionId The session ID received from the client.
+     * @return An {@link ArchiveServerResponseData} object containing if starting the live feed was successful.
+     */
     public ArchiveServerResponseData getSessionInformationLive(String sessionId) throws InterruptedException {
         // Validate the session ID
         boolean sessionIdValid = this.validateSessionId(sessionId);
@@ -173,6 +236,11 @@ public class ArchiveService {
         return new ArchiveServerResponseData(sessionId, this.messageService.getResponseNewSessionFeed());
     }
 
+    /**
+     * <p>This method cancels an active session and returns a confirmation to the archive controller.</p>
+     * @param sessionId The session ID received from the client.
+     * @return An {@link ArchiveServerResponseData} object containing if canceling the session was successful.
+     */
     public ArchiveServerResponseData cancelSession(String sessionId) {
         // Validate the session ID
         boolean sessionIdValid = this.validateSessionId(sessionId);

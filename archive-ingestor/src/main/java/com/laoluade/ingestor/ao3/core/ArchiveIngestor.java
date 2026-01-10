@@ -46,6 +46,16 @@ import java.util.concurrent.CompletableFuture;
  * <p>This class exposes it's version, placeholder value, and the tags it ignores as statically accessible objects.</p>
  * <p>This class exposes high level APIs for creating chapters and creating stories.</p>
  * <p>This class exposes a task creation method for Archive Server to access as a spring boot component.</p>
+ * <p>This class uses the following settings from the application.properties file to configure itself:</p>
+ * <ul>
+ *     <li>archiveServer.ingestor.tosSleepDurationSecs</li>
+ *     <li>archiveServer.ingestor.waitDurationSecs</li>
+ *     <li>archiveServer.ingestor.maxCommentThreadDepth</li>
+ *     <li>archiveServer.ingestor.maxCommentPageLimit</li>
+ *     <li>archiveServer.ingestor.maxKudosPageLimit</li>
+ *     <li>archiveServer.ingestor.maxBookmarkPageLimit</li>
+ * </ul>
+ * <p>All <code>archiveServer.ingestor</code> settings have a class attribute counterpart.</p>
  */
 @Service
 public class ArchiveIngestor {
@@ -165,12 +175,18 @@ public class ArchiveIngestor {
      * @param messageService The {@link ArchiveMessageService} managed by Spring Boot. Set to null to use outside spring boot.
      * @param sessionService The {@link ArchiveSessionService} managed by Spring Boot. Set to null to use outside spring boot.
      * @param driverService The {@link ArchiveDriverService} managed by Spring Boot. Set to null to use outside spring boot.
-     * @param tosSleepDurationSecs The number of seconds to wait on TOS screen.
-     * @param waitDurationSecs The number of seconds to enter into {@link WebDriverWait} objects.
-     * @param maxCommentThreadDepth The number of comment thread replies to go down.
-     * @param maxCommentPageLimit The number of comment pages to parse.
-     * @param maxKudosPageLimit The number of kudos pages to parse.
-     * @param maxBookmarkPageLimit The number of bookmark pages to parse.
+     * @param tosSleepDurationSecs The number of seconds to wait on TOS screen. Spring Boot passes the corresponding
+     *                             <code>archiveServer.ingestor</code> value.
+     * @param waitDurationSecs The number of seconds to enter into {@link WebDriverWait} objects. Spring Boot passes the corresponding
+     *                         <code>archiveServer.ingestor</code> value.
+     * @param maxCommentThreadDepth The number of comment thread replies to go down. Spring Boot passes the corresponding
+     *                              <code>archiveServer.ingestor</code> value.
+     * @param maxCommentPageLimit The number of comment pages to parse. Spring Boot passes the corresponding
+     *                            <code>archiveServer.ingestor</code> value.
+     * @param maxKudosPageLimit The number of kudos pages to parse. Spring Boot passes the corresponding
+     *                          <code>archiveServer.ingestor</code> value.
+     * @param maxBookmarkPageLimit The number of bookmark pages to parse. Spring Boot passes the corresponding
+     *                             <code>archiveServer.ingestor</code> value.
      * @throws IOException If the <code>resourceReader.readAllAsString()</code> line in
      *      <code>ArchiveIngestor.getJSONFromResource()</code> fails due to an I/O Error.
      */
