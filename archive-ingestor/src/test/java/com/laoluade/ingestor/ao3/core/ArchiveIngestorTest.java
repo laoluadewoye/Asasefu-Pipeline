@@ -1,7 +1,6 @@
 package com.laoluade.ingestor.ao3.core;
 
 // Core Error Package
-import com.laoluade.ingestor.ao3.ArchiveServer;
 import com.laoluade.ingestor.ao3.exceptions.*;
 
 // JSON Packages

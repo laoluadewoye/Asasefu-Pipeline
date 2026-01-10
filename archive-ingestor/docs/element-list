@@ -1,0 +1,8 @@
+com.laoluade.ingestor.ao3
+com.laoluade.ingestor.ao3.configs
+com.laoluade.ingestor.ao3.controllers
+com.laoluade.ingestor.ao3.core
+com.laoluade.ingestor.ao3.exceptions
+com.laoluade.ingestor.ao3.models
+com.laoluade.ingestor.ao3.repositories
+com.laoluade.ingestor.ao3.services
