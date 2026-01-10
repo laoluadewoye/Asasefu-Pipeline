@@ -46,44 +46,108 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * <p>
+ *     This test class is used to run unit tests and integration tests for the
+ *     {@link ArchiveServer} Spring Boot application.
+ * </p>
+ */
 @SpringBootTest(useMainMethod = SpringBootTest.UseMainMethod.ALWAYS)
 @AutoConfigureMockMvc
 public class ArchiveServerTest {
     // Test objects
+    /**
+     * <p>This test attribute is used to read in test story links to utilize.</p>
+     */
     private static JSONObject testLinks;
+
+    /**
+     * <p>This test attribute is used to access the standard messages for the archive server.</p>
+     */
     private static ArchiveMessageService testMessageService;
 
     // TODO: Check if including dynamic components would affect test success
     // Test values to check and use
+    /**
+     * <p>This test attribute is used to hold the tag names for Angular components.</p>
+     */
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
             "app-root", "app-header", "app-body", "app-tester", "app-settings", "app-progress", "app-results",
             "app-session", "app-story", "app-story-metadata", "app-chapter", "app-comments", "app-comment-thread",
             "app-output-icons", "app-output-list",
             "app-footer"
     ));
+
+    /**
+     * <p>This test attribute is used to hold the test session username.</p>
+     */
     private static final String sessionNickname = "testParseSession";
+
+    /**
+     * <p>This test attribute is used to set how long the test should wait before retrieving a new session update.</p>
+     */
     private static final Integer sessionUpdateIntervalMilli = 2000;
+
+    /**
+     * <p>This test attribute is used to set the test <code>maxCommentThreadDepth</code> setting.</p>
+     */
     private static final Integer ingestorCommentThreadDepth = 10;
+
+    /**
+     * <p>This test attribute is used to set the test <code>maxCommentPageLimit</code> setting.</p>
+     */
     private static final Integer ingestorCommentPageLimit = 3;
+
+    /**
+     * <p>This test attribute is used to set the test <code>maxKudosPageLimit</code> setting.</p>
+     */
     private static final Integer ingestorKudosPageLimit = 3;
+
+    /**
+     * <p>This test attribute is used to set the test <code>maxBookmarkPageLimit</code> setting.</p>
+     */
     private static final Integer ingestorBookmarkPageLimit = 3;
 
     // Test runtime stuff
+    /**
+     * <p>This test attribute is used to hold the runtime used to run system commands.</p>
+     */
     private static final Runtime testRuntime = Runtime.getRuntime();
+
+    /**
+     * <p>This test attribute is used to hold the command for creating a new selenium container.</p>
+     */
     private static final String[] runSeleniumContainerCmd = {
             "docker", "run", "-d", "-p", "4444:4444", "-p", "7900:7900", "--shm-size=\"2g\"",
             "--name", "archive-ingestor-test-container", "selenium/standalone-chrome:136.0-20251101"
     };
+
+    /**
+     * <p>This test attribute is used to hold the command for stopping a selenium container.</p>
+     */
     private static final String[] stopSeleniumContainerCmd = {
             "docker", "stop", "archive-ingestor-test-container"
     };
+
+    /**
+     * <p>This test attribute is used to hold the command for starting a selenium container.</p>
+     */
     private static final String[] startSeleniumContainerCmd = {
             "docker", "start", "archive-ingestor-test-container"
     };
+
+    /**
+     * <p>This test attribute is used to hold the command for removing a selenium container.</p>
+     */
     private static final String[] removeSeleniumContainerCmd = {
             "docker", "rm", "archive-ingestor-test-container"
     };
 
+    /**
+     * <p>This test method sets up the test links, message service, and Selenium container.</p>
+     * @throws IOException If the <code>ArchiveIngestor.getJSONFromFilepath()</code> line experiences an I/O exception.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> is interrupted mid-execution.
+     */
     @BeforeAll
     public static void setupTests() throws IOException, InterruptedException {
         System.out.println("Obtaining test links...");
@@ -92,7 +156,7 @@ public class ArchiveServerTest {
         String testLinksPathDecoded = URLDecoder.decode(testLinksLocator.getPath(), StandardCharsets.UTF_8);
         testLinks = ArchiveIngestor.getJSONFromFilepath(testLinksPathDecoded);
 
-        System.out.println("Creating message manager...");
+        System.out.println("Creating message service...");
         testMessageService = new ArchiveMessageService();
 
         System.out.println("Creating Selenium container...");
@@ -114,6 +178,11 @@ public class ArchiveServerTest {
         Thread.sleep(5000);
     }
 
+    /**
+     * <p>This test method tests retrieving the index.html file.</p>
+     * @param mvc The mock Spring MVC server.
+     * @throws UnsupportedEncodingException If the response content is in an unsupported encoding.
+     */
     @Test
     public void testIndex(@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         // Return HTML
@@ -139,6 +208,11 @@ public class ArchiveServerTest {
         }
     }
 
+    /**
+     * <p>This test method tests retrieving the <code>/api/v1</code> and <code>/api/v1/spec</code> URLs.</p>
+     * @param mvc The mock Spring MVC server.
+     * @throws UnsupportedEncodingException If the response content is in an unsupported encoding.
+     */
     @Test
     public void testAPIBasic(@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         // Test API version path
@@ -187,6 +261,13 @@ public class ArchiveServerTest {
         );
     }
 
+    /**
+     * <p>This test method runs assertion tests for a given archive server response.</p>
+     * @param response An {@link ArchiveServerResponseData} object.
+     * @param sessionId The session ID of the response.
+     * @param isInit Flag for the response being the initial response.
+     * @param usesNickname Flag for expecting a username in the response.
+     */
     public void runResultTests(ArchiveServerResponseData response, String sessionId, boolean isInit,
                                boolean usesNickname) {
         // General assertions
@@ -270,6 +351,17 @@ public class ArchiveServerTest {
         }
     }
 
+    /**
+     * <p>
+     *     This test method runs a loop where the MVC retrieves updates to an ongoing session and tests
+     *     the response contents.
+     * </p>
+     * @param mvc The Spring Boot MVC server.
+     * @param initialResult The initial MVC result.
+     * @param usesNickname Flag for if the test session is expecting a nickname to be present in responses.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line is interrupted mid-execution.
+     */
     public void runSessionTest(MockMvc mvc, MvcResult initialResult, boolean usesNickname)
             throws UnsupportedEncodingException, InterruptedException {
         // Parse initial result
@@ -357,6 +449,19 @@ public class ArchiveServerTest {
         }
     }
 
+    /**
+     * <p>
+     *     This test method is used to create an {@link ArchiveServerRequestData} object to send to the archive
+     *     server then test the progress responses.
+     * </p>
+     * @param mvc The Spring Boot MVC server.
+     * @param testLink The test AO3 story/chapter link to use.
+     * @param parseURI The archive server parsing API endpoint to use.
+     * @param usesNickname Flag for if the test session is expecting a nickname to be present in responses.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line in <code>runSessionTest()</code>
+     *      is interrupted mid-execution.
+     */
     public void testAPIParse(MockMvc mvc, String testLink, String parseURI, boolean usesNickname) throws
             UnsupportedEncodingException, InterruptedException {
         // Start the parsing
@@ -388,6 +493,14 @@ public class ArchiveServerTest {
         runSessionTest(mvc, testInfoResult, usesNickname);
     }
 
+    /**
+     * <p>This test method is used to stress test different archive parsing combinations.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @throws UnsupportedEncodingException If a response's content in <code>testAPIParse()</code> is in an
+     *      unsupported encoding.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line in <code>runSessionTest()</code>
+     *      is interrupted mid-execution.
+     */
     @Test
     public void testAPIParseCombinations(@Autowired MockMvc mvc) throws UnsupportedEncodingException,
             InterruptedException {
@@ -400,6 +513,11 @@ public class ArchiveServerTest {
         testAPIParse(mvc, storyTestLink, "/api/v1/parse/story", false);
     }
 
+    /**
+     * <p>This test method is used to test canceling an active parsing session.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     */
     @Test
     public void testAPISessionCanceling(@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         // Run the story without nickname test
@@ -472,6 +590,11 @@ public class ArchiveServerTest {
         );
     }
 
+    /**
+     * <p>This test method is used to test the handling of invalid access to sessions.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     */
     @Test
     public void testInvalidSessionAccess (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         // Test session getting
@@ -511,6 +634,12 @@ public class ArchiveServerTest {
         );
     }
 
+    /**
+     * <p>This test method is used to test the handling of clients sending bad page links for parsing.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line is interrupted mid-execution.
+     */
     @Test
     public void testBadPageLinkResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException,
             InterruptedException {
@@ -622,6 +751,11 @@ public class ArchiveServerTest {
         );
     }
 
+    /**
+     * <p>This test method is used to test the handling of the client sending a bad nickname for a session.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     */
     @Test
     public void testBadNicknameResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         String chapterTestLink = testLinks.getString("Chapter");
@@ -669,6 +803,11 @@ public class ArchiveServerTest {
         );
     }
 
+    /**
+     * <p>This test method is used to test the handling of the client sending a bad session ID.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     */
     @Test
     public void testBadSessionIdResponse (@Autowired MockMvc mvc) throws UnsupportedEncodingException {
         // Try when getting session information
@@ -705,7 +844,14 @@ public class ArchiveServerTest {
                 "Mock server did not return the proper response for notifying of a badly formatted session id for cancel request."
         );
     }
-    
+
+    /**
+     * <p>This test method is used to test the handling of the client sending a bad session ID.</p>
+     * @param mvc The Spring Boot MVC server.
+     * @param brokerChannel The {@link AbstractSubscribableChannel} used to connect to the websocket.
+     * @throws UnsupportedEncodingException If a response's content is in an unsupported encoding.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> line is interrupted mid-execution.
+     */
     @Test
     public void testWebsocketFeed (@Autowired MockMvc mvc, @Autowired AbstractSubscribableChannel brokerChannel)
             throws UnsupportedEncodingException, InterruptedException {
@@ -801,6 +947,10 @@ public class ArchiveServerTest {
         }
     }
 
+    /**
+     * <p>This test method is used to shut down running aspects of the archive server tests.</p>
+     * @throws InterruptedException If the <code>waitFor()</code> lines is interrupted mid-execution.
+     */
     @AfterAll
     public static void shutdownSelenium() throws InterruptedException {
         System.out.println("Deleting Selenium container...");

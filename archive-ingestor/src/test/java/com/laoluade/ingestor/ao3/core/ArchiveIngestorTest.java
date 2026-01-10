@@ -1,6 +1,7 @@
 package com.laoluade.ingestor.ao3.core;
 
 // Core Error Package
+import com.laoluade.ingestor.ao3.ArchiveServer;
 import com.laoluade.ingestor.ao3.exceptions.*;
 
 // JSON Packages
@@ -38,43 +39,95 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.lang.reflect.Field;
 
+/**
+ * <p>This test class is used to run unit tests and integration tests for the {@link ArchiveIngestor} class/service.</p>
+ */
 public class ArchiveIngestorTest {
     // Test objects
+    /**
+     * <p>This test attribute is used to read in test story links to utilize.</p>
+     */
     private static JSONObject testLinks;
+
+    /**
+     * <p>This test attribute is used to set up the Selenium test driver.</p>
+     */
     private static RemoteWebDriver testDriver;
+    /**
+     * <p>This test attribute is used to set up the test archive ingestor.</p>
+     */
     private static ArchiveIngestor testIngestor;
 
     // Test values to check
+    /**
+     * <p>This test attribute is used to hold a list of possible AO3 story ratings.</p>
+     */
     private static final ArrayList<String> expectedRatings = new ArrayList<>(Arrays.asList(
             "General Audiences", "Teen And Up Audiences", "Mature", "Explicit", "Not Rated"
     ));
+
+    /**
+     * <p>This test attribute is used to hold a list of possible AO3 story warnings.</p>
+     */
     private static final ArrayList<String> expectedWarnings = new ArrayList<>(Arrays.asList(
             "Underage Sex", "Rape/Non-Con", "Graphic Depictions Of Violence", "Major Character Death",
             "Creator Chose Not To Use Archive Warnings", "No Archive Warnings Apply"
     ));
+
+    /**
+     * <p>This test attribute is used to hold a list of possible AO3 story categories.</p>
+     */
     private static final ArrayList<String> expectedCategories = new ArrayList<>(Arrays.asList(
             "F/F", "F/M", "Gen", "M/M", "Multi", "Other"
     ));
+
+    /**
+     * <p>This test attribute is used to hold a list of possible AO3 story statuses.</p>
+     */
     private static final ArrayList<String> expectedStatuses = new ArrayList<>(Arrays.asList(
             "Completed", "Updated", ArchiveIngestor.PLACEHOLDER
     ));
 
     // Test runtime stuff
+    /**
+     * <p>This test attribute is used to hold the runtime used to run system commands.</p>
+     */
     private static final Runtime testRuntime = Runtime.getRuntime();
+
+    /**
+     * <p>This test attribute is used to hold the command for creating a new selenium container.</p>
+     */
     private static final String[] runSeleniumContainerCmd = {
             "docker", "run", "-d", "-p", "4444:4444", "-p", "7900:7900", "--shm-size=\"2g\"",
             "--name", "archive-ingestor-test-container", "selenium/standalone-chrome:136.0-20251101"
     };
+
+    /**
+     * <p>This test attribute is used to hold the command for stopping a selenium container.</p>
+     */
     private static final String[] stopSeleniumContainerCmd = {
             "docker", "stop", "archive-ingestor-test-container"
     };
+
+    /**
+     * <p>This test attribute is used to hold the command for starting a selenium container.</p>
+     */
     private static final String[] startSeleniumContainerCmd = {
             "docker", "start", "archive-ingestor-test-container"
     };
+
+    /**
+     * <p>This test attribute is used to hold the command for removing a selenium container.</p>
+     */
     private static final String[] removeSeleniumContainerCmd = {
             "docker", "rm", "archive-ingestor-test-container"
     };
 
+    /**
+     * <p>This test method is used to set up the test link, the archive ingestor, and the selenium container.</p>
+     * @throws IOException If the <code>ArchiveIngestor.getJSONFromFilepath()</code> line experiences an I/O exception.
+     * @throws InterruptedException If the <code>Thread.sleep()</code> is interrupted mid-execution.
+     */
     @BeforeAll
     public static void setupTests() throws IOException, InterruptedException {
         System.out.println("Obtaining test links...");
@@ -124,6 +177,9 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method is used to ensure the web driver is set up correctly.</p>
+     */
     @Test
     public void testSelenium() {
         try {
@@ -135,6 +191,9 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method is used to ensure that a bad AO3 work link is properly detected.</p>
+     */
     @Test
     public void testBadWork() {
         try {
@@ -153,6 +212,9 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method is used to ensure the current OTW archive version of AO3 is supported.</p>
+     */
     @Test
     public void testArchiveVersion() {
         testDriver.get("https://archiveofourown.org/works/XXXXXXXX");
@@ -164,6 +226,11 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method is used to run a batch of chapter-level assertion tests.</p>
+     * @param testArchiveChapter The archive chapter of interest.
+     * @param storyCreationTimestamp The creation timestamp of a corresponding {@link ArchiveStory} object.
+     */
     public void runChapterTests(ArchiveChapter testArchiveChapter, String storyCreationTimestamp) {
         // Assert chapter timestamps are good
         Assertions.assertInstanceOf(
@@ -235,6 +302,14 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method uses the chapter test links to test the functionality of the archive ingestor.</p>
+     * @throws InterruptedException If the <code>testIngestor.createChapter()</code> line returns the exception.
+     * @throws ArchiveParagraphsNotFoundException If the <code>testIngestor.createChapter()</code> line returns the exception.
+     * @throws ArchiveIngestorCanceledException If the <code>testIngestor.createChapter()</code> line returns the exception.
+     * @throws ArchiveElementNotFoundException If the <code>testIngestor.createChapter()</code> line returns the exception.
+     * @throws ArchivePageNotFoundException If the <code>testIngestor.createChapter()</code> line returns the exception.
+     */
     @Test
     public void testChapterParse() throws InterruptedException, ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException,
             ArchiveElementNotFoundException, ArchivePageNotFoundException {
@@ -252,6 +327,10 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method is used to run a batch of story-level assertion tests.</p>
+     * @param testArchiveStory The archive story of interest.
+     */
     public void runStoryTests(ArchiveStory testArchiveStory) {
         // Assert story timestamps are good
         Assertions.assertInstanceOf(
@@ -434,6 +513,14 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method uses the story test links to test the functionality of the archive ingestor.</p>
+     * @throws InterruptedException If the <code>testIngestor.createStory()</code> line returns the exception.
+     * @throws ArchiveParagraphsNotFoundException If the <code>testIngestor.createStory()</code> line returns the exception.
+     * @throws ArchiveIngestorCanceledException If the <code>testIngestor.createStory()</code> line returns the exception.
+     * @throws ArchiveElementNotFoundException If the <code>testIngestor.createStory()</code> line returns the exception.
+     * @throws ArchivePageNotFoundException If the <code>testIngestor.createStory()</code> line returns the exception.
+     */
     @Test
     public void testStoryParse() throws InterruptedException, ArchiveParagraphsNotFoundException, ArchiveIngestorCanceledException,
             ArchiveElementNotFoundException, ArchivePageNotFoundException {
@@ -451,6 +538,10 @@ public class ArchiveIngestorTest {
         }
     }
 
+    /**
+     * <p>This test method is used to shut down running aspects of the archive ingestor tests.</p>
+     * @throws InterruptedException If the <code>waitFor()</code> lines is interrupted mid-execution.
+     */
     @AfterAll
     public static void quitDriver() throws InterruptedException {
         System.out.println("Closing remote Selenium test driver...");

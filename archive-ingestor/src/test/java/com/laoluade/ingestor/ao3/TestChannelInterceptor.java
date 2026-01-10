@@ -32,28 +32,56 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A ChannelInterceptor that caches messages.
+ * <p>This test class implements a custom {@link ChannelInterceptor} for testing the archive server websocket.</p>
+ * <p>
+ *     This test class is based on the implementation from on
+ *     <a href="https://github.com/rstoyanchev/spring-websocket-portfolio">rstoyanchev's GitHub repository.</a>
+ * </p>
  */
 public class TestChannelInterceptor implements ChannelInterceptor {
-
+    /**
+     * <p>This test attribute represents the queue for storing intercepted messages.</p>
+     */
     private final BlockingQueue<Message<?>> messages = new ArrayBlockingQueue<>(100);
 
+    /**
+     * <p>This test attribute represents the list of websocket destinations to look for.</p>
+     */
     private final List<String> destinationPatterns = new ArrayList<>();
 
+    /**
+     * <p>
+     *     This test attribute represents the matcher used to match found destinations to
+     *     destinations listed in the <code>destinationPatterns</code> attribute.
+     * </p>
+     */
     private final PathMatcher matcher = new AntPathMatcher();
 
 
+    /**
+     * <p>This test method adds a set of pattern parameters to the <code>destinationPatterns</code> attribute.</p>
+     * @param patterns A variable set of string parameters that are destination patterns.
+     */
     public void setIncludedDestinations(String... patterns) {
         this.destinationPatterns.addAll(Arrays.asList(patterns));
     }
 
     /**
-     * @return the next received message or {@code null} if the specified time elapses
+     * <p>This test method waits for a new message until a certain amount of time in seconds has passed.</p>
+     * @param timeoutInSeconds The amount to wait for a new message in seconds.
+     * @return The next received message or {@code null} if the specified time elapses.
+     * @exception InterruptedException If the polling of the message queue is interrupted mid-execution.
      */
     public Message<?> awaitMessage(long timeoutInSeconds) throws InterruptedException {
         return this.messages.poll(timeoutInSeconds, TimeUnit.SECONDS);
     }
 
+    /**
+     * <p>This test method overrides the {@link ChannelInterceptor}'s preSend method hook.</p>
+     * @param message The message itself.
+     * @param channel The message channel used to send the message.
+     * @return The message itself.
+     */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         if (this.destinationPatterns.isEmpty()) {
