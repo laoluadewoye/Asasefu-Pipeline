@@ -137,18 +137,7 @@ The following settings have been used for this server at the Spring Boot level.
 
 [source]
 ----
-archiveServer.async.executor.corePoolSize=2
-archiveServer.async.executor.maxPoolSize=4
-archiveServer.async.executor.queueCapacity=2
-archiveServer.async.executor.threadNamePrefix=archiveServerAsyncThread-
-
-archiveServer.driver.socket=http://localhost:4444
-archiveServer.session.persistSecs=5
-archiveServer.session.checkIntervalMilli=2000
-
-spring.application.name=archive-ingestion-server
-spring.threads.virtual.enabled=true
-spring.lifecycle.timeout-per-shutdown-phase=5s
+include::src/main/resources/application.properties[]
 ----
 
 These settings are made available in the JVM that runs this application. To change any of these settings, pass it as a command line argument when running the docker container or jar file.
