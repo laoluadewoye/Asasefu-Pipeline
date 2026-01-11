@@ -54,7 +54,39 @@ public class ArchiveServerRequestData {
     @Setter private boolean nicknameSent;
 
     /**
-     * <p>This constructor creates a standardized request object without a session nickname.</p>
+     * <p>This constructor creates a standardized request object with only a page link.</p>
+     * @param pageLink The page link the client wants to parse.
+     */
+    public ArchiveServerRequestData(String pageLink) {
+        createURLTest(pageLink);
+        this.sessionNickname = "";
+        this.maxCommentThreadDepth = -1;
+        this.maxCommentPageLimit = -1;
+        this.maxKudosPageLimit = -1;
+        this.maxBookmarkPageLimit = -1;
+        this.nicknameSent = false;
+    }
+
+    /**
+     * <p>This constructor creates a standardized request object with only a page link and session nickname.</p>
+     * @param pageLink The page link the client wants to parse.
+     * @param sessionNickname The client's nickname for the session.
+     */
+    public ArchiveServerRequestData(String pageLink, String sessionNickname) {
+        createURLTest(pageLink);
+        createNicknameTest(sessionNickname);
+        this.maxCommentThreadDepth = -1;
+        this.maxCommentPageLimit = -1;
+        this.maxKudosPageLimit = -1;
+        this.maxBookmarkPageLimit = -1;
+
+        if (!sessionNickname.isBlank()) { // If whitespace was sent, we can ignore and just reset it later
+            this.nicknameSent = true;
+        }
+    }
+
+    /**
+     * <p>This constructor creates a standardized request object with all parameters except the session nickname.</p>
      * @param pageLink The page link the client wants to parse.
      * @param maxCommentThreadDepth The client's maximum comment thread depth.
      * @param maxCommentPageLimit The client's maximum comment page limit.
@@ -73,7 +105,7 @@ public class ArchiveServerRequestData {
     }
 
     /**
-     * <p>This constructor creates a standardized request object with a session nickname.</p>
+     * <p>This constructor creates a standardized request object with all parameters.</p>
      * @param pageLink The page link the client wants to parse.
      * @param sessionNickname The client's nickname for the session.
      * @param maxCommentThreadDepth The client's maximum comment thread depth.
