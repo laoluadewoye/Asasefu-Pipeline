@@ -333,13 +333,61 @@ public class ArchiveMessageService {
     /**
      * <p>
      *     This method creates a message saying that the session validity check interval is set to a specific
-     *     amount of seconds.
+     *     amount of milliseconds.
      * </p>
      * @param checkIntervalMilli The size of the check interval in milliseconds.
      * @return The created message string.
      */
     public String createSessionCheckIntervalMessage(Integer checkIntervalMilli) {
-        return "Session validity check interval is set to is set to " + checkIntervalMilli + " seconds.";
+        return "Session validity check interval is set to " + checkIntervalMilli + " milliseconds.";
+    }
+
+    /**
+     * <p>
+     *     This method creates a message saying that the websocket publishing interval is set to a specific amount
+     *     of milliseconds.
+     * </p>
+     * @param sendIntervalMilli The size of the publishing interval in milliseconds.
+     * @return The created message string.
+     */
+    public String createWebsocketSendIntervalMessage(Integer sendIntervalMilli) {
+        return "Websocket publishing interval is set to " + sendIntervalMilli + " milliseconds.";
+    }
+
+    /**
+     * <p>This method creates a message saying that the websocket endpoint URL is set to a specific URL.</p>
+     * @param endpointURL The chosen URL.
+     * @return The created message string.
+     */
+    public String createWebsocketEndpointMessage(String endpointURL) {
+        return "Websocket endpoint URL is set to " + endpointURL + ".";
+    }
+
+    /**
+     * <p>This method creates a message saying that the websocket topic URL is set to a specific URL.</p>
+     * @param topicURL The chosen URL.
+     * @return The created message string.
+     */
+    public String createWebsocketTopicMessage(String topicURL) {
+        return "Websocket topic URL is set to " + topicURL + ".";
+    }
+
+    /**
+     * <p>This method creates a message saying that the websocket app API is set to a specific URL.</p>
+     * @param appURL The chosen URL.
+     * @return The created message string.
+     */
+    public String createWebsocketAppMessage(String appURL) {
+        return "Websocket app URL is set to " + appURL + ".";
+    }
+
+    /**
+     * <p>This method creates a message saying that the websocket port is set to a specific port number.</p>
+     * @param port The port number.
+     * @return The created message string.
+     */
+    public String createWebsocketPortMessage(Integer port) {
+        return "Websocket port is set to " + port + ".";
     }
 
     /**
@@ -363,7 +411,6 @@ public class ArchiveMessageService {
 
     // MESSAGE CREATION - WEBSOCKET
     // MESSAGE CREATION - WEBSOCKET
-
     /**
      * <p>This method creates a message saying that the websocket service published a new message.</p>
      * @param sessionId The session ID being live fed.
@@ -377,7 +424,6 @@ public class ArchiveMessageService {
 
     // MESSAGE CREATION - SESSION SERVICE
     // MESSAGE CREATION - SESSION SERVICE
-
     /**
      * <p>This method creates a message saying that the session service added a session to persistent storage.</p>
      * @param newSessionId The session ID.

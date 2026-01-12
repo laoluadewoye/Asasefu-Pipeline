@@ -3,6 +3,7 @@ package com.laoluade.ingestor.ao3.services;
 import com.laoluade.ingestor.ao3.models.ArchiveServerResponseData;
 import com.laoluade.ingestor.ao3.repositories.ArchiveParse;
 import com.laoluade.ingestor.ao3.repositories.ArchiveSession;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,8 +15,12 @@ import org.springframework.stereotype.Service;
  * <p>This class uses the following settings from the application.properties file to configure itself:</p>
  * <ul>
  *     <li>archiveServer.websocket.sendIntervalMilli</li>
+ *     <li>archiveServer.websocket.endpointURL</li>
+ *     <li>archiveServer.websocket.topicURL</li>
+ *     <li>archiveServer.websocket.appURL</li>
+ *     <li>server.port</li>
  * </ul>
- * <p>All <code>archiveServer.websocket</code> settings have a class attribute counterpart.</p>
+ * <p>All class attributes correspond to their <code>archiveServer.websocket</code> and <code>server</code> counterparts.</p>
  */
 @Service
 public class ArchiveWebsocketService {
@@ -49,21 +54,77 @@ public class ArchiveWebsocketService {
     private final Integer sendIntervalMilli;
 
     /**
+     * <p>This attribute represents the relative URL of the websocket registry.</p>
+     */
+    private final String endpointURL;
+
+    /**
+     * <p>This attribute represents the relative URL of websocket topics.</p>
+     */
+    private final String topicURL;
+
+    /**
+     * <p>This attribute represents the relative URL of websocket APIs.</p>
+     */
+    private final String appURL;
+
+    /**
+     * <p>This attribute represents the port number the websocket service is sitting on.</p>
+     */
+    private final Integer port;
+
+    /**
      * <p>This constructor injects services and values into the archive websocket service.</p>
      * @param logService The injected logging service.
      * @param messageService The injected message service.
      * @param sessionService The injected session service.
      * @param websocketTemplate The injected {@link SimpMessagingTemplate}.
      * @param sendIntervalMilli Size of message publishing interval in seconds.
+     * @param endpointURL The relative websocket URL for subscribing.
+     * @param topicURL The relative websocket URL for topics.
+     * @param appURL The relative websocket URL for APIs.
+     * @param port The port the websocket is bound to.
      */
     public ArchiveWebsocketService(ArchiveLogService logService, ArchiveMessageService messageService,
                                    ArchiveSessionService sessionService, SimpMessagingTemplate websocketTemplate,
-                                   @Value("${archiveServer.websocket.sendIntervalMilli}") Integer sendIntervalMilli) {
+                                   @Value("${archiveServer.websocket.sendIntervalMilli}") Integer sendIntervalMilli,
+                                   @Value("${archiveServer.websocket.endpointURL}") String endpointURL,
+                                   @Value("${archiveServer.websocket.topicURL}") String topicURL,
+                                   @Value("${archiveServer.websocket.appURL}") String appURL,
+                                   @Value("${server.port}") Integer port) {
+        // Inject services and template
         this.logService = logService;
         this.messageService = messageService;
         this.sessionService = sessionService;
         this.websocketTemplate = websocketTemplate;
+
+        // Setup configuration attributes
         this.sendIntervalMilli = sendIntervalMilli;
+        this.logService.createInfoLog(this.messageService.createWebsocketSendIntervalMessage(this.sendIntervalMilli));
+
+        this.endpointURL = endpointURL;
+        this.logService.createInfoLog(this.messageService.createWebsocketEndpointMessage(this.endpointURL));
+
+        this.topicURL = topicURL;
+        this.logService.createInfoLog(this.messageService.createWebsocketTopicMessage(this.topicURL));
+
+        this.appURL = appURL;
+        this.logService.createInfoLog(this.messageService.createWebsocketAppMessage(this.appURL));
+
+        this.port = port;
+        this.logService.createInfoLog(this.messageService.createWebsocketPortMessage(this.port));
+    }
+
+    /**
+     * <p>This method returns the information needed to create a STOMP subscription client-side.</p>
+     * @return JSON representation of STOMP subscription information.
+     */
+    public JSONObject getSTOMPConfig() {
+        JSONObject sc = new JSONObject();
+        sc.put("endpointURL", this.endpointURL);
+        sc.put("topicURL", this.topicURL);
+        sc.put("port", this.port);
+        return sc;
     }
 
     /**
@@ -73,6 +134,7 @@ public class ArchiveWebsocketService {
      */
     @Async("archiveServerAsyncExecutor")
     public void runLiveSessionFeed(String sessionId) throws InterruptedException {
+        String sessionTopic =  this.topicURL + "/" + sessionId;
         boolean sessionStillLive;
         do {
             // Sleep for a set time
@@ -96,7 +158,7 @@ public class ArchiveWebsocketService {
             }
 
             // Send response data
-            this.websocketTemplate.convertAndSend("/api/v1/websocket/topic/get-session-live", responseData);
+            this.websocketTemplate.convertAndSend(sessionTopic, responseData);
 
             // Log it
             this.logService.createInfoLog(this.messageService.createWSSentMessage(sessionId, responseData.getResponseMessage()));

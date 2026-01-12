@@ -855,11 +855,6 @@ public class ArchiveServerTest {
     @Test
     public void testWebsocketFeed (@Autowired MockMvc mvc, @Autowired AbstractSubscribableChannel brokerChannel)
             throws UnsupportedEncodingException, InterruptedException {
-        // Prepare STOMP websocket feed catcher
-        TestChannelInterceptor testBrokerChannelInterceptor = new TestChannelInterceptor();
-        testBrokerChannelInterceptor.setIncludedDestinations("/api/v1/websocket/topic/get-session-live");
-        brokerChannel.addInterceptor(testBrokerChannelInterceptor);
-
         // Send initial parse request
         String chapterTestLink = testLinks.getString("Chapter");
         ArchiveServerRequestData newRequest = new ArchiveServerRequestData(
@@ -897,6 +892,20 @@ public class ArchiveServerTest {
                 "Mock Server did not return the new session feed message for test live response."
         );
 
+        // Get the live feed configuration details
+        Assertions.assertFalse(
+                testLiveResponse.getParseResult().isEmpty(),
+                "Mock Server did not return the RxStomp configuration for subscribing to the live feed."
+        );
+
+        JSONObject stompConfig = new JSONObject(testLiveResponse.getParseResult());
+
+        // Prepare STOMP websocket feed catcher
+        String sessionTopic = stompConfig.getString("topicURL") + "/" + testInitResponse.getSessionId();
+        TestChannelInterceptor testBrokerChannelInterceptor = new TestChannelInterceptor();
+        testBrokerChannelInterceptor.setIncludedDestinations(sessionTopic);
+        brokerChannel.addInterceptor(testBrokerChannelInterceptor);
+
         // Watch the responses
         boolean waitingForEnd = true;
         int waitingForEndCounter = 0;
@@ -911,7 +920,7 @@ public class ArchiveServerTest {
             // Check the headers
             StompHeaderAccessor feedMessageWithHeaders = StompHeaderAccessor.wrap(feedMessage);
             Assertions.assertEquals(
-                    "/api/v1/websocket/topic/get-session-live", feedMessageWithHeaders.getDestination(),
+                    sessionTopic, feedMessageWithHeaders.getDestination(),
                     "Mock Server did not return a websocket message with the correct destination on update " +
                             waitingForEndCounter
             );

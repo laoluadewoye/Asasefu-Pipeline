@@ -12,17 +12,38 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * <p>This class implements {@link WebSocketMessageBrokerConfigurer} to configure a STOMP broker and a message broker.</p>
  * <p>This class uses the following settings from the application.properties file to configure itself:</p>
  *  <ul>
- *      <li>archiveServer.websocket.port</li>
+ *      <li>archiveServer.websocket.endpointURL</li>
+ *      <li>archiveServer.websocket.topicURL</li>
+ *      <li>archiveServer.websocket.appURL</li>
+ *      <li>server.port</li>
  *  </ul>
- *  <p>All class attributes correspond to their <code>archiveServer.websocket</code> counterpart.</p>
+ *  <p>All class attributes correspond to their <code>archiveServer.websocket</code> and <code>server</code> counterparts.</p>
  */
 @Configuration
 @EnableWebSocketMessageBroker
 public class ArchiveServerWebsocketConfig implements WebSocketMessageBrokerConfigurer {
     /**
+     * <p>This attribute specifies the relative URL of the websocket registry.</p>
+     */
+    @Value("${archiveServer.websocket.endpointURL}")
+    private String endpointURL;
+
+    /**
+     * <p>This attribute specifies the relative URL of websocket topics.</p>
+     */
+    @Value("${archiveServer.websocket.topicURL}")
+    private String topicURL;
+
+    /**
+     * <p>This attribute specifies the relative URL of websocket APIs.</p>
+     */
+    @Value("${archiveServer.websocket.appURL}")
+    private String appURL;
+
+    /**
      * <p>This attribute specifies the port where the websocket should run on.</p>
      */
-    @Value("${archiveServer.websocket.port}")
+    @Value("${server.port}")
     private Integer port;
 
     /**
@@ -30,7 +51,7 @@ public class ArchiveServerWebsocketConfig implements WebSocketMessageBrokerConfi
      * @param websocketRegistry The {@link StompEndpointRegistry} to modify.
      */
     public void registerStompEndpoints(StompEndpointRegistry websocketRegistry) {
-        websocketRegistry.addEndpoint("/api/v1/websocket")
+        websocketRegistry.addEndpoint(this.endpointURL)
                 .setAllowedOriginPatterns("http://localhost:" + this.port + "*");
     }
 
@@ -39,7 +60,7 @@ public class ArchiveServerWebsocketConfig implements WebSocketMessageBrokerConfi
      * @param brokerRegistry The {@link MessageBrokerRegistry} to configure.
      */
     public void configureMessageBroker(MessageBrokerRegistry brokerRegistry) {
-        brokerRegistry.enableSimpleBroker("/api/v1/websocket/topic");
-        brokerRegistry.setApplicationDestinationPrefixes("/api/v1/websocket/app");
+        brokerRegistry.enableSimpleBroker(this.topicURL);
+        brokerRegistry.setApplicationDestinationPrefixes(this.appURL);
     }
 }

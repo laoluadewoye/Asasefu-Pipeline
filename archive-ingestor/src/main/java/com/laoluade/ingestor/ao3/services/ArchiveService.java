@@ -230,10 +230,13 @@ public class ArchiveService {
         }
 
         // Start sending through websockets
+        String stompConfig = this.websocketService.getSTOMPConfig().toString();
         this.websocketService.runLiveSessionFeed(sessionId);
 
         // Return the response
-        return new ArchiveServerResponseData(sessionId, this.messageService.getResponseNewSessionFeed());
+        ArchiveServerResponseData r = new ArchiveServerResponseData(sessionId, this.messageService.getResponseNewSessionFeed());
+        r.setParseResult(stompConfig);
+        return r;
     }
 
     /**
