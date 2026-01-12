@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, DOCUMENT } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ArchiveServerSpecData } from '../models/archive-server-spec-data';
 
@@ -6,9 +6,15 @@ import { ArchiveServerSpecData } from '../models/archive-server-spec-data';
   providedIn: 'root',
 })
 export class ArchiveServerSpecService {
+    document: Document = inject(DOCUMENT);
     httpClient: HttpClient = inject(HttpClient);
-    
+    specURL!: string;
+
+    constructor() {
+        this.specURL = this.document.location.href + "api/v1/spec";
+    }
+
     getArchiveServerSpecData() {
-        return this.httpClient.get<ArchiveServerSpecData>("http://localhost:8080/api/v1/spec");
+        return this.httpClient.get<ArchiveServerSpecData>(this.specURL);
     }
 }

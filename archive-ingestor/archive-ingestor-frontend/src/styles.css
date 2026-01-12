@@ -140,6 +140,7 @@ button {
     h3 {
         color: var(--theme-red-color);
         padding-top: var(--default-distance);
+        text-align: left;
     }
 }
 

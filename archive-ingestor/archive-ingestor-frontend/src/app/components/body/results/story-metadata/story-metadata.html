@@ -1,7 +1,7 @@
 @if (storyMetadataResultUnit()) {
     <div animate.enter="fade-in" animate.leave="fade-out">
         <div class="result-unit-div">
-            <h3>{{ storyMetadataResultUnit()?.nickname }} Story Metadata</h3>
+            <h3>{{ displayNickname() }} Story Metadata</h3>
             @if (latestUnit()) { <h4>Latest Session</h4> }
             <p>ID: {{ storyMetadataResultUnit()?.id }}</p>
             <app-output-icons
@@ -24,7 +24,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Author(s)'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -34,7 +34,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Story Summary'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>
@@ -44,7 +44,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Story Starting Notes'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>
@@ -54,7 +54,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Story Ending Notes'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>
@@ -64,7 +64,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Associations'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -74,7 +74,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Ratings'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -84,7 +84,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Warnings'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -94,7 +94,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Categories'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -104,7 +104,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Fandoms'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -114,7 +114,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Relationships'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -124,7 +124,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Story Characters'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -134,7 +134,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Additional Story Tags'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -148,7 +148,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Series the Story Is In'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -158,7 +158,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Collections the Story Is In'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -191,7 +191,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Registered Users That Left Kudos'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>
@@ -203,7 +203,7 @@
                         [displayAsList]="false"
                         [displayAsText]="true"
                         [defaultHeader]="'Registered Users That Left Public Bookmarks'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputListDisplayLimit()"
                         [displaySeperator]="', '"
                     />
                 </div>

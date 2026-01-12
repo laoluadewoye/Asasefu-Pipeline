@@ -1,7 +1,7 @@
 @if (chapterResultUnit()) {
     <div animate.enter="fade-in" animate.leave="fade-out">
         <div class="result-unit-div">
-            <h3>{{ chapterResultUnit()?.nickname }} Chapter Information</h3>
+            <h3>{{ displayNickname() }} Chapter Information</h3>
             @if (latestUnit()) { <h4>Latest Session</h4> }
             <p>ID: {{ chapterResultUnit()?.id }}</p>
             <app-output-icons
@@ -17,7 +17,12 @@
                 @if (partOfSession()) {
                     <div class="result-unit-subdiv">
                         <h3>Story Metadata</h3>
-                        <app-story-metadata [storyMetadataResultUnit]="chapterResultUnit()?.storyMetadata" [latestUnit]="false" />
+                        <app-story-metadata 
+                            [storyMetadataResultUnit]="chapterResultUnit()?.storyMetadata" 
+                            [latestUnit]="false"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit()"
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit()"
+                        />
                     </div>
                 }
                 <div class="result-unit-subdiv">
@@ -38,7 +43,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Chapter Summary'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputParagraphDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>
@@ -48,7 +53,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Chapter Starting Notes'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputParagraphDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>
@@ -58,7 +63,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Chapter Ending Notes'"
-                        [displayLimit]="defaultDisplayLimit"
+                        [displayLimit]="outputParagraphDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>
@@ -68,7 +73,7 @@
                         [displayAsList]="true"
                         [displayAsText]="false"
                         [defaultHeader]="'Chapter Paragraphs'"
-                        [displayLimit]="defaultParagraphDisplayLimit"
+                        [displayLimit]="outputParagraphDisplayLimit()"
                         [displaySeperator]="'\n'"
                     />
                 </div>

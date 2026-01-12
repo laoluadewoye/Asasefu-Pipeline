@@ -13,6 +13,7 @@ import { Chapter } from "../chapter/chapter";
   styleUrl: './story.css',
 })
 export class Story implements OnInit {
+    // Result Units
     storyResultUnit: InputSignal<ArchiveStoryResultUnit | undefined> = input.required<ArchiveStoryResultUnit | undefined>();
     latestUnit: InputSignal<boolean> = input.required<boolean>();
     storySelected: WritableSignal<boolean> = signal<boolean>(false);
@@ -20,6 +21,17 @@ export class Story implements OnInit {
     storyMetadataUnit: WritableSignal<ArchiveMetadataResultUnit | undefined> = signal<ArchiveMetadataResultUnit | undefined>(undefined);
     storyChapterUnits: WritableSignal<ArchiveChapterResultUnit[]> = signal<ArchiveChapterResultUnit[]>([]);
 
+    // Display signals
+    parentNicknameDisplayLimit: InputSignal<number> = input.required<number>();
+    nicknameDisplayLimit: WritableSignal<number> = signal<number>(0);
+    displayNickname: WritableSignal<string> = signal<string>("");
+
+    parentOutputListDisplayLimit: InputSignal<number> = input.required<number>();
+    parentOutputParagraphDisplayLimit: InputSignal<number> = input.required<number>();
+
+    outputListDisplayLimit: WritableSignal<number> = signal<number>(0);
+    outputParagraphDisplayLimit: WritableSignal<number> = signal<number>(0);
+    
     ngOnInit(): void {
         // Create metadata unit
         this.storyMetadataUnit.set(new ArchiveMetadataResultUnit({
@@ -36,6 +48,19 @@ export class Story implements OnInit {
                 data: archiveChapter,
             }));
         });
+
+        this.outputListDisplayLimit.set(this.parentOutputListDisplayLimit());
+        this.outputParagraphDisplayLimit.set(this.parentOutputParagraphDisplayLimit());
+        this.nicknameDisplayLimit.set(this.parentNicknameDisplayLimit());
+
+        // Set up the display name
+        let n = this.storyResultUnit()?.nickname;
+        if (n && n.length > this.nicknameDisplayLimit()) {
+            this.displayNickname.set(n.slice(0, this.nicknameDisplayLimit()) + "...");
+        }
+        else if (n) {
+            this.displayNickname.set(n);
+        }
     }
 
     flipStorySelected() {

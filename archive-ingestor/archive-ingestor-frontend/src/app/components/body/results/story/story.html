@@ -15,12 +15,24 @@
         @if (storySelected()) {
             <div animate.enter="fade-in" animate.leave="fade-out">
                 <div class="result-unit-subdiv">
-                    <app-story-metadata [storyMetadataResultUnit]="storyMetadataUnit()" [latestUnit]="latestUnit()" />
+                    <app-story-metadata 
+                        [storyMetadataResultUnit]="storyMetadataUnit()"
+                        [latestUnit]="latestUnit()" 
+                        [parentOutputListDisplayLimit]="outputListDisplayLimit()"
+                        [parentNicknameDisplayLimit]="nicknameDisplayLimit()"
+                    />
                 </div>
                 <div class="result-unit-subdiv">
                     <h3>Chapter List</h3>
                     @for (chapter of storyChapterUnits(); track chapter) {
-                        <app-chapter [chapterResultUnit]="chapter" [latestUnit]="latestUnit()" [partOfSession]="false" />
+                        <app-chapter 
+                            [chapterResultUnit]="chapter" 
+                            [latestUnit]="latestUnit()" 
+                            [partOfSession]="false"
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit()"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit()"
+                            [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit()"
+                        />
                     }
                 </div>
                 <div class="result-unit-subdiv">

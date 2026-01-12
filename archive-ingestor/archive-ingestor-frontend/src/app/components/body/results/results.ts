@@ -23,6 +23,9 @@ export class Results implements OnChanges {
     // General properties
     activeTab: WritableSignal<string> = signal<string>("");
     archiveSessionGetService: ArchiveSessionGetService = inject(ArchiveSessionGetService);
+    nicknameDisplayLimit: number = 27;
+    outputListDisplayLimit: number = 50;
+    outputParagraphDisplayLimit: number = 10;
 
     // Session management properties
     parentCompletedSessionIds: InputSignal<string[]> = input.required<string[]>();

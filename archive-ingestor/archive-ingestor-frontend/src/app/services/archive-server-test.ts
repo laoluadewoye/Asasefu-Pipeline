@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, DOCUMENT } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ArchiveServerTestData } from '../models/archive-server-test-data';
 
@@ -6,9 +6,15 @@ import { ArchiveServerTestData } from '../models/archive-server-test-data';
   providedIn: 'root',
 })
 export class ArchiveServerTestService {
+    document: Document = inject(DOCUMENT);
     httpClient: HttpClient = inject(HttpClient);
+    testURL!: string;
+
+    constructor() {
+        this.testURL = this.document.location.href + "api/v1";
+    }
 
     getArchiveServerTestData() {
-        return this.httpClient.get<ArchiveServerTestData>("http://localhost:8080/api/v1");
+        return this.httpClient.get<ArchiveServerTestData>(this.testURL);
     }
 }

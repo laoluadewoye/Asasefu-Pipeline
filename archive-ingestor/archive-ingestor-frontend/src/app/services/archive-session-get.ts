@@ -1,16 +1,19 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, DOCUMENT } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ArchiveServerResponseData } from '../models/archive-server-response-data';
 import { Subject, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IMessage, RxStomp } from '@stomp/rx-stomp';
+import { ArchiveSTOMPConfig } from '../models/archive-stomp-config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ArchiveSessionGetService {
     // Http client
+    document: Document = inject(DOCUMENT);
     httpClient: HttpClient = inject(HttpClient);
+    baseHref!: string;
 
     // Websocket client
     stompClient: RxStomp = new RxStomp();
@@ -18,13 +21,8 @@ export class ArchiveSessionGetService {
     stompSubscription!: Subscription;
     
     constructor() {
-        // Configure STOMP client
-        this.stompClient.configure({
-            brokerURL: "ws://localhost:8080/api/v1/websocket",
-            reconnectDelay: 0,
-            debug: (msg) => console.log(new Date(), msg)
-        });
-        this.stompClient.activate();
+        // Create base reference
+        this.baseHref = this.document.location.href;
 
         // Configure STOMP subject
         this.stompSubject.subscribe({
@@ -41,27 +39,42 @@ export class ArchiveSessionGetService {
 
     getSessionInformation(sessionId: string) {
         return this.httpClient.get<ArchiveServerResponseData>(
-            `http://localhost:8080/api/v1/parse/session/${sessionId}`
+            this.baseHref + `api/v1/parse/session/${sessionId}`
         );
     }
     
     getSessionInformationLive(sessionId: string) {
         // Start the feed
         this.httpClient.get<ArchiveServerResponseData>(
-            `http://localhost:8080/api/v1/parse/session/${sessionId}/live`
+            this.baseHref + `api/v1/parse/session/${sessionId}/live`
         ).pipe(
             catchError((err) => {
                 console.log(err);
                 throw err;
             })
-        ).subscribe((result) => this.stompSubject.next(result));
+        ).subscribe((result) => {
+            // Publish result to STOMP subject
+            this.stompSubject.next(result);
 
-        // Create a subscription to this feed
-        this.stompSubscription = this.stompClient.watch(
-            {destination: "/api/v1/websocket/topic/get-session-live"}
-        ).subscribe((msg: IMessage) => {
-            let responseData: ArchiveServerResponseData = JSON.parse(msg.body);
-            this.stompSubject.next(responseData);
+            // Retrieve STOMP settings
+            let stompConfig: ArchiveSTOMPConfig = JSON.parse(result.parseResult);
+
+            // Reconfigure STOMP client
+            this.stompClient.deactivate();
+            this.stompClient.configure({
+                brokerURL: `ws://localhost:${stompConfig.port}${stompConfig.endpointURL}`,
+                reconnectDelay: 0,
+                debug: (msg) => console.log(new Date(), msg)
+            });
+            this.stompClient.activate();
+
+            // Create a subscription to live feed
+            this.stompSubscription = this.stompClient.watch(
+                {destination: `${stompConfig.topicURL}/${sessionId}`}
+            ).subscribe((msg: IMessage) => {
+                let responseData: ArchiveServerResponseData = JSON.parse(msg.body);
+                this.stompSubject.next(responseData);
+            });
         });
 
         // Return the subject as an observable

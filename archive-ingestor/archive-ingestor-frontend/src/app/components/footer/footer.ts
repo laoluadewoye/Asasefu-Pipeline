@@ -18,10 +18,13 @@ export class Footer implements OnInit {
     });
 
     ngOnInit(): void {
+        // Set default value
         this.archiveServerSpecData.set({
             archiveIngestorVersion: this.parentDefaultValue(), 
             latestOTWArchiveVersion: this.parentDefaultValue()
         });
+
+        // Set actual value
         this.archiveServerSpecService.getArchiveServerSpecData().pipe(
             catchError((err) => {
                 console.log(err);

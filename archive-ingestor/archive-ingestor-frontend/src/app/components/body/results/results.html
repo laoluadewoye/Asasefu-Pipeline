@@ -18,13 +18,25 @@
 
     <!--Section tabs-->
     <div id="result-div-menu">
-        <div class="results-menu-tab" [class.red-background]="activeTab() === 'full-sessions'" (click)="selectTab('full-sessions')">
+        <div 
+            class="results-menu-tab" 
+            [class.red-background]="activeTab() === 'full-sessions'" 
+            (click)="selectTab('full-sessions')"
+        >
             <h3>Sessions (Stories and Chapters)</h3>
         </div>
-        <div class="results-menu-tab" [class.red-background]="activeTab() === 'story-metadata-only'" (click)="selectTab('story-metadata-only')">
+        <div 
+            class="results-menu-tab" 
+            [class.red-background]="activeTab() === 'story-metadata-only'" 
+            (click)="selectTab('story-metadata-only')"
+        >
             <h3>Story Metadata Only</h3>
         </div>
-        <div class="results-menu-tab" [class.red-background]="activeTab() === 'chapters-only'" (click)="selectTab('chapters-only')">
+        <div 
+            class="results-menu-tab" 
+            [class.red-background]="activeTab() === 'chapters-only'" 
+            (click)="selectTab('chapters-only')"
+        >
             <h3>Individual Chapters Only</h3>
         </div>
     </div>
@@ -34,11 +46,23 @@
         @if (activeTab() === "full-sessions") {
             <div id="result-div-full-sessions" class="fade-in">
                 @if (parentLatestCompletedSessionId() !== "") {
-                    <app-session [completedSession]="filterCompletedSession(getLatestCompletedSession())" [latestUnit]="true" />
+                    <app-session 
+                        [completedSession]="filterCompletedSession(getLatestCompletedSession())" 
+                        [latestUnit]="true" 
+                        [parentNicknameDisplayLimit]="nicknameDisplayLimit"
+                        [parentOutputListDisplayLimit]="outputListDisplayLimit"
+                        [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit"
+                    />
                 }
                 @for (value of filterCompletedSessions(completedSessionMap().values()); track value) {
                     @if (value.data.id !== parentLatestCompletedSessionId()) {
-                        <app-session [completedSession]="value" [latestUnit]="false" />
+                        <app-session 
+                            [completedSession]="value" 
+                            [latestUnit]="false" 
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit"
+                            [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit" 
+                        />
                     }
                 }
             </div>
@@ -46,11 +70,21 @@
         @if (activeTab() === "story-metadata-only") {
             <div id="result-div-story-metadata-only" class="fade-in">
                 @if (parentLatestCompletedSessionId() !== "") {
-                    <app-story-metadata [storyMetadataResultUnit]="filterStoryMetadataUnit(latestStoryMetadataUnit())" [latestUnit]="true" />
+                    <app-story-metadata 
+                        [storyMetadataResultUnit]="filterStoryMetadataUnit(latestStoryMetadataUnit())" 
+                        [latestUnit]="true"
+                        [parentOutputListDisplayLimit]="outputListDisplayLimit"
+                        [parentNicknameDisplayLimit]="nicknameDisplayLimit"
+                    />
                 }
                 @for (value of filterStoryMetadataUnits(storyMetadataMap().values()); track value) {
                     @if (value.id !== parentLatestCompletedSessionId()) {
-                        <app-story-metadata [storyMetadataResultUnit]="value" [latestUnit]="false" />
+                        <app-story-metadata 
+                            [storyMetadataResultUnit]="value" 
+                            [latestUnit]="false"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit"
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit"
+                        />
                     }
                 }
             </div>
@@ -58,11 +92,25 @@
         @if (activeTab() === "chapters-only") {
             <div id="result-div-chapters-only" class="fade-in">
                 @if (parentLatestCompletedSessionId() !=="") {
-                    <app-chapter [chapterResultUnit]="filterChapterUnit(latestChapterUnit())" [latestUnit]="true" [partOfSession]="false" />
+                    <app-chapter 
+                        [chapterResultUnit]="filterChapterUnit(latestChapterUnit())" 
+                        [latestUnit]="true" 
+                        [partOfSession]="false"
+                        [parentNicknameDisplayLimit]="nicknameDisplayLimit"
+                        [parentOutputListDisplayLimit]="outputListDisplayLimit"
+                        [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit"
+                    />
                 }
                 @for (value of filterChapterUnits(chapterMap().values()); track value) {
                     @if (value.id !== parentLatestCompletedSessionId()) {
-                        <app-chapter [chapterResultUnit]="value" [latestUnit]="false" [partOfSession]="false" />
+                        <app-chapter 
+                            [chapterResultUnit]="value" 
+                            [latestUnit]="false" 
+                            [partOfSession]="false"
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit"
+                            [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit"
+                        />
                     }
                 }
             </div>

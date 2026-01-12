@@ -1,4 +1,4 @@
-import { Component, input, InputSignal, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, input, InputSignal, isWritableSignal, OnInit, signal, WritableSignal } from '@angular/core';
 import { ArchiveCompletedSession } from '../../../../models/archive-completed-session';
 import { OutputIcons } from "../output-icons/output-icons";
 import { ArchiveStoryResultUnit } from '../../../../models/archive-story-result-unit';
@@ -16,17 +16,29 @@ import { ArchiveMetadataResultUnit } from '../../../../models/archive-metadata-r
   styleUrl: './session.css',
 })
 export class Session implements OnInit {
-    defaultDisplayLimit: number = 50;
-
+    // Session unit
     completedSession: InputSignal<ArchiveCompletedSession | undefined> = input.required<ArchiveCompletedSession | undefined>();
     latestUnit: InputSignal<boolean> = input.required<boolean>();
     sessionSelected: WritableSignal<boolean> = signal<boolean>(false);
 
+    // Session sub unit
     completedStoryUnit: WritableSignal<ArchiveStoryResultUnit | undefined> = signal<ArchiveStoryResultUnit | undefined>(undefined);
     completedChapterUnit: WritableSignal<ArchiveChapterResultUnit | undefined> = signal<ArchiveChapterResultUnit | undefined>(undefined);
     completedUnitType: WritableSignal<string> = signal<string>("");
 
+    // Display signals
+    parentNicknameDisplayLimit: InputSignal<number> = input.required<number>();
+    nicknameDisplayLimit: WritableSignal<number> = signal<number>(0);
+    displayNickname: WritableSignal<string> = signal<string>("");
+
+    parentOutputListDisplayLimit: InputSignal<number> = input.required<number>();
+    parentOutputParagraphDisplayLimit: InputSignal<number> = input.required<number>();
+
+    outputListDisplayLimit: WritableSignal<number> = signal<number>(0);
+    outputParagraphDisplayLimit: WritableSignal<number> = signal<number>(0);
+
     ngOnInit(): void {
+        // Setup the sub result unit
         if (this.completedSession()?.data.data instanceof ArchiveStoryData) {
             // Create story result unit
             this.completedStoryUnit.set(new ArchiveStoryResultUnit({
@@ -53,6 +65,20 @@ export class Session implements OnInit {
                 storyMetadata: storyMetadataUnit
             }));
             this.completedUnitType.set("chapter");
+        }
+
+        // Setup the display name limit
+        this.outputListDisplayLimit.set(this.parentOutputListDisplayLimit());
+        this.outputParagraphDisplayLimit.set(this.parentOutputParagraphDisplayLimit());
+        this.nicknameDisplayLimit.set(this.parentNicknameDisplayLimit());
+
+        // Set up the display name
+        let n = this.completedSession()?.data?.nickname;
+        if (n && n.length > this.nicknameDisplayLimit()) {
+            this.displayNickname.set(n.slice(0, this.nicknameDisplayLimit()) + "...");
+        }
+        else if (n) {
+            this.displayNickname.set(n);
         }
     }
 

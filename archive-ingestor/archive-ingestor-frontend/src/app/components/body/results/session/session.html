@@ -1,7 +1,7 @@
 @if (completedSession()) {
     <div animate.enter="fade-in" animate.leave="fade-out">
         <div class="result-unit-div">
-            <h3>{{ completedSession()?.data?.nickname }}</h3>
+            <h3>{{ displayNickname() }}</h3>
             <p>ID: {{ completedSession()?.data?.id }}</p>
             <p>Outcome: {{ completedSession()?.data?.outcome }}</p>
             @if (latestUnit()) { <h4>Latest Session</h4> }
@@ -17,13 +17,26 @@
             <div animate.enter="fade-in" animate.leave="fade-out">
                 @if (completedUnitType() === "story") {
                     <div class="result-unit-subdiv">
-                        <app-story [storyResultUnit]="completedStoryUnit()" [latestUnit]="latestUnit()" />
+                        <app-story 
+                            [storyResultUnit]="completedStoryUnit()" 
+                            [latestUnit]="latestUnit()"
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit()"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit()"
+                            [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit()"
+                        />
                     </div>
                 }
                 @else if (completedUnitType() === "chapter") {
                     <div class="result-unit-subdiv">
                         <h3>Chapter Information</h3>
-                        <app-chapter [chapterResultUnit]="completedChapterUnit()" [latestUnit]="latestUnit()" [partOfSession]="true" />
+                        <app-chapter 
+                            [chapterResultUnit]="completedChapterUnit()" 
+                            [latestUnit]="latestUnit()" 
+                            [partOfSession]="true"
+                            [parentNicknameDisplayLimit]="nicknameDisplayLimit()"
+                            [parentOutputListDisplayLimit]="outputListDisplayLimit()"
+                            [parentOutputParagraphDisplayLimit]="outputParagraphDisplayLimit()"
+                        />
                     </div>
                 }
             </div>
