@@ -1,6 +1,7 @@
 import { inject, Injectable, DOCUMENT } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ArchiveServerResponseData } from '../models/archive-server-response-data';
+import { ArchiveBaseRef } from './archive-base-ref';
 
 @Injectable({
   providedIn: 'root',
@@ -8,15 +9,15 @@ import { ArchiveServerResponseData } from '../models/archive-server-response-dat
 export class ArchiveSessionCancelService {
     document: Document = inject(DOCUMENT);
     httpClient: HttpClient = inject(HttpClient);
-    baseHref!: string;
+    baseRef!: ArchiveBaseRef;
 
     constructor() {
-        this.baseHref = this.document.location.pathname;
+        this.baseRef = new ArchiveBaseRef(this.document);
     }
 
     getCancelSessionResponse(sessionId: string) {
         return this.httpClient.get<ArchiveServerResponseData>(
-            this.baseHref + `api/v1/parse/session/${sessionId}/cancel`
+            this.baseRef.baseRef + `api/v1/parse/session/${sessionId}/cancel`
         );
     }
 }

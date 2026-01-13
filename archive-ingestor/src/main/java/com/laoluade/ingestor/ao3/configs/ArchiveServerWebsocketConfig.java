@@ -51,8 +51,10 @@ public class ArchiveServerWebsocketConfig implements WebSocketMessageBrokerConfi
      * @param websocketRegistry The {@link StompEndpointRegistry} to modify.
      */
     public void registerStompEndpoints(StompEndpointRegistry websocketRegistry) {
+        String selfOriginPattern = "http://localhost:" + this.port;
+        String angularDevOriginPattern = "http://localhost:4200";
         websocketRegistry.addEndpoint(this.endpointURL)
-                .setAllowedOriginPatterns("http://localhost:" + this.port + "*");
+                .setAllowedOriginPatterns(selfOriginPattern, angularDevOriginPattern);
     }
 
     /**

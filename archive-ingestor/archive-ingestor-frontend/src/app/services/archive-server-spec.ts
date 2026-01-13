@@ -1,6 +1,7 @@
-import { inject, Injectable, DOCUMENT } from '@angular/core';
+import { DOCUMENT, inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ArchiveServerSpecData } from '../models/archive-server-spec-data';
+import { ArchiveBaseRef } from './archive-base-ref';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,8 @@ export class ArchiveServerSpecService {
     specURL!: string;
 
     constructor() {
-        this.specURL = this.document.location.pathname + "api/v1/spec";
+        let baseRef: ArchiveBaseRef = new ArchiveBaseRef(this.document);
+        this.specURL = baseRef.baseRef + "api/v1/spec";
     }
 
     getArchiveServerSpecData() {

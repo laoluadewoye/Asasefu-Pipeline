@@ -5,6 +5,7 @@ import { Subject, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IMessage, RxStomp } from '@stomp/rx-stomp';
 import { ArchiveSTOMPConfig } from '../models/archive-stomp-config';
+import { ArchiveBaseRef } from './archive-base-ref';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,7 @@ export class ArchiveSessionGetService {
     // Http client
     document: Document = inject(DOCUMENT);
     httpClient: HttpClient = inject(HttpClient);
-    baseHref!: string;
+    baseRef!: ArchiveBaseRef;
 
     // Websocket client
     stompClient: RxStomp = new RxStomp();
@@ -21,9 +22,8 @@ export class ArchiveSessionGetService {
     stompSubscription!: Subscription;
     
     constructor() {
-        // Create base reference
-        this.baseHref = this.document.location.pathname;
-
+        this.baseRef = new ArchiveBaseRef(this.document);
+        
         // Configure STOMP subject
         this.stompSubject.subscribe({
             next: (result) => {
@@ -39,14 +39,14 @@ export class ArchiveSessionGetService {
 
     getSessionInformation(sessionId: string) {
         return this.httpClient.get<ArchiveServerResponseData>(
-            this.baseHref + `api/v1/parse/session/${sessionId}`
+            this.baseRef.baseRef + `api/v1/parse/session/${sessionId}`
         );
     }
     
     getSessionInformationLive(sessionId: string) {
         // Start the feed
         this.httpClient.get<ArchiveServerResponseData>(
-            this.baseHref + `api/v1/parse/session/${sessionId}/live`
+            this.baseRef.baseRef + `api/v1/parse/session/${sessionId}/live`
         ).pipe(
             catchError((err) => {
                 console.log(err);
