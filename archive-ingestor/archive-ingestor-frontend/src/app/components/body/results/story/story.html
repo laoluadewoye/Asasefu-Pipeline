@@ -1,7 +1,7 @@
 @if (storyResultUnit()) {
     <div animate.enter="fade-in" animate.leave="fade-out">
         <div class="result-unit-div">
-            <h3>{{ storyResultUnit()?.nickname }} Story Information</h3>
+            <h3>{{ displayNickname() }} Story Information</h3>
             @if (latestUnit()) { <h4>Latest Session</h4> }
             <p>ID: {{ storyResultUnit()?.id }}</p>
             <app-output-icons

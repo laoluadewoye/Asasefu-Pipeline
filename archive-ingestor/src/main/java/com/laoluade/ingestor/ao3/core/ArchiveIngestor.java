@@ -63,7 +63,7 @@ public class ArchiveIngestor {
     /**
      * <p>This attribute holds the current version of the ingestor.</p>
      */
-    public static final String VERSION = "0.2";
+    public static final String VERSION = "0.2.1";
 
     /**
      * <p>This attribute defines the placeholder string value.</p>
@@ -74,7 +74,7 @@ public class ArchiveIngestor {
      * <p>This attribute defines the HTML tags it will ignore when parsing sets of elements.</p>
      */
     public static final ArrayList<String> PARAGRAPH_IGNORE_TAGS = new ArrayList<>(Arrays.asList(
-            "strong", "em", "u", "span"
+            "strong", "em", "u", "span", "b"
     ));
 
     // Private Class Constants
@@ -695,7 +695,7 @@ public class ArchiveIngestor {
 
         // Navigate to kudos page
         String currentURL = driver.getCurrentUrl();
-        String kudosURL = currentURL.split("/chapters")[0] + "/kudos";
+        String kudosURL = currentURL.split("/chapters")[0].split("\\?")[0] + "/kudos";
         driver.navigate().to(kudosURL);
         newSiteWait.until(d -> d.findElement(By.xpath("//*[@id=\"main\"]/h2")).isDisplayed());
 

@@ -18,7 +18,10 @@
             }
             @for (commentThread of commentThreadsDisplay(); track commentThread) {
                 <div class="result-unit-subdiv">
-                    <app-comment-thread [inputCommentUnit]="commentThread" [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit" />
+                    <app-comment-thread 
+                        [inputCommentUnit]="commentThread" 
+                        [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit" 
+                    />
                 </div>
             }
         </div>

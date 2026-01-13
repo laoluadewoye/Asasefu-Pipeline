@@ -5,16 +5,18 @@ nav {
     gap: var(--default-distance);
 }
 
-button {
-    border-radius: 0px;
-}
-
 a {
     background-color: var(--theme-red-color);
     color: var(--theme-white-color);
-    padding: var(--half-default-distance);    
+    padding: var(--half-default-distance);
+    border-radius: var(--default-border-radius);    
     text-decoration: none;
+    transition: var(--transition-seconds);
+}
 
+a:hover {
+    background-color: var(--theme-white-color);
+    color: var(--theme-red-color);
 }
 
 button:hover {

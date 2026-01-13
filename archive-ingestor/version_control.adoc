@@ -1,11 +1,14 @@
 == Version Control
 
-Latest Version: 0.1
+Latest Version: 0.2.1
 
 === Changelog
 
 [cols="1,1"]
 |===
+
+|Version 0.2.1
+a| * First completed version of project.
 
 |Version 0.1
 a|* Initial project.

@@ -17,7 +17,10 @@
     @if (inputCommentUnit().depth < defaultThreadDepthLimit()) {
         @for (commentThread of inputCommentUnit().replies; track commentThread) {
             <div class="result-unit-subdiv">
-                <app-comment-thread [inputCommentUnit]="commentThread" [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit()" />
+                <app-comment-thread 
+                    [inputCommentUnit]="commentThread" 
+                    [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit()"
+                />
             </div>
         }
     }
