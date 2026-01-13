@@ -1,4 +1,4 @@
-import { ArchiveCommentsData } from "./archive-comments-data";
+import { ArchiveCommentData } from "./archive-comment-data";
 import { ArchiveStoryInfoData } from "./archive-story-info-data";
 
 export class ArchiveChapterData {
@@ -12,7 +12,7 @@ export class ArchiveChapterData {
     startNotes!: string[];
     endNotes!: string[];
     paragraphs!: string[];
-    foundComments!: ArchiveCommentsData;
+    foundComments!: ArchiveCommentData[];
 
     constructor(obj: any) {
         obj && Object.assign(this, obj);

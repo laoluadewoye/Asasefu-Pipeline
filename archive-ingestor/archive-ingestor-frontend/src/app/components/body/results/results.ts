@@ -60,6 +60,7 @@ export class Results implements OnChanges {
 
     latestStoryMetadataUnit: WritableSignal<ArchiveMetadataResultUnit | undefined> = signal<ArchiveMetadataResultUnit | undefined>(undefined);
     latestChapterUnit: WritableSignal<ArchiveChapterResultUnit | undefined> = signal<ArchiveChapterResultUnit | undefined>(undefined);
+    latestChapterUnitId: WritableSignal<string> = signal<string>("");
 
     // Search properties
     resultSearch: FormControl =  new FormControl<string>("");
@@ -296,8 +297,10 @@ export class Results implements OnChanges {
                 let cm = this.chapterMap();
                 metadataAndChapters.chapters.forEach((chapter: ArchiveChapterResultUnit) => {
                     cm.set(chapter.id, chapter);
+                    this.latestChapterUnitId.set(chapter.id);
                     this.latestChapterUnit.set(chapter);
                 });
+                
                 this.chapterMap.set(cm);
             }
             console.log(`Updated management maps with ${sessionId}'s metadata and chapters.`);

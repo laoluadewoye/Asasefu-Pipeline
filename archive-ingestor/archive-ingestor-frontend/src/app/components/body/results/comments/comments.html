@@ -1,8 +1,8 @@
 <h3>Chapter Comments</h3>
 @if (inputComments()) {
-    <h4>Comment thread count: {{ commentThreads().length }}</h4>
+    <h4>Comment thread count: {{ inputComments()?.length }}</h4>
     <app-output-icons
-        [inputObject]="commentThreads()" 
+        [inputObject]="inputComments()" 
         [objectName]="`${chapterName()} Comment Threads`"
         [showDropdown]="true"
         (dropdownEvent)="flipCommentsSelected()"
@@ -16,10 +16,10 @@
             @if (threadsExceedDisplayLimit()) {
                 <h4>Not all comments threads are shown due to the count being over the limit of {{ defaultThreadDisplayLimit }} threads. Please download using buttons to see the rest...</h4>
             }
-            @for (commentThread of commentThreadsDisplay(); track commentThread) {
+            @for (comment of commentDisplay(); track comment) {
                 <div class="result-unit-subdiv">
                     <app-comment-thread 
-                        [inputCommentUnit]="commentThread" 
+                        [inputComment]="comment" 
                         [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit" 
                     />
                 </div>

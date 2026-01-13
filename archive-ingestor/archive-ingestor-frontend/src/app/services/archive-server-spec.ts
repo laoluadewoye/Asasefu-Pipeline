@@ -11,7 +11,7 @@ export class ArchiveServerSpecService {
     specURL!: string;
 
     constructor() {
-        this.specURL = this.document.location.href + "api/v1/spec";
+        this.specURL = this.document.location.pathname + "api/v1/spec";
     }
 
     getArchiveServerSpecData() {

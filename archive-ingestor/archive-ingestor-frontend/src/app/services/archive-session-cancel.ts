@@ -11,7 +11,7 @@ export class ArchiveSessionCancelService {
     baseHref!: string;
 
     constructor() {
-        this.baseHref = this.document.location.href;
+        this.baseHref = this.document.location.pathname;
     }
 
     getCancelSessionResponse(sessionId: string) {

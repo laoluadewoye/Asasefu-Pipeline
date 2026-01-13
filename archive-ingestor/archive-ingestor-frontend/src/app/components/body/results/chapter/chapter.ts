@@ -3,7 +3,6 @@ import { ArchiveChapterResultUnit } from '../../../../models/archive-chapter-res
 import { OutputIcons } from '../output-icons/output-icons';
 import { OutputList } from '../output-list/output-list';
 import { Comments } from "../comments/comments";
-import { ArchiveCommentUnit } from '../../../../models/archive-comment-unit';
 import { StoryMetadata } from "../story-metadata/story-metadata";
 
 @Component({
@@ -29,15 +28,10 @@ export class Chapter implements OnInit {
     outputListDisplayLimit: WritableSignal<number> = signal<number>(0);
     outputParagraphDisplayLimit: WritableSignal<number> = signal<number>(0);
 
-    // Custom downloadable
-    chapterDownloadable = signal({});
-
     // Selection booleans
     chapterSelected: WritableSignal<boolean> = signal<boolean>(false);
 
     ngOnInit(): void {
-        this.chapterDownloadable.set({chapter: this.chapterResultUnit(), formattedComments: null});
-
         this.outputListDisplayLimit.set(this.parentOutputListDisplayLimit());
         this.outputParagraphDisplayLimit.set(this.parentOutputParagraphDisplayLimit());
         this.nicknameDisplayLimit.set(this.parentNicknameDisplayLimit());
@@ -54,9 +48,5 @@ export class Chapter implements OnInit {
 
     flipChapterSelected() {
         this.chapterSelected.set(!this.chapterSelected());
-    }
-
-    updateDownloadable(event: ArchiveCommentUnit[]) {
-        this.chapterDownloadable.set({chapter: this.chapterResultUnit(), formattedComments: event});
     }
 }

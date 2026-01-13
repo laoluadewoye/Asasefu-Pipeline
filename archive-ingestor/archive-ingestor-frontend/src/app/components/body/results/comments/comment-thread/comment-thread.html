@@ -1,27 +1,29 @@
 <!--Core HTML-->
-<h3>{{ inputCommentUnit().user }}'s Comment</h3>
-<h4>Posted: {{ inputCommentUnit().posted }}</h4>
-@for (text of inputCommentUnit().text; track text) {
+<h3>{{ inputComment().user }}'s Comment (Page {{ inputComment().page }})</h3>
+<h4>Posted: {{ inputComment().posted }}</h4>
+@for (text of inputComment().text; track text) {
     <p>{{text}}</p>
 }
+<h4>Object Timestamp: {{ inputComment().creationTimestamp }}</h4>
+<h4>Object Hash: {{ inputComment().creationHash }}</h4>
+
+<!--Output icons-->
 <app-output-icons
-    [inputObject]="inputCommentUnit()" 
-    [objectName]="`${inputCommentUnit().user}'s Comment`"
-    [showDropdown]="inputCommentUnit().replies.length > 0"
+    [inputObject]="inputComment()" 
+    [objectName]="`${inputComment().user}'s Comment`"
+    [showDropdown]="inputComment().replies.length > 0"
     (dropdownEvent)="flipCommentThreadSelected()"
     class="outputs" 
 />
 
 <!--Recursive loop-->
-@if (commentThreadSelected()) {
-    @if (inputCommentUnit().depth < defaultThreadDepthLimit()) {
-        @for (commentThread of inputCommentUnit().replies; track commentThread) {
-            <div class="result-unit-subdiv">
-                <app-comment-thread 
-                    [inputCommentUnit]="commentThread" 
-                    [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit()"
-                />
-            </div>
-        }
+@if (commentThreadSelected() && inputComment().depth < defaultThreadDepthLimit()) {
+    @for (reply of inputComment().replies; track reply) {
+        <div class="result-unit-subdiv">
+            <app-comment-thread 
+                [inputComment]="reply"
+                [parentDefaultThreadDepthLimit]="defaultThreadDepthLimit()"
+            />
+        </div>
     }
 }

@@ -12,7 +12,7 @@ export class ArchiveParseChapterService {
     parseChapterURL!: string;
 
     constructor() {
-        this.parseChapterURL = this.document.location.href + "api/v1/parse/chapter";
+        this.parseChapterURL = this.document.location.pathname + "api/v1/parse/chapter";
     }
 
     postParseChapterRequest(archiveServerRequestData: ArchiveServerRequestData) {

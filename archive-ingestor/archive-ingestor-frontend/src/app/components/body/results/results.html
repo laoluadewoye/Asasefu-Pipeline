@@ -91,7 +91,7 @@
         }
         @if (activeTab() === "chapters-only") {
             <div id="result-div-chapters-only" class="fade-in">
-                @if (parentLatestCompletedSessionId() !=="") {
+                @if (latestChapterUnitId() !== "") {
                     <app-chapter 
                         [chapterResultUnit]="filterChapterUnit(latestChapterUnit())" 
                         [latestUnit]="true" 
@@ -102,7 +102,7 @@
                     />
                 }
                 @for (value of filterChapterUnits(chapterMap().values()); track value) {
-                    @if (value.id !== parentLatestCompletedSessionId()) {
+                    @if (value.id !== latestChapterUnitId()) {
                         <app-chapter 
                             [chapterResultUnit]="value" 
                             [latestUnit]="false" 

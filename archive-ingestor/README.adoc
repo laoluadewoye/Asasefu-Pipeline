@@ -92,6 +92,24 @@ Metadata about the story is contained in this object, and is the first thing cre
 . guestKudos (Integer) -> Count of kudos that were left by guests.
 . publicBookmarks (List of Strings) -> List of users who bookmarked the story.
 
+=== Comment Schema for JSON Parse Result
+
+Information specific to a chapter is contained here. If a comment has replies, the comment will contain a list of other comment objects representing the replies.
+
+==== Metadata about the metadata
+
+. creationTimestamp (String) -> The date and time the story info object was created in UTC.
+. creationHash (String) -> The unique identifier of the story info object.
+
+==== Comment information
+
+. user (String) -> The user who made the comment.
+. posted (String) -> The date and time the comment was posted.
+. text (List of Strings) -> The comment text.
+. depth (Integer) -> The reply depth of the comment.
+. page (Integer) -> The page the comment was found on.
+. replies (List of Comment Objects) -> The replies to the comment.
+
 === Chapter Schema for JSON Parse Result
 
 Information specific to a chapter is contained here, along with a reference to the story information if the chapter isn't wrapped in a greater story object.
@@ -111,7 +129,7 @@ Information specific to a chapter is contained here, along with a reference to t
 . startNotes (List of Strings) -> The starting notes of the chapter (not to be confused with story-wide start notes).
 . endNotes (List of Strings) -> The ending notes of the chapter (not to be confused with story-wide end notes).
 . paragraphs (List of Strings) -> The paragraphs of the chapter.
-. comments (Reference) -> The comments of the chapter.
+. comments (List of Comment Objects) -> A list of comments with threads.
 
 === Story Schema for JSON Parse Result
 

@@ -11,7 +11,7 @@ export class ArchiveServerTestService {
     testURL!: string;
 
     constructor() {
-        this.testURL = this.document.location.href + "api/v1";
+        this.testURL = this.document.location.pathname + "api/v1";
     }
 
     getArchiveServerTestData() {

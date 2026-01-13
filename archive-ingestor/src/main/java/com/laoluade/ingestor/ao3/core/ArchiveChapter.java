@@ -71,7 +71,7 @@ public class ArchiveChapter {
     /**
      * <p>This attribute stores the comment threads of the chapter.</p>
      */
-    public JSONObject foundComments;
+    public ArrayList<ArchiveComment> foundComments;
 
     /**
      * <p>
@@ -122,7 +122,7 @@ public class ArchiveChapter {
      * <p>This method sets the <code>foundComments</code> attribute of the object.</p>
      * @param foundComments The JSONObject of comment threads.
      */
-    public void setFoundComments(JSONObject foundComments) {
+    public void setFoundComments(ArrayList<ArchiveComment> foundComments) {
         this.foundComments = foundComments;
     }
 
@@ -145,7 +145,7 @@ public class ArchiveChapter {
         rep.put("startNotes", new JSONArray(this.startNotes));
         rep.put("endNotes", new JSONArray(this.endNotes));
         rep.put("paragraphs", new JSONArray(this.paragraphs));
-        rep.put("foundComments", this.foundComments);
+        rep.put("foundComments", ArchiveComment.convertCommentArrayListToJSON(this.foundComments));
         return rep;
     }
 
@@ -167,7 +167,7 @@ public class ArchiveChapter {
         rep.put("startNotes", new JSONArray(this.startNotes));
         rep.put("endNotes", new JSONArray(this.endNotes));
         rep.put("paragraphs", new JSONArray(this.paragraphs));
-        rep.put("foundComments", this.foundComments);
+        rep.put("foundComments", ArchiveComment.convertCommentArrayListToJSON(this.foundComments));
         return rep;
     }
 }

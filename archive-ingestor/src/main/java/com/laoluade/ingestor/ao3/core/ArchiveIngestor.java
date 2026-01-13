@@ -1,6 +1,7 @@
 package com.laoluade.ingestor.ao3.core;
 
 // Server Classes
+
 import com.laoluade.ingestor.ao3.exceptions.*;
 import com.laoluade.ingestor.ao3.models.ArchiveServerFutureData;
 import com.laoluade.ingestor.ao3.repositories.ArchiveParse;
@@ -10,35 +11,25 @@ import com.laoluade.ingestor.ao3.services.ArchiveDriverService;
 import com.laoluade.ingestor.ao3.services.ArchiveLogService;
 import com.laoluade.ingestor.ao3.services.ArchiveMessageService;
 import com.laoluade.ingestor.ao3.services.ArchiveSessionService;
-
-// JSON Classes
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-// Selenium Classes
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.pagefactory.ByChained;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
-// Spring Boot Classes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-// I/O Classes
-import java.io.IOException;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-
-// Structure Classes
+import java.io.*;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -63,7 +54,7 @@ public class ArchiveIngestor {
     /**
      * <p>This attribute holds the current version of the ingestor.</p>
      */
-    public static final String VERSION = "0.2.1";
+    public static final String VERSION = "0.3";
 
     /**
      * <p>This attribute defines the placeholder string value.</p>
@@ -403,8 +394,13 @@ public class ArchiveIngestor {
                 continue;
             }
 
+            // Ignore text with dead space
+            if (text.getText().isBlank()) {
+                continue;
+            }
+
             // Get text if the checks pass
-            filteredText.add(text.getText());
+            filteredText.add(text.getText().trim());
             updateLastRecordedMessage("Added text -> " + text.getText(), sessionId);
         }
 
@@ -1022,19 +1018,18 @@ public class ArchiveIngestor {
 
     /**
      * <p>
-     *     This method parses a single comment thread into a JSONObject. If this method detects a response to the
-     *     current comment that it's on, it utilizes recursion to go deeper into the thread.
+     *     This method parses a single comment thread level into a list of comments. If this method detects a response
+     *     to the current comment that it's on, it utilizes recursion to go deeper into the thread.
      * </p>
-     * @param commentBlockWait The {@link WebDriverWait} object use to wait for comments to load.
      * @param commentThreadElement The web element containing the comment thread.
      * @param threadDepth The current depth level for where we are in the thread.
      * @param sessionId The session ID of the current parsing session.
-     * @return A {@link JSONObject} representing the comment thread information.
+     * @param parentCommentList The references to the parent {@link ArrayList} of comments.
+     * @param pageCount The current page number of comments.
      */
-    private JSONObject parseCommentThread(WebDriverWait commentBlockWait, WebElement commentThreadElement,
-                                          Integer threadDepth, String sessionId) {
-        JSONObject commentThread = new JSONObject();
-        String lastParentCommentID = "";
+    private void parseCommentThread(WebElement commentThreadElement, Integer threadDepth, String sessionId,
+                                          ArrayList<ArchiveComment> parentCommentList, Integer pageCount) {
+        ArchiveComment lastParentComment = null;
 
         for (WebElement commentListItem: commentThreadElement.findElements(By.xpath(DIRECT_CHILDREN_XPATH))) {
             if (!commentListItem.getTagName().equals("li")) {
@@ -1047,7 +1042,7 @@ public class ArchiveIngestor {
             if (itemID == null) { // Null check
                 parentComment = false;
             }
-            else if (itemID.contains("add") || (!itemID.contains("comment") && lastParentCommentID.isBlank())) { // Skip conditions
+            else if (itemID.contains("add") || (!itemID.contains("comment") && lastParentComment == null)) { // Skip conditions
                 continue;
             }
             else if (!itemID.contains("comment")) { // False conditions
@@ -1062,51 +1057,48 @@ public class ArchiveIngestor {
                     // Create new comment object
                     String commentUser = commentListItem.findElement(By.xpath(".//h4/a | .//h4/span")).getText();
                     String commentPosted = commentListItem.findElement(By.className("posted")).getText();
-                    String commentID = (commentUser + '_' + commentPosted).replace(' ', '_');
-                    commentID = commentID.replace(':', '_');
-
-                    commentThread.put(commentID, new JSONObject());
-
-                    JSONObject commentObject = commentThread.getJSONObject(commentID);
-                    commentObject.put("user", commentUser);
-                    commentObject.put("posted", commentPosted);
 
                     WebElement commentBlock = commentListItem.findElement(By.className("userstuff"));
                     ArrayList<String> commentText = filterText(
                             commentBlock.findElements(By.xpath(ALL_CHILDREN_XPATH)), sessionId
                     );
-                    commentObject.put("text", new JSONArray(commentText));
 
-                    // Set last parent comment ID
-                    lastParentCommentID = commentID;
+                    ArchiveComment newComment = new ArchiveComment(
+                            commentUser, commentPosted, commentText, threadDepth, pageCount
+                    );
+
+                    // Add it to list of comments
+                    parentCommentList.add(newComment);
+
+                    // Set last parent comment reference
+                    lastParentComment = newComment;
                 }
                 catch (NoSuchElementException e) {
-                    updateLastRecordedMessage("Skipping thread member list item...", sessionId);
+                    updateLastRecordedMessage("Skipping new comment...", sessionId);
                 }
             }
             else {
                 // Only go deeper if the max thread depth is not exceeded
-                JSONObject parentCommentObject = commentThread.getJSONObject(lastParentCommentID);
                 if (threadDepth <= this.maxCommentThreadDepth && this.maxCommentThreadDepth > 0) {
                     // Create new JSON array for child threads
                     try {
+                        // Create a new set of replies for the last parent comment
                         WebElement childCommentThreadElement = commentListItem.findElement(By.className("thread"));
-                        parentCommentObject.put("threads", parseCommentThread(
-                                commentBlockWait, childCommentThreadElement, threadDepth + 1, sessionId
-                        ));
+                        ArrayList<ArchiveComment> newReplies = new ArrayList<>();
+                        parseCommentThread(
+                                childCommentThreadElement, threadDepth + 1, sessionId, newReplies, pageCount
+                        );
+
+                        // Set the replies of the last parent comment
+                        assert lastParentComment != null;
+                        lastParentComment.setReplies(newReplies);
                     }
                     catch (NoSuchElementException e) {
-                        updateLastRecordedMessage("Skipping thread member list item...", sessionId);
+                        updateLastRecordedMessage("Skipping replies to last comment...", sessionId);
                     }
-                }
-                else {
-                    parentCommentObject.put("threads", "Beyond max thread depth of " + this.maxCommentThreadDepth);
-                    return commentThread;
                 }
             }
         }
-
-        return commentThread;
     }
 
     /**
@@ -1117,16 +1109,17 @@ public class ArchiveIngestor {
      * </p>
      * @param driver The {@link RemoteWebDriver} being used to run a Selenium session.
      * @param sessionId The session ID of the current parsing session.
-     * @return A {@link JSONObject} representing the comment page.
+     * @param pageCommentList The references to the {@link ArrayList} of page comments.
+     * @param pageCount The current page number of comments.
      */
-    private JSONObject parseCommentPage(RemoteWebDriver driver, String sessionId) {
+    private void parseCommentPage(RemoteWebDriver driver, String sessionId, ArrayList<ArchiveComment> pageCommentList,
+                                  Integer pageCount) {
         // Create the starting point
         WebElement commentsPlaceholder = createCommentsPlaceholderReference(driver);
         WebElement commentThreadElement = commentsPlaceholder.findElement(By.className("thread"));
-        WebDriverWait commentBlockWait = new WebDriverWait(driver, Duration.ofSeconds(this.waitDurationSecs));
 
         // Start thread searching and return the result
-        return parseCommentThread(commentBlockWait, commentThreadElement, 1, sessionId);
+        parseCommentThread(commentThreadElement, 1, sessionId, pageCommentList, pageCount);
     }
 
     /**
@@ -1158,10 +1151,8 @@ public class ArchiveIngestor {
             commentsOpened = true;
         }
 
-        // Create main comment object
-        JSONObject comments = new JSONObject();
-        comments.put("pages", new JSONObject());
-        JSONObject commentPages = comments.getJSONObject("pages");
+        // Create comment list
+        ArrayList<ArchiveComment> comments = new ArrayList<>();
 
         // Read comment section
         if (commentsOpened) {
@@ -1221,7 +1212,7 @@ public class ArchiveIngestor {
                     }
 
                     // Parse comment page
-                    commentPages.put(Integer.toString(pageCount), parseCommentPage(driver, sessionId));
+                    parseCommentPage(driver, sessionId, comments, pageCount);
 
                     // Check for cancellation of thread
                     checkForCancel(sessionId);
@@ -1241,7 +1232,7 @@ public class ArchiveIngestor {
             }
             else {
                 updateLastRecordedMessage("Parsing single page of comments...", sessionId);
-                commentPages.put("1", parseCommentPage(driver, sessionId));
+                parseCommentPage(driver, sessionId, comments, 1);
 
                 // Check for cancellation of thread
                 checkForCancel(sessionId);
@@ -1696,6 +1687,8 @@ public class ArchiveIngestor {
             resultMessage = this.messageService.getLoggingErrorParseFailedNotFound();
         }
         catch (Exception e) {
+            this.logService.createErrorLog(e.toString());
+            this.logService.createErrorLog(Arrays.toString(e.getStackTrace()));
             resultMessage = this.messageService.getLoggingErrorParseFailedUnknown();
         }
         finally {

@@ -1,6 +1,6 @@
 import { Component, input, InputSignal, OnInit, signal, WritableSignal } from '@angular/core';
-import { ArchiveCommentUnit } from '../../../../../models/archive-comment-unit';
 import { OutputIcons } from "../../output-icons/output-icons";
+import { ArchiveCommentData } from '../../../../../models/archive-comment-data';
 
 @Component({
   selector: 'app-comment-thread',
@@ -9,7 +9,7 @@ import { OutputIcons } from "../../output-icons/output-icons";
   styleUrl: './comment-thread.css',
 })
 export class CommentThread implements OnInit {
-    inputCommentUnit: InputSignal<ArchiveCommentUnit> = input.required<ArchiveCommentUnit>();
+    inputComment: InputSignal<ArchiveCommentData> = input.required<ArchiveCommentData>();
     parentDefaultThreadDepthLimit: InputSignal<number> = input.required<number>();
     defaultThreadDepthLimit: WritableSignal<number> = signal<number>(-1);
     commentThreadSelected: WritableSignal<boolean> = signal<boolean>(false);

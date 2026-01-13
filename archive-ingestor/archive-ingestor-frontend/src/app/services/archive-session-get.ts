@@ -22,7 +22,7 @@ export class ArchiveSessionGetService {
     
     constructor() {
         // Create base reference
-        this.baseHref = this.document.location.href;
+        this.baseHref = this.document.location.pathname;
 
         // Configure STOMP subject
         this.stompSubject.subscribe({

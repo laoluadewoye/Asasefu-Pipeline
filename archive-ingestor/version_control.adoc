@@ -1,11 +1,22 @@
 == Version Control
 
-Latest Version: 0.2.1
+Latest Version: 0.3
+
+Note: Update ArchiveIngestor class, package-info, pom.xml, and version table when updating this value.
 
 === Changelog
 
 [cols="1,1"]
 |===
+
+|Version 0.3
+a| * Updated ArchiveIngestor.filterText() to ignore bolded text and blank space.
+* Created an ArchiveComment POJO and used it to update ArchiveChapter and ArchiveIngestor's comment parsing functionality.
+* Added lines to print the exception stack trace if an unexpected error takes place in ArchiveIngestor.startCreateTask().
+* Updated Angular frontend services to use document.location.pathname as a URL base instead of document.location.href.
+* Simplified Angular comment data models into one single model that is in line with the ArchiveComment POJO and updated the chapter data model to use the unified comment model.
+* Fixed bug in Angular result component where the latest chapter wasn't filtered from the rest by adding a dedicated latest chapter ID tracker.
+* Simplified the Angular chapter, comment, and comment thread components using the new unified comment data model.
 
 |Version 0.2.1
 a| * First completed version of project.

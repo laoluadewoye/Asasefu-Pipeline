@@ -12,7 +12,7 @@ export class ArchiveParseStoryService {
     parseStoryURL!: string; 
     
     constructor() {
-        this.parseStoryURL = this.document.location.href + "api/v1/parse/story";
+        this.parseStoryURL = this.document.location.pathname + "api/v1/parse/story";
     }
 
     postParseStoryRequest(archiveServerRequestData: ArchiveServerRequestData) {

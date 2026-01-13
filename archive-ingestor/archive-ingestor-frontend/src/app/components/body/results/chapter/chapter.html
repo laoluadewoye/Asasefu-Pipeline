@@ -5,7 +5,7 @@
             @if (latestUnit()) { <h4>Latest Session</h4> }
             <p>ID: {{ chapterResultUnit()?.id }}</p>
             <app-output-icons
-                [inputObject]="chapterDownloadable()" 
+                [inputObject]="chapterResultUnit()"
                 [objectName]="chapterResultUnit()?.nickname"
                 [showDropdown]="true"
                 (dropdownEvent)="flipChapterSelected()"
@@ -81,7 +81,6 @@
                     <app-comments 
                         [inputComments]="chapterResultUnit()?.data?.foundComments" 
                         [chapterName]="chapterResultUnit()?.nickname"
-                        (formattingFinished)="updateDownloadable($event)"
                     />
                 </div>
                 <div class="result-unit-subdiv">
