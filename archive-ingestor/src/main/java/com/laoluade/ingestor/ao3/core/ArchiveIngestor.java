@@ -54,7 +54,7 @@ public class ArchiveIngestor {
     /**
      * <p>This attribute holds the current version of the ingestor.</p>
      */
-    public static final String VERSION = "0.3";
+    public static final String VERSION = "0.3.1";
 
     /**
      * <p>This attribute defines the placeholder string value.</p>

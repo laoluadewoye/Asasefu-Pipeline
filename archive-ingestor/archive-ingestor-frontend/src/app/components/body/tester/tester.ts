@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, input, InputSignal, WritableSignal } from '@angular/core';
 import { ArchiveServerTestService } from '../../../services/archive-server-test';
 import { ArchiveServerTestData } from '../../../models/archive-server-test-data';
-import { catchError } from 'rxjs';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-tester',
@@ -25,8 +25,9 @@ export class Tester implements OnInit {
     onTesterButtonClick() {
         this.archiveServerTestService.getArchiveServerTestData().pipe(
             catchError((err) => {
-                console.log(err);
-                throw err;
+                let backupTestData = new ArchiveServerTestData();
+                backupTestData.testData = "";
+                return of(backupTestData);
             })
         ).subscribe((result) => {
             this.archiveServerTestData.set(result);

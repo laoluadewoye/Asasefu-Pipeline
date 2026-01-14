@@ -1,6 +1,6 @@
 == Version Control
 
-Latest Version: 0.3
+Latest Version: 0.3.1
 
 Note: Update ArchiveIngestor class, package-info, pom.xml, and version table when updating this value.
 
@@ -8,6 +8,16 @@ Note: Update ArchiveIngestor class, package-info, pom.xml, and version table whe
 
 [cols="1,1"]
 |===
+
+|Version 0.3.1
+a| * Updated Angular settings to run a proxy during development.
+* Modified all services to now receive their base ref from a single plain js class.
+* Updated websocket configurations to allow connections from the angular development server.
+* Cleaned up client-side error handling and logging on Angular front end.
+* Fixed Angular bugs such as lapses in settings checks to ensure bad request aren't sent, hanging progress sections that don't allow users to try again.
+* Improved front-end CSS to make application more user-friendly.
+* Re-enabled prerendering and server-side rendering options during build process and fixed the bug preventing that earlier.
+* Updated elements that display the total chapter count by making them display a TBD in place of a -1.
 
 |Version 0.3
 a| * Updated ArchiveIngestor.filterText() to ignore bolded text and blank space.

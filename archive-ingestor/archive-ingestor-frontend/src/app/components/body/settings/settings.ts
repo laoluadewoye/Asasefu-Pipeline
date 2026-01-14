@@ -5,7 +5,7 @@ import { ArchiveSessionGetService } from '../../../services/archive-session-get'
 import { ArchiveParseChapterService } from '../../../services/archive-parse-chapter';
 import { ArchiveParseStoryService } from '../../../services/archive-parse-story';
 import { ArchiveServerRequestData } from '../../../models/archive-server-request-data';
-import { catchError, Subscription } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 import { ArchiveServerResponseData } from '../../../models/archive-server-response-data';
 import { Progress } from "./progress/progress";
 
@@ -126,13 +126,19 @@ export class Settings implements OnInit {
                 catchError((err) => {
                     this.callParseError.set("Archive Parse Chapter Service encountered an error.");
                     this.enableSettingsForm();
-                    throw err;
+                    let errorMessage = new ArchiveServerResponseData();
+                    errorMessage.responseMessage = "Error occured.";
+                    return of(errorMessage);
                 })
             ).subscribe((result) => {
                 this.latestResponse.set(result);
                 badParseResult = false;
                 if (result.sessionException) {
                     this.callParseError.set("Archive Parse Chapter Service reported a bad request.");
+                    this.enableSettingsForm();
+                    badParseResult = true;
+                }
+                else if (result.responseMessage === "Error occured.") {
                     this.enableSettingsForm();
                     badParseResult = true;
                 }
@@ -143,13 +149,19 @@ export class Settings implements OnInit {
                 catchError((err) => {
                     this.callParseError.set("Archive Parse Story Service encountered an error.");
                     this.enableSettingsForm();
-                    throw err;
+                    let errorMessage = new ArchiveServerResponseData();
+                    errorMessage.responseMessage = "Error occured.";
+                    return of(errorMessage);
                 })
             ).subscribe((result) => {
                 this.latestResponse.set(result);
                 badParseResult = false;
                 if (result.sessionException) {
                     this.callParseError.set("Archive Parse Story Service reported a bad request.");
+                    this.enableSettingsForm();
+                    badParseResult = true;
+                }
+                else if (result.responseMessage === "Error occured.") {
                     this.enableSettingsForm();
                     badParseResult = true;
                 }
@@ -213,7 +225,6 @@ export class Settings implements OnInit {
             this.callParse();
         }
         catch (err) {
-            console.log(err);
             this.callParseError.set("General parser logic encountered an error.");
             this.enableSettingsForm();
         }

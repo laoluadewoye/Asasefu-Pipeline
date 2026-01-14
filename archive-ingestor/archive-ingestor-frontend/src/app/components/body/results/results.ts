@@ -5,7 +5,7 @@ import { ArchiveChapterData } from '../../../models/archive-chapter-data';
 import { ArchiveSessionData } from '../../../models/archive-session-data';
 import { ArchiveCompletedSession } from '../../../models/archive-completed-session';
 import { ArchiveSessionGetService } from '../../../services/archive-session-get';
-import { catchError } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { StoryMetadata } from './story-metadata/story-metadata';
 import { Chapter } from './chapter/chapter';
 import { Session } from "./session/session";
@@ -197,12 +197,18 @@ export class Results implements OnChanges {
                 // Call the service if needed
                 this.archiveSessionGetService.getSessionInformation(sessionId).pipe(
                     catchError((err) => {
-                        throw err;
+                        let errorMessage = new ArchiveServerResponseData();
+                        errorMessage.responseMessage = "Error occured.";
+                        return of(errorMessage);
                     })
                 ).subscribe((result) => {
-                    this.responseCache.set(sessionId, result);
-
-                    this.addNewCompletedSession(result);
+                    if (result.responseMessage !== "Error occured.") {
+                        this.responseCache.set(sessionId, result);
+                        this.addNewCompletedSession(result);
+                    }
+                    else {
+                        console.log("Error occured when getting information for " + sessionId);
+                    }
                     gsiFinished[index] = true;
                 });
             }

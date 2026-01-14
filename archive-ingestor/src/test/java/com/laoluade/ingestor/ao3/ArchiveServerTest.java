@@ -66,12 +66,18 @@ public class ArchiveServerTest {
      */
     private static ArchiveMessageService testMessageService;
 
-    // TODO: Check if including dynamic components would affect test success
     // Test values to check and use
     /**
-     * <p>This test attribute is used to hold the tag names for Angular components.</p>
+     * <p>This test attribute is used to hold the tag names for expected Angular components when first opening the HTML.</p>
      */
     private static final ArrayList<String> expectedComponents = new ArrayList<>(Arrays.asList(
+            "app-root", "app-header", "app-body", "app-tester", "app-settings", "app-results", "app-footer"
+    ));
+
+    /**
+     * <p>This test attribute is used to hold the tag names for all Angular components.</p>
+     */
+    private static final ArrayList<String> allComponents = new ArrayList<>(Arrays.asList(
             "app-root", "app-header", "app-body", "app-tester", "app-settings", "app-progress", "app-results",
             "app-session", "app-story", "app-story-metadata", "app-chapter", "app-comments", "app-comment-thread",
             "app-output-icons", "app-output-list",
@@ -252,11 +258,11 @@ public class ArchiveServerTest {
         ArchiveServerSpecData testSpecInstance = new ObjectMapper().readValue(testBasicString, ArchiveServerSpecData.class);
 
         Assertions.assertEquals(
-                "0.1", testSpecInstance.getArchiveIngestorVersion(),
+                "0.3.1", testSpecInstance.getArchiveIngestorVersion(),
                 "Mock Server returned incorrect archive ingestor version from /api/v1/spec."
         );
         Assertions.assertEquals(
-                "otwarchive v0.9.451.1", testSpecInstance.getLatestOTWArchiveVersion(),
+                "otwarchive v0.9.452.1", testSpecInstance.getLatestOTWArchiveVersion(),
                 "Mock Server returned incorrect OTWArchive version from /api/v1/spec."
         );
     }

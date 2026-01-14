@@ -14,7 +14,7 @@
  * </ul>
  * <p>The server application is entered into from the <code>ArchiveServer</code> top-level class.</p>
  * @author Laolu Ade
- * @version 0.3
+ * @version 0.3.1
  * @since OpenJDK 25.0.1
  */
 package com.laoluade.ingestor.ao3;

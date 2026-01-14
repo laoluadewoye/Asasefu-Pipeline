@@ -1,7 +1,7 @@
 import { Component, inject, input, InputSignal, OnChanges, signal, SimpleChanges, WritableSignal } from '@angular/core';
 import { ArchiveServerResponseData } from '../../../../models/archive-server-response-data';
 import { ArchiveSessionCancelService } from '../../../../services/archive-session-cancel';
-import { catchError } from 'rxjs';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-progress',
@@ -21,7 +21,12 @@ export class Progress implements OnChanges {
     parentDefaultTimeoutMilli: InputSignal<number> = input.required<number>();
 
     trimString(s: string): string {
-        return (s.length > this.textLimit) ? s.substring(0, this.textLimit) + "..." : s;
+        if (s) {
+            return (s.length > this.textLimit) ? s.substring(0, this.textLimit) + "..." : s;
+        }
+        else {
+            return "";
+        }
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -37,12 +42,17 @@ export class Progress implements OnChanges {
     onProgressButtonClick() {
         this.archiveServerCancelService.getCancelSessionResponse(this.currentResponse().sessionId).pipe(
             catchError((err) => {
-                console.log(err);
-                throw err;
+                let errorMessage = new ArchiveServerResponseData();
+                errorMessage.responseMessage = "Error occured.";
+                return of(errorMessage);
             })
         ).subscribe((result) => {
-            console.log(result);
-            this.cancelResponseMessage.set(result.responseMessage);
+            if (result.responseMessage !== "Error occured.") {
+                this.cancelResponseMessage.set(result.responseMessage);
+            }
+            else {
+                console.log("Error occured when canceling session.");
+            }
         });
 
         setTimeout(() => {

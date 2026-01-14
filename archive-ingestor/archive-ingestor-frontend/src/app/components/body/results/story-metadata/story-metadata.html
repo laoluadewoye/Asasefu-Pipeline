@@ -177,8 +177,12 @@
                     <h3>Number of Chapters (Current): {{ storyMetadataResultUnit()?.data?.currentChapters }}</h3>
                 </div>
                 <div class="result-unit-subdiv">
-                    <h3>Number of Chapters (Total): {{ storyMetadataResultUnit()?.data?.totalChapters }}</h3>
-                    <h4>Note: A total of negative one means that the total chapter count is to be determined.</h4>
+                    @if (storyMetadataResultUnit()?.data?.totalChapters === -1) {
+                        <h3>Number of Chapters (Total): TBD</h3>
+                    }
+                    @else {
+                        <h3>Number of Chapters (Total): {{ storyMetadataResultUnit()?.data?.totalChapters }}</h3>
+                    }
                 </div>
                 <div class="result-unit-subdiv">
                     <h3>Number of Comments: {{ storyMetadataResultUnit()?.data?.comments }}</h3>

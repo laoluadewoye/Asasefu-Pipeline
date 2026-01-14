@@ -1,7 +1,7 @@
 import { Component, inject, input, InputSignal, OnInit, signal, WritableSignal } from '@angular/core';
 import { ArchiveServerSpecService } from '../../services/archive-server-spec';
 import { ArchiveServerSpecData } from '../../models/archive-server-spec-data';
-import { catchError } from 'rxjs';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-footer',
@@ -27,8 +27,10 @@ export class Footer implements OnInit {
         // Set actual value
         this.archiveServerSpecService.getArchiveServerSpecData().pipe(
             catchError((err) => {
-                console.log(err);
-                throw err;
+                return of(new ArchiveServerSpecData({
+                    archiveIngestorVersion: this.parentDefaultValue(), 
+                    latestOTWArchiveVersion: this.parentDefaultValue()
+                }));
             })
         ).subscribe((result) => {
             this.archiveServerSpecData.set(result);

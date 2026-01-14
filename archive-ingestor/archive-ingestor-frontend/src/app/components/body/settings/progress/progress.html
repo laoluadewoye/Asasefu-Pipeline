@@ -21,7 +21,12 @@
     <p><em><strong>Session Canceled:</strong></em> {{ currentResponse().sessionCanceled }}</p>
     <p><em><strong>Session Exception:</strong></em> {{ currentResponse().sessionException }}</p>
     <p><em><strong>Session Chapters Completed:</strong></em> {{ currentResponse().parseChaptersCompleted }}</p>
-    <p><em><strong>Session Chapters Total:</strong></em> {{ currentResponse().parseChaptersTotal }}</p>
+    @if (currentResponse().parseChaptersTotal === -1) {
+        <p><em><strong>Session Chapters Total:</strong></em> TBD</p>
+    }
+    @else {
+        <p><em><strong>Session Chapters Total:</strong></em> {{ currentResponse().parseChaptersTotal }}</p>
+    }
     <p><em><strong>Session Parse Result:</strong></em> {{ currentParseResult() }}</p>
     <p><em><strong>Session Response Message:</strong></em> {{ currentResponseMessage() }}</p>
     <div class="center-content">
