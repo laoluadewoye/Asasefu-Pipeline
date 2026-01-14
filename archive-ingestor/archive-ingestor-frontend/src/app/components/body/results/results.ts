@@ -66,8 +66,8 @@ export class Results implements OnChanges {
     resultSearch: FormControl =  new FormControl<string>("");
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log("Changes were made to result component");
-        console.log(changes);
+        // console.log("Changes were made to result component");
+        // console.log(changes);
         this.refreshView();
     }
 
@@ -96,9 +96,21 @@ export class Results implements OnChanges {
         }
     }
 
+    endResponseMessageFound(responseMessage: string | undefined) {
+        if (responseMessage) {
+            return this.endResponseMessagePhrases.filter(
+                (phrase) => responseMessage.includes(phrase)
+            ).length > 0;
+        }
+        else {
+            return false;
+        }
+    }
+
     async createNewCompletedSession(response: ArchiveServerResponseData) {
         // Create a new completed session
         let newOutcome: string;
+        let newOutcomeFromServer: boolean = true;
         if (response.sessionFinished) {
             newOutcome = "Finished";
         }
@@ -110,6 +122,7 @@ export class Results implements OnChanges {
         }
         else {
             newOutcome = "Unexpected Error: No completion flag set.";
+            newOutcomeFromServer = false;
         }
 
         let newSessionData: ArchiveSessionData = new ArchiveSessionData();
@@ -124,11 +137,15 @@ export class Results implements OnChanges {
             newSessionData.data = undefined;
         }
 
-        if (newSessionData.data === undefined) {
-            newSessionData.outcome = newSessionData.outcome + " Unexpected Error: Parse result failed.";
+        if (newOutcomeFromServer && this.endResponseMessageFound(response.responseMessage)) {
+            newSessionData.outcome = newSessionData.outcome + " - " + response.responseMessage;
         }
-        console.log(newSessionData.outcome);
-        console.log(newSessionData.outcome);
+        else if (newOutcomeFromServer) {
+            newSessionData.outcome = newSessionData.outcome + " - Please click the 'Refresh View' button to see final result message.";
+        }
+        else {
+            newSessionData.outcome = newSessionData.outcome + " - Unexpected Error: Parse result failed.";
+        }
 
         // Do this funky hashing because node:crypto isn't allowed
         let hashInput = new TextEncoder().encode(
@@ -164,18 +181,6 @@ export class Results implements OnChanges {
 
             // Add session id to sessions to address later
             this.unaddressedUpdatedSessions.push(newCompletedSession.data.id);
-            console.log(`Added ${newCompletedSession.data.id} to unaddressedUpdatedSessions.`);
-        }
-    }
-
-    endResponseMessageFound(responseMessage: string | undefined) {
-        if (responseMessage) {
-            return this.endResponseMessagePhrases.filter(
-                (phrase) => responseMessage.includes(phrase)
-            ).length > 0;
-        }
-        else {
-            return false;
         }
     }
 
@@ -192,13 +197,10 @@ export class Results implements OnChanges {
                 // Call the service if needed
                 this.archiveSessionGetService.getSessionInformation(sessionId).pipe(
                     catchError((err) => {
-                        console.log(err);
                         throw err;
                     })
                 ).subscribe((result) => {
                     this.responseCache.set(sessionId, result);
-                    console.log(`Added ${sessionId} to unaddressedUpdatedSessions.`);
-                    console.log(this.responseCache.get(sessionId));
 
                     this.addNewCompletedSession(result);
                     gsiFinished[index] = true;
@@ -259,8 +261,6 @@ export class Results implements OnChanges {
 
         // Empty the array
         this.unaddressedUpdatedSessions = [];
-        console.log("Cleared unaddressedUpdatedSessions.");
-        console.log(this.unaddressedUpdatedSessions);
 
         // Refresh completed session data
         await this.refreshCompletedSessionMap();
@@ -275,14 +275,8 @@ export class Results implements OnChanges {
             if (correlatedHash !== undefined) {
                 completedSession = this.completedSessionMap().get(correlatedHash);
             }
-            console.log(`Got ${sessionId} from completedSessionMap.`);
-            console.log(correlatedHash);
-            console.log(completedSession);
-            console.log(completedSession?.data.data);
 
             let metadataAndChapters = this.getMetadataAndChapters(completedSession);
-            console.log(`Got ${sessionId}'s metadata and chapters.`);
-            console.log(metadataAndChapters);
             
             // Update management maps
             let isArchiveStoryData: boolean = metadataAndChapters.storyOrChapter instanceof ArchiveStoryData;
@@ -303,11 +297,6 @@ export class Results implements OnChanges {
                 
                 this.chapterMap.set(cm);
             }
-            console.log(`Updated management maps with ${sessionId}'s metadata and chapters.`);
-            console.log(this.storyMetadataMap());
-            console.log(this.latestStoryMetadataUnit());
-            console.log(this.latestChapterUnit());
-            console.log(this.chapterMap());
         });
 
         this.isRefreshing.set(false);

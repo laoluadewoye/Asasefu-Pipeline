@@ -15,15 +15,15 @@
             <p>Session had an exception.</p>
         </div>
     }
-    <p>Session ID: {{ currentResponse().sessionId }}</p>
-    <p>Session Nickname: {{ currentResponse().sessionNickname }}</p>
-    <p>Session Finished: {{ currentResponse().sessionFinished }}</p>
-    <p>Session Canceled: {{ currentResponse().sessionCanceled }}</p>
-    <p>Session Exception: {{ currentResponse().sessionException }}</p>
-    <p>Session Chapters Completed: {{ currentResponse().parseChaptersCompleted }}</p>
-    <p>Session Chapters Total: {{ currentResponse().parseChaptersTotal }}</p>
-    <p>Session Parse Result: {{ currentParseResult() }}</p>
-    <p>Session Response Message: {{ currentResponseMessage() }}</p>
+    <p><em><strong>Session ID:</strong></em> {{ currentResponse().sessionId }}</p>
+    <p><em><strong>Session Nickname:</strong></em> {{ currentResponse().sessionNickname }}</p>
+    <p><em><strong>Session Finished:</strong></em> {{ currentResponse().sessionFinished }}</p>
+    <p><em><strong>Session Canceled:</strong></em> {{ currentResponse().sessionCanceled }}</p>
+    <p><em><strong>Session Exception:</strong></em> {{ currentResponse().sessionException }}</p>
+    <p><em><strong>Session Chapters Completed:</strong></em> {{ currentResponse().parseChaptersCompleted }}</p>
+    <p><em><strong>Session Chapters Total:</strong></em> {{ currentResponse().parseChaptersTotal }}</p>
+    <p><em><strong>Session Parse Result:</strong></em> {{ currentParseResult() }}</p>
+    <p><em><strong>Session Response Message:</strong></em> {{ currentResponseMessage() }}</p>
     <div class="center-content">
         <button class="button-padding" (click)="onProgressButtonClick()">Cancel Parse Session</button>
     </div>

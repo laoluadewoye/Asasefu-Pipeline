@@ -127,15 +127,27 @@ public class ArchiveService {
 
         // Check if request passed inspection
         if (pageLink.isEmpty()) {
-            return new ArchiveServerResponseData(this.messageService.getResponseBadURLFormat());
+            ArchiveServerResponseData badRequestResponse = new ArchiveServerResponseData(
+                    this.messageService.getResponseBadURLFormat()
+            );
+            badRequestResponse.setSessionException(true);
+            return badRequestResponse;
         }
         if (request.isNicknameSent() && sessionNickname.isEmpty()) {
-            return new ArchiveServerResponseData(this.messageService.getResponseBadNicknameFormat());
+            ArchiveServerResponseData badRequestResponse = new ArchiveServerResponseData(
+                    this.messageService.getResponseBadNicknameFormat()
+            );
+            badRequestResponse.setSessionException(true);
+            return badRequestResponse;
         }
 
         // Check if a chapter-specific link was sent for story parsing
         if (pageLink.contains("chapters") && parseType.equals(ArchiveParseType.STORY)) {
-            return new ArchiveServerResponseData(this.messageService.getResponseBadStoryLink());
+            ArchiveServerResponseData badRequestResponse = new ArchiveServerResponseData(
+                    this.messageService.getResponseBadStoryLink()
+            );
+            badRequestResponse.setSessionException(true);
+            return badRequestResponse;
         }
 
         // Create a session ID

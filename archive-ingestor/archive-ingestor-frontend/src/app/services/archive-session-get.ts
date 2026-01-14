@@ -26,10 +26,10 @@ export class ArchiveSessionGetService {
         
         // Configure STOMP subject
         this.stompSubject.subscribe({
-            next: (result) => {
-                console.log("Processing result for " + result.sessionId);
-                console.log(result);
-            },
+            // next: (result) => {
+            //     console.log("Processing result for " + result.sessionId);
+            //     console.log(result);
+            // },
             error: (err) => {
                 console.log("Processing error for " + err.sessionId);
                 console.log(err);
@@ -64,7 +64,7 @@ export class ArchiveSessionGetService {
             this.stompClient.configure({
                 brokerURL: `ws://localhost:${stompConfig.port}${stompConfig.endpointURL}`,
                 reconnectDelay: 0,
-                debug: (msg) => console.log(new Date(), msg)
+                // debug: (msg) => console.log(new Date(), msg)
             });
             this.stompClient.activate();
 
@@ -82,6 +82,6 @@ export class ArchiveSessionGetService {
     }
 
     unsubscribeFromStomp() {
-        this.stompSubscription.unsubscribe();
+        if (this.stompSubscription) this.stompSubscription.unsubscribe();
     }
 }

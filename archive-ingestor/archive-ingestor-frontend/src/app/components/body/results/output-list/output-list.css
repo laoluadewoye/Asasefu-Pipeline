@@ -2,3 +2,7 @@ h3 {
     color: var(--theme-red-color);
     padding-top: var(--default-distance);
 }
+
+p, ul {
+    margin-inline: var(--default-distance);
+}

@@ -56,22 +56,39 @@ button:hover {
 
 #result-div-menu {
     margin-top: var(--default-distance);
-    margin-inline: var(--default-distance);
     display: flex;
     justify-items: center;
-}
 
-#result-div-menu div {
-    transition: var(--transition-seconds);
-}
+    div {
+        transition: var(--transition-seconds);
+        h3 {
+            margin-inline: var(--half-default-distance);
+        }
+    }
 
-#result-div-menu div:hover {
-    background-color: var(--theme-red-color);
-    h3, h4 {
-        color: var(--theme-white-color);
+    div:hover {
+        background-color: var(--theme-red-color);
+        h3 {
+            color: var(--theme-white-color);
+        }
     }
 }
 
 #result-div-content {
     margin-inline: var(--default-distance);
+}
+
+@media (max-width: 800px) {
+    #result-search {
+        flex-direction: column;
+        margin-inline: var(--button-distance);
+
+        label {
+            text-wrap-mode: wrap;
+        }
+
+        input {
+            margin-top: var(--half-default-distance);
+        }
+    }
 }

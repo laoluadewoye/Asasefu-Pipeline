@@ -10,6 +10,7 @@ h3 {
 span {
     display: flex;
     align-items: center;
+    margin-inline: var(--default-distance);
 }
 
 #settings-parsing-radio {
@@ -88,5 +89,16 @@ label {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@media (max-width: 800px) {
+    span {
+        flex-direction: column;
+        margin-inline: var(--button-distance);
+    }
+
+    #settings-div-advanced {
+        margin-left: auto;
     }
 }

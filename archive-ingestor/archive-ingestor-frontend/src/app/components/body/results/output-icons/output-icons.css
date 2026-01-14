@@ -1,6 +1,6 @@
 img {
     padding: var(--default-distance);
-    margin-left: var(--half-default-distance);
+    margin-inline: var(--half-default-distance);
     border-radius: var(--default-border-radius);
 
     transition: var(--transition-seconds);

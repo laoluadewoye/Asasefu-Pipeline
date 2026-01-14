@@ -28,7 +28,7 @@ button:hover {
     background-color: var(--theme-white-color);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   nav {
     flex-direction: column;
   }

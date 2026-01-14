@@ -11,15 +11,29 @@
             <span>
                 <h3>Parsing Method (Required):</h3>
                 <div id="parseType-radio">
-                    <input type="radio" id="parseType-chapter" name="parseType" value="chapter" formControlName="parseType">
+                    <input 
+                        type="radio" 
+                        id="parseType-chapter" 
+                        name="parseType" 
+                        value="chapter" 
+                        formControlName="parseType"
+                        (change)="checkParseTypeLinkCombo()"
+                    >
                     <label for="parseType-chapter">Chapter</label>
-                    <input type="radio" id="parseType-story" name="parseType" value="story" formControlName="parseType">
+                    <input 
+                        type="radio" 
+                        id="parseType-story" 
+                        name="parseType" 
+                        value="story" 
+                        formControlName="parseType"
+                        (change)="checkParseTypeLinkCombo()"
+                    >
                     <label for="parseType-story">Story</label>
                 </div>
             </span>
 
             <!--Parsing Link-->
-            @if (settingsFormGroup.get('parseLink')?.dirty && settingsFormGroup.get('parseLink')?.invalid) {
+            @if (settingsFormGroup.get('parseLink')?.dirty && (settingsFormGroup.get('parseLink')?.invalid || chapterLinkOnStoryParse())) {
                 <div class="error fade-in" animate.leave="fade-out">
                     <p>
                         Error: The typed/copied link cannot be used. Please look at the instructions above and try again.
@@ -29,7 +43,7 @@
             }
             <span>
                 <label for="parseLink"><h3>Chapter or Story Link (Required):</h3></label>
-                <input type="text" id="parseLink" name="parseLink" formControlName="parseLink">
+                <input type="text" id="parseLink" name="parseLink" formControlName="parseLink" (input)="checkParseTypeLinkCombo()">
             </span>
 
             <!--Parsing Nickname-->
@@ -122,8 +136,8 @@
             @if (!isDisabled()) {
                 <div class="center-content">
                     <input 
-                        [class.dimming-layer]="settingsFormGroup.invalid" 
-                        [disabled]="settingsFormGroup.invalid" 
+                        [class.dimming-layer]="settingsFormGroup.invalid || chapterLinkOnStoryParse()" 
+                        [disabled]="settingsFormGroup.invalid || chapterLinkOnStoryParse()" 
                         type="submit" 
                         value="Start Parsing"
                     >

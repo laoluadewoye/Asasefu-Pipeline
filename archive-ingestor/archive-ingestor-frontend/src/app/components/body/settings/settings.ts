@@ -31,6 +31,7 @@ export class Settings implements OnInit {
         parseMaxKudosPageLimit: new FormControl<number>(3, {nonNullable: true}),
         parseMaxBookmarkPageLimit: new FormControl<number>(3, {nonNullable: true}),
     });
+    chapterLinkOnStoryParse: WritableSignal<boolean> = signal<boolean>(true);
 
     // Services
     archiveParseChapterService: ArchiveParseChapterService = inject(ArchiveParseChapterService);
@@ -77,6 +78,19 @@ export class Settings implements OnInit {
         }
     }
 
+    checkParseTypeLinkCombo() {
+        let curParseType: string = this.settingsFormGroup.get('parseType')?.value;
+        let curParseLink: string = this.settingsFormGroup.get('parseLink')?.value;
+
+        if (curParseType === 'story') {
+            this.chapterLinkOnStoryParse.set(curParseType === 'story' && curParseLink.includes('chapter'));
+        }
+        else {
+            this.chapterLinkOnStoryParse.set(false);
+            this.settingsFormGroup.get('parseLink')?.updateValueAndValidity();
+        }
+    }
+
     disableSettingsForm() {
         this.isDisabled.set(true);
         this.settingsFormGroup.disable();
@@ -106,6 +120,7 @@ export class Settings implements OnInit {
         newArchiveServerRequest.maxBookmarkPageLimit = this.settingsFormGroup.get('parseMaxBookmarkPageLimit')?.value;
         
         // Get confirmation response
+        let badParseResult: boolean | undefined = undefined;
         if (this.settingsFormGroup.get('parseType')?.value === "chapter") {
             this.archiveParseChapterService.postParseChapterRequest(newArchiveServerRequest).pipe(
                 catchError((err) => {
@@ -113,7 +128,15 @@ export class Settings implements OnInit {
                     this.enableSettingsForm();
                     throw err;
                 })
-            ).subscribe((result) => this.latestResponse.set(result));
+            ).subscribe((result) => {
+                this.latestResponse.set(result);
+                badParseResult = false;
+                if (result.sessionException) {
+                    this.callParseError.set("Archive Parse Chapter Service reported a bad request.");
+                    this.enableSettingsForm();
+                    badParseResult = true;
+                }
+            });
         }
         else if (this.settingsFormGroup.get('parseType')?.value === "story") {
             this.archiveParseStoryService.postParseStoryRequest(newArchiveServerRequest).pipe(
@@ -122,17 +145,26 @@ export class Settings implements OnInit {
                     this.enableSettingsForm();
                     throw err;
                 })
-            ).subscribe((result) => this.latestResponse.set(result));
+            ).subscribe((result) => {
+                this.latestResponse.set(result);
+                badParseResult = false;
+                if (result.sessionException) {
+                    this.callParseError.set("Archive Parse Story Service reported a bad request.");
+                    this.enableSettingsForm();
+                    badParseResult = true;
+                }
+            });
         }
         else {
-            throw new TypeError("Bad type of parseType.");
+            this.callParseError.set("No parse type was selected in the settings menu.");
+            this.enableSettingsForm();
         }
 
         // Wait for confirmation response
         let waitingForResponse: boolean = true;
         while (waitingForResponse) {
             await new Promise(resolve => setTimeout(resolve, this.parentDefaultServiceWaitMilli()));
-            waitingForResponse = lastSessionId === this.latestResponse().sessionId;
+            waitingForResponse = lastSessionId === this.latestResponse().sessionId || badParseResult === undefined;
         }
 
         // Monitor session
@@ -163,7 +195,7 @@ export class Settings implements OnInit {
             let sE: boolean = this.latestResponse().sessionException;
 
             // Manually end the session if any flag set
-            if (sF || sC || sE) {
+            if (sF || sC || sE || badParseResult === true) {
                 this.getLatestSubscription.unsubscribe();
                 this.archiveSessionGetService.unsubscribeFromStomp();
                 this.sessionComplete.emit(this.curSessionId());

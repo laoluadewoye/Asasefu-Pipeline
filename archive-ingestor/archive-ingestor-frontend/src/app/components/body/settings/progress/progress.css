@@ -4,6 +4,11 @@ h2 {
 
 p {
     padding-inline: var(--half-default-distance);
+    word-break: break-all;
+}
+
+strong {
+    color: var(--theme-white-color);
 }
 
 button {

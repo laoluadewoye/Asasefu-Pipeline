@@ -133,7 +133,6 @@ button {
     border-color: var(--theme-black-color);
     border-style: solid;
     border-width: calc(var(--half-default-distance) / 4);
-    padding-left: var(--default-distance);
     position: relative;
     overflow-wrap: break-word;
 
@@ -142,16 +141,29 @@ button {
         padding-top: var(--default-distance);
         text-align: left;
     }
+
+    h3, h4, p {
+        margin-inline: var(--default-distance);
+    }
 }
 
 .result-unit-subdiv {
     margin-left: calc(var(--default-distance) * 2);
 }
 
-
 .outputs {
     position: absolute;
     right: var(--half-default-distance);
     top: var(--half-default-distance);
     align-items: center;
+}
+
+@media (max-width: 800px) {
+    .outputs {
+        position: relative;
+        right: auto;
+        top: auto;
+        display: flex;
+        justify-content: center;
+    }
 }

@@ -1,3 +1,7 @@
+p {
+    margin-inline: var(--button-distance);
+}
+
 button {
     background-color: var(--theme-red-color);
     color: var(--theme-white-color);

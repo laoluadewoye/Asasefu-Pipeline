@@ -1,8 +1,15 @@
+p, ol {
+    word-wrap: break-word;
+    margin-inline: var(--default-distance);
+}
+
 nav {
     display: flex;
+    justify-content: center;
     justify-self: center;
     flex-wrap: wrap;
     gap: var(--default-distance);
+    margin-inline: var(--button-distance);
 }
 
 a {
@@ -22,4 +29,10 @@ a:hover {
 button:hover {
     background-color: var(--theme-white-color);
     color: var(--theme-red-color);
+}
+
+@media (max-width: 800px) {
+    .center-content {
+        margin-inline: var(--button-distance);
+    }
 }
