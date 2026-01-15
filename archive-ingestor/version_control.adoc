@@ -2,7 +2,9 @@
 
 Latest Version: 0.3.1
 
-Note: Update ArchiveIngestor class, package-info, pom.xml, and version table when updating this value.
+docker.io/laoluade/archive-ingestor:0.3.1
+
+Note: Update ArchiveIngestor class and version table, package-info, pom.xml, docker file, and docker compose file when updating this value.
 
 === Changelog
 
@@ -18,6 +20,8 @@ a| * Updated Angular settings to run a proxy during development.
 * Improved front-end CSS to make application more user-friendly.
 * Re-enabled prerendering and server-side rendering options during build process and fixed the bug preventing that earlier.
 * Updated elements that display the total chapter count by making them display a TBD in place of a -1.
+* Created a docker image and docker compose file using the selenium/hub:4.39.0 and selenium/node-chrome:143.0-20251212 images.
+* Updated web page title and favicon.
 
 |Version 0.3
 a| * Updated ArchiveIngestor.filterText() to ignore bolded text and blank space.

@@ -1,0 +1,26 @@
+name: "archive-ingestor-compose"
+services:
+    selenium-grid:
+        image: selenium/hub:4.39.0
+        ports:
+            - "4442:4442"
+            - "4443:4443"
+            - "4444:4444"
+    selenium-node:
+        image: selenium/node-chrome:143.0-20251212
+        shm_size: 2g
+        depends_on:
+            - selenium-grid
+        environment:
+            - SE_EVENT_BUS_HOST=selenium-grid
+            - SE_EVENT_BUS_PUBLISH_PORT=4442
+            - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+            - SE_NODE_SESSION_TIMEOUT=30
+    archive-ingestor:
+        image: docker.io/laoluade/archive-ingestor:0.3.1
+        depends_on:
+            - selenium-grid
+        ports:
+            - "8080:8080"
+        command:
+            - "--archiveServer.driver.socket=http://selenium-grid:4444"

@@ -162,4 +162,6 @@ These settings are made available in the JVM that runs this application. To chan
 
 == Usage
 
-(Finish this later)
+The simplest way to use this image is by using the Docker Compose configuration file located in this repository. To do this, you will first need to install Docker or Podman (On Windows, this may involve downloading Docker/Podman Desktop). Once you have downloaded the app, open a command line terminal and navigate to the folder of this project (the one containing the repo). Lastly, just run the compose command, such as `docker compose up -d`, to run the docker compose configuration. It will let you know that it is up and running, and you should be able to access the application by going to `localhost:8080` in your web browser.
+
+Feel free to also use the classes in this project if you want to create your own kind of parser or something. All I ask is that you give credit and also share your stuff to keep things open.
