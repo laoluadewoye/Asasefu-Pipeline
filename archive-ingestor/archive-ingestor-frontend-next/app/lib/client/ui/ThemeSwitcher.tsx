@@ -1,13 +1,16 @@
 "use client"
 
-import { DARK, getThemeColors, LIGHT } from "../lib/client/theme";
-import { RedisResponse, ThemeColors } from "../lib/client/schema";
+import { DARK, getThemeColors, LIGHT } from "../theme";
+import { RedisResponse, ThemeColors } from "../schema";
 import { Dispatch, SetStateAction } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ThemeSwitcher(
     {currentTheme, setCurrentTheme}: 
     {currentTheme: string, setCurrentTheme: Dispatch<SetStateAction<string>>}
 ) {
+    const router = useRouter();
+    
     // Get current colors
     const currentThemeColors: ThemeColors = getThemeColors(DARK);
 
@@ -16,6 +19,7 @@ export default function ThemeSwitcher(
         fetch("/api/v1/get-current-theme").then((res) => res.json()).then((res: RedisResponse) => {
             let t = res.response;
             t ? setCurrentTheme(t) : setCurrentTheme(LIGHT);
+            router.refresh();
         });
     }
 

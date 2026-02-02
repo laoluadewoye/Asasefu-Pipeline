@@ -1,12 +1,11 @@
-"use client"
+import { ThemeColors } from "./lib/server/schema";
+import { getThemeColors, LIGHT } from "./lib/server/theme";
+import { getCurrentTheme } from "./lib/server/redis";
 
-import { useContext } from "react";
-import { ThemeColors } from "./lib/client/schema";
-import { getThemeColors, ThemeContext } from "./lib/client/theme";
-
-export default function Page() {
+export default async function Page() {
     // Get current colors
-    const currentThemeColors: ThemeColors = getThemeColors(useContext(ThemeContext));
+    const currentTheme = await getCurrentTheme();
+    const currentThemeColors: ThemeColors = currentTheme ? getThemeColors(currentTheme) : getThemeColors(LIGHT);
 
     return (
         <div id="home" className={`${currentThemeColors.mainBgColor} ${currentThemeColors.mainTextColor}`}>Hello Index</div>

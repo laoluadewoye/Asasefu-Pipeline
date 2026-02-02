@@ -39,4 +39,4 @@ export function getThemeColors(theme: string): ThemeColors {
     return theme === DARK ? darkTheme : lightTheme;
 }
 
-export const ThemeContext: Context<string> = createContext<string>(LIGHT); 
+export const ClientThemeContext: Context<string> = createContext<string>(LIGHT);

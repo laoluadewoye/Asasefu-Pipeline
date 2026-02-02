@@ -4,10 +4,6 @@ const redisClient = await createClient().on(
     "error", (err) => console.log("Redis Client Error", err)
 ).connect();
 
-export interface RedisResponse {
-    response: string | null;
-}
-
 export async function setThemeDark(): Promise<string | null> {
     let result: string | null = await redisClient.SET("theme", "dark");
     return result;

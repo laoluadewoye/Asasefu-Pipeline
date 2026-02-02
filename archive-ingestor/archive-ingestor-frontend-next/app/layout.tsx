@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "./ui/Header";
-import ThemedBody from "./ui/ThemedBody";
+import Header from "./lib/server/ui/Header";
+import ThemedClientWrapper from "./lib/client/ui/ThemedClientWrapper";
 
 export const metadata: Metadata = {
     title: { default: "Archive Ingestor", template: "%s | Archive Ingestor" },
@@ -12,7 +12,9 @@ export default function RootLayout({children,}: Readonly<{children: React.ReactN
         <html lang="en">
             <body className="antialiased">
                 <Header />
-                <ThemedBody>{children}</ThemedBody>
+                <ThemedClientWrapper>
+                    {children}
+                </ThemedClientWrapper>
                 {/*Add a footer here*/}
             </body>
         </html>
