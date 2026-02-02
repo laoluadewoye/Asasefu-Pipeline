@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "./lib/server/ui/Header";
+import Footer from "./lib/server/ui/Footer";
 import ThemedClientWrapper from "./lib/client/ui/ThemedClientWrapper";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default function RootLayout({children,}: Readonly<{children: React.ReactN
                 <ThemedClientWrapper>
                     {children}
                 </ThemedClientWrapper>
-                {/*Add a footer here*/}
+                <Footer />
             </body>
         </html>
     );

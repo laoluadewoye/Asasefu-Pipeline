@@ -4,28 +4,29 @@
 :root {
     --h1-font-size: 2rem;
     --h2-font-size: 1.5rem;
+    --h3-font-size: 1.25rem;
 
     --button-padding: 0.5rem;
     --button-border-radius: 25px;
 
-    --header-padding: 1rem;
+    --div-padding: 1rem;
+    --text-block-margin: 1rem;
 
     --default-duration: 0.3s;
 
     @media (min-width: 600px) {
         --h1-font-size: 4rem;
         --h2-font-size: 2rem;
+        --h3-font-size: 1.5rem;
     }
 }
 
 /* Elements */
-button {
-    padding: var(--button-padding);
-    border-radius: var(--button-border-radius);
-    font-size: 1rem;
-} 
+div {
+    padding: var(--div-padding);
+}
 
-h1, h2, span {
+h1, h2, h3, span {
     justify-self: center;
     text-align: center; 
 }
@@ -38,6 +39,10 @@ h2 {
     font-size: var(--h2-font-size);
 }
 
+h3 {
+    font-size: var(--h3-font-size);
+}
+
 span {
     width: 100%;
     display: flex;
@@ -45,12 +50,24 @@ span {
     flex-wrap: wrap;
 }
 
-/* IDs */
-#header {
-    padding: var(--header-padding); 
+button {
+    padding: var(--button-padding);
+    border-radius: var(--button-border-radius);
+    font-size: 1rem;
+}
 
+ul {
+    margin-left: var(--text-block-margin);
+}
+
+li {
+    list-style-type: disc;
+}
+
+/* IDs */
+#header, #footer {
     a {
-        outline-style: solid;
+        outline-style: solid; 
         padding: var(--button-padding);
         flex-grow: 1;
         transition-duration: var(--default-duration);
@@ -61,14 +78,72 @@ span {
     }
 }
 
+#footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    p, a {
+        margin-block: var(--text-block-margin);
+    }
+
+    a {
+        text-wrap-mode: nowrap;
+        border-radius: var(--button-border-radius);
+        text-align: center;
+    }
+
+    #footer-main {
+        padding: 0rem;
+    }
+
+    #footer-links {
+        padding-block: 0rem; 
+        display: flex;
+        width: 70%; 
+        flex-direction: column;
+    }
+
+    @media (min-width: 600px) {
+        flex-direction: row;
+
+        a {
+            border-radius: 0px; 
+            margin-block: 0rem;
+        }
+
+        #footer-links {
+            justify-content: space-evenly;
+        }
+    }
+}
+
+#themed-body {
+    padding: 0rem;
+    position: relative;
+}
+
 #theme-switcher {
-    position: fixed;
+    position: fixed; 
     bottom: 1rem;
     right: 1rem;
-    opacity: 0.2;
-    transition-duration: var(--default-duration); 
+    opacity: 0.75; 
+    transition-duration: var(--default-duration);
+
+    @media (min-width: 600px) {
+        position: absolute;
+        bottom: auto;
+        top: 1rem;
+        opacity: 0.5;
+    }
 }
 
 #theme-switcher:hover {
     opacity: 1;
+}
+
+#eula {
+    p {
+        margin-block: var(--text-block-margin);
+    }
 }
