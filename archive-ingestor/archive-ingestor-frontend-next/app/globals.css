@@ -10,6 +10,8 @@
 
     --header-padding: 1rem;
 
+    --default-duration: 0.3s;
+
     @media (min-width: 600px) {
         --h1-font-size: 4rem;
         --h2-font-size: 2rem;
@@ -41,16 +43,22 @@ span {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-
-    button {
-        margin-inline: 1rem;
-        margin-block: 0.5rem;
-    } 
 }
 
 /* IDs */
 #header {
     padding: var(--header-padding); 
+
+    a {
+        outline-style: solid;
+        padding: var(--button-padding);
+        flex-grow: 1;
+        transition-duration: var(--default-duration);
+    }
+
+    a:hover {
+        background-color: white;
+    }
 }
 
 #theme-switcher {
@@ -58,7 +66,7 @@ span {
     bottom: 1rem;
     right: 1rem;
     opacity: 0.2;
-    transition-duration: 0.3s;
+    transition-duration: var(--default-duration); 
 }
 
 #theme-switcher:hover {

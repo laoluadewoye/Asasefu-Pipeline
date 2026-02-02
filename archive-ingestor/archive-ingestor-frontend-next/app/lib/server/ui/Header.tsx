@@ -1,33 +1,21 @@
 import Link from "next/link";
-import { headerBgColor, headerBtnBgColor, headerbtnTextColor, headerTextColor, ThemeTitleFont, ThemePrimaryFont } from "../theme"
+import { ThemeTitleFont, ThemePrimaryFont, headerBgColor, headerTextColor, headerLinkBgColor, headerLinkTextColor, headerLinkOutlineColor } from "../theme"
 
 export default function Header() {
+    const linkClasses: string = `${headerLinkBgColor} ${headerLinkTextColor} ${headerLinkOutlineColor}`
+
     return (
         <div id="header" className={`${ThemeTitleFont.className} ${headerBgColor} ${headerTextColor}`}>
             <h1>Archive Ingestor!</h1>
             <h2>Yet another web app leveraging Next.js and Redis...</h2>
             <span className={`${ThemePrimaryFont.className}`}>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/">Home</Link>
-                </button>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/about">About</Link>
-                </button>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/eula">EULA</Link>
-                </button>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/instructions">Instructions</Link>
-                </button>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/parser">Parser</Link>
-                </button>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/results">Results</Link>
-                </button>
-                <button className={`${headerBtnBgColor} ${headerbtnTextColor}`}>
-                    <Link href="/pipeline">Pipeline</Link>
-                </button>
+                <Link href="/" className={linkClasses}>Home</Link>
+                <Link href="/about" className={linkClasses}>About</Link>
+                <Link href="/eula" className={linkClasses}>EULA</Link>
+                <Link href="/instructions" className={linkClasses}>Instructions</Link>
+                <Link href="/parser" className={linkClasses}>Parser</Link>
+                <Link href="/results" className={linkClasses}>Results</Link>
+                <Link href="/pipeline" className={linkClasses}>Pipeline</Link>
             </span>
         </div>
     );

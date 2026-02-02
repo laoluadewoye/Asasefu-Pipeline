@@ -17,9 +17,3 @@ export default function ThemedClientWrapper({children,}: Readonly<{children: Rea
         </div>
     );
 }
-
-/*
-<Suspense fallback={<button id="theme-switcher" disabled={true}>Detecting Theme...</button>}>
-    <ThemeSwitcher currentTheme={currentTheme} setCurrentTheme={setCurrentTheme} />
-</Suspense>
-*/

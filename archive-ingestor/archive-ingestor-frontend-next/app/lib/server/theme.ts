@@ -16,8 +16,9 @@ export const ThemeTitleFont: NextFont = Cabin_Sketch({
 // Colors
 export const headerBgColor: string = "bg-red-800";
 export const headerTextColor: string = "text-rose-100";
-export const headerBtnBgColor: string = "bg-rose-200";
-export const headerbtnTextColor: string = "text-red-800";
+export const headerLinkBgColor: string = "bg-rose-200";
+export const headerLinkTextColor: string = "text-red-800";
+export const headerLinkOutlineColor: string = "outline-neutral-950";
 
 const lightTheme: ThemeColors = {
     isDark: false,
