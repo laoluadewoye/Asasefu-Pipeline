@@ -1,0 +1,18 @@
+Pages
+
+Index 
+
+Landing page, showcases cards with examples of the new site (for now the old site)
+Is kind of advertising the site in a modern corpo way
+
+Uses layout, page, and loading tsx files
+
+--------------------------
+
+Header
+
+uses 
+
+--------------------------
+
+Themed Body 

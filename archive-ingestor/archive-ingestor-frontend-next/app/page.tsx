@@ -1,12 +1,14 @@
-import { useState } from "react";
-import Header from "./ui/header";
+"use client"
 
-export default function Home() {
-    const [theme, setTheme] = useState('');
+import { useContext } from "react";
+import { ThemeColors } from "./lib/client/schema";
+import { getThemeColors, ThemeContext } from "./lib/client/theme";
+
+export default function Page() {
+    // Get current colors
+    const currentThemeColors: ThemeColors = getThemeColors(useContext(ThemeContext));
 
     return (
-        <div id="home">
-            <Header />
-        </div>
+        <div id="home" className={`${currentThemeColors.mainBgColor} ${currentThemeColors.mainTextColor}`}>Hello Index</div>
     );
 }
