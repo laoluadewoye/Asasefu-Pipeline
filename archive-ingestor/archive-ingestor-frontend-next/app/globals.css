@@ -124,9 +124,9 @@ li {
 }
 
 #theme-switcher {
-    position: fixed; 
+    position: sticky; 
     bottom: 1rem;
-    right: 1rem;
+    margin: 1rem;
     opacity: 0.75; 
     transition-duration: var(--default-duration);
 
@@ -134,6 +134,7 @@ li {
         position: absolute;
         bottom: auto;
         top: 1rem;
+        right: 1rem;
         opacity: 0.5;
     }
 }

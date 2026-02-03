@@ -14,6 +14,8 @@ export default async function Page() {
     const currentThemeColors: ThemeColors = currentTheme ? getThemeColors(currentTheme) : getThemeColors(LIGHT);
 
     return (
-        <div id="instructions" className={`${currentThemeColors.mainBgColor} ${currentThemeColors.mainTextColor}`}>Hello Instructions</div>
+        <div id="instructions" className={`${currentThemeColors.mainBgColor} ${currentThemeColors.mainTextColor}`}>
+            <h2 className="underline">Site Instructions</h2>
+        </div>
     );
 }

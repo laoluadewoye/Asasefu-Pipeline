@@ -8,7 +8,7 @@ export default function Header() {
         <div id="header" className={`${ThemeTitleFont.className} ${headerBgColor} ${headerTextColor}`}>
             <h1>Archive Ingestor!</h1>
             <h2>Yet another web app leveraging Next.js and Redis...</h2>
-            <span className={`${ThemePrimaryFont.className}`}>
+            <span className={`${ThemePrimaryFont.className} mt-4`}>
                 <Link href="/" className={linkClasses}>Home</Link>
                 <Link href="/about" className={linkClasses}>About</Link>
                 <Link href="/eula" className={linkClasses}>EULA</Link>
